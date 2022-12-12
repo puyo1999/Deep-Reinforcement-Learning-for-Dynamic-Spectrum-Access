@@ -3,9 +3,10 @@ from drqn import QNetwork,Memory
 import numpy as np
 import sys
 import  matplotlib.pyplot as plt 
-from collections import  deque
+from collections import deque
 import os
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import time
 
 TIME_SLOTS = 100000                            # number of time-slots to run simulation
