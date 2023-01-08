@@ -1,18 +1,25 @@
-from  multi_user_network_env import env_network
-from drqn import QNetwork,Memory
+from env.multi_user_network_env import env_network
+from util.memory_buffer import Memory
+from util.prioritized_memory import PerMemory
+from util.parser import Parser
+from model.drqn import QNetwork
+from model.dqn import DQNetwork
 import numpy as np
 import sys
-import  matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 from collections import deque
 import os
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import time
 
-TIME_SLOTS = 100000                            # number of time-slots to run simulation
+#TIME_SLOTS = 100000                            # number of time-slots to run simulation
+TIME_SLOTS = 1000
 NUM_CHANNELS = 2                               # Total number of channels
-NUM_USERS = 3                                  # Total number of users
+NUM_USERS = 3                                 # Total number of users
 ATTEMPT_PROB = 1                               # attempt probability of ALOHA based  models 
+args = None
+args = Parser.parse_args(args)
 
 #It creates a one hot vector of a number as num with size as len
 def one_hot(num,len):
@@ -60,10 +67,18 @@ tf.reset_default_graph()
 env = env_network(NUM_USERS,NUM_CHANNELS,ATTEMPT_PROB)
 
 #initializing deep Q network
-mainQN = QNetwork(name='main',hidden_size=hidden_size,learning_rate=learning_rate,step_size=step_size,state_size=state_size,action_size=action_size)
+if args.type == "DQN":
+    mainQN = DQNetwork(name='main',hidden_size=hidden_size,learning_rate=learning_rate,step_size=step_size,state_size=state_size,action_size=action_size)
+elif args.type == "DRQN":
+    print("##### DRQN #####")
+    mainQN = QNetwork(name='main',hidden_size=hidden_size,learning_rate=learning_rate,step_size=step_size,state_size=state_size,action_size=action_size)
 
 #this is experience replay buffer(deque) from which each batch will be sampled and fed to the neural network for training
-memory = Memory(max_size=memory_size)   
+if args.with_per:
+    memory = PerMemory(capacity=memory_size)
+else:
+    memory = Memory(max_size=memory_size)
+
 
 #this is our input buffer which will be used for  predicting next Q-values   
 history_input = deque(maxlen=step_size)
@@ -84,7 +99,15 @@ for ii in range(pretrain_length*step_size*5):
     obs = env.step(action)      # obs is a list of tuple with [[(ACK,REW) for each user] ,CHANNEL_RESIDUAL_CAPACITY_VECTOR]
     next_state = state_generator(action,obs)
     reward = [i[1] for i in obs[:NUM_USERS]]
-    memory.add((state,action,reward,next_state))
+    if(args.with_per):
+        td_error = 1
+    else:
+        td_error = 0
+    if args.with_per:
+        memory.add(td_error, (state, action, reward, next_state))
+    else:
+        memory.add((state, action, reward, next_state))
+
     state = next_state
     history_input.append(state)
 
@@ -238,7 +261,9 @@ cum_collision = [0]
 
 
 for time_step in range(TIME_SLOTS):
-    
+    print("$$$$$")
+    print()
+    print()
     # changing beta at every 50 time-slots
     if time_step %50 == 0:
         if time_step < 5000:
@@ -256,6 +281,7 @@ for time_step in range(TIME_SLOTS):
         
     # Exploitation
     else:
+        print ("exploited")
         #initializing action vector
         action = np.zeros([NUM_USERS],dtype=np.int32)
 
@@ -293,32 +319,40 @@ for time_step in range(TIME_SLOTS):
 
             #action[each_user] = np.argmax(Qs,axis=1)
             if time_step % interval == 0:
+                print("state_vector")
                 print (state_vector[:,each_user])
+                print("Qs")
                 print (Qs)
+                print("prob, sum of beta*Qs")
                 print (prob, np.sum(np.exp(beta*Qs)))
 
     # taking action as predicted from the q values and receiving the observation from thr envionment
     obs = env.step(action)           # obs is a list of tuple with [(ACK,REW) for each user ,(CHANNEL_RESIDUAL_CAPACITY_VECTOR)] 
-    
+
+    print("action")
     print (action)
+    print("obs")
     print (obs)
 
     # Generate next state from action and observation 
     next_state = state_generator(action,obs)
+    print("next_state")
     print (next_state)
 
     # reward for all users given by environment
     reward = [i[1] for i in obs[:NUM_USERS]]
     
     # calculating sum of rewards
-    sum_r =  np.sum(reward)
+    sum_r = np.sum(reward)
+    print("$$$ sum_r={}".format(sum_r))
 
     #calculating cumulative reward
     cum_r.append(cum_r[-1] + sum_r)
 
     #If NUM_CHANNELS = 2 , total possible reward = 2 , therefore collision = (2 - sum_r) or (NUM_CHANNELS - sum_r) 
     collision = NUM_CHANNELS - sum_r
-    
+    print("@@@ collision={}".format(collision))
+
     #calculating cumulative collision
     cum_collision.append(cum_collision[-1] + collision)
     
@@ -333,11 +367,18 @@ for time_step in range(TIME_SLOTS):
 
 
     total_rewards.append(sum_r)
-    print (reward)
-    
+    #print (reward)
+    print("$$$$$ reward={}".format(reward))
     
     # add new experiences into the memory buffer as (state, action , reward , next_state) for training
-    memory.add((state,action,reward,next_state))
+    if(args.with_per):
+        td_error = 1
+    else:
+        td_error = 0
+    if args.with_per:
+        memory.add(td_error, (state, action,reward,next_state))
+    else:
+        memory.add((state,action,reward,next_state))
     
     
     state = next_state
@@ -349,11 +390,14 @@ for time_step in range(TIME_SLOTS):
     ###################################################################################
 
     #  sampling a batch from memory buffer for training
-    batch = memory.sample(batch_size,step_size)
+    if args.with_per:
+        batch, idxs, is_weights = memory.sample(batch_size, step_size)
+    else:
+        batch = memory.sample(batch_size, step_size)
     
     #   matrix of rank 4
     #   shape [NUM_USERS,batch_size,step_size,state_size]
-    states = get_states_user(batch)      
+    states = get_states_user(batch)
   
     #   matrix of rank 3
     #   shape [NUM_USERS,batch_size,step_size]
@@ -378,7 +422,6 @@ for time_step in range(TIME_SLOTS):
     #  creating target vector (possible best action)
     target_Qs = sess.run(mainQN.output,feed_dict={mainQN.inputs_:next_states})
 
-
     #  Q_target =  reward + gamma * Q_next
     targets = rewards[:,-1] + gamma * np.max(target_Qs,axis=1)
   
@@ -392,20 +435,22 @@ for time_step in range(TIME_SLOTS):
     #   Training block ends
     ########################################################################################
     
-    if  time_step %5000 == 4999:
+    #if time_step % 5000 == 4999:
+    if time_step % 1000 == 999:
         plt.figure(1)
-        plt.subplot(211)
-        #plt.plot(np.arange(1000),total_rewards,"r+")
-        #plt.xlabel('Time Slots')
-        #plt.ylabel('total rewards')
-        #plt.title('total rewards given per time_step')
+        plt.subplot(311)
+        plt.plot(np.arange(1000),total_rewards,"r+")
+        plt.xlabel('Time Slots')
+        plt.ylabel('total rewards')
+        plt.title('total rewards given per time_step')
         #plt.show()
-        plt.plot(np.arange(5001),cum_collision,"r-")
+        plt.subplot(312)
+        plt.plot(np.arange(1001),cum_collision,"r-")
         plt.xlabel('Time Slot')
         plt.ylabel('cumulative collision')
         #plt.show()
-        plt.subplot(212)
-        plt.plot(np.arange(5001),cum_r,"r-")
+        plt.subplot(313)
+        plt.plot(np.arange(1001),cum_r,"b-")
         plt.xlabel('Time Slot')
         plt.ylabel('Cumulative reward of all users')
         #plt.title('Cumulative reward of all users')
@@ -414,7 +459,7 @@ for time_step in range(TIME_SLOTS):
         total_rewards = []
         cum_r = [0]
         cum_collision = [0]
-        saver.save(sess,'checkpoints/dqn_multi-user.ckpt')
+        saver.save(sess,'checkpoints/drqn_multi-user.ckpt')
         #print time_step,loss , sum(reward) , Qs
     
     print ("*************************************************")

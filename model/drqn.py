@@ -6,16 +6,21 @@ from keras.layers import LayerNormalization
 import keras.layers as kl
 
 import numpy as np
+
 class QNetwork:
-    def __init__(self, learning_rate=0.01, state_size=4, 
+    '''def __init__(self, learning_rate=0.01, state_size=4,
                  action_size=2, hidden_size=10, step_size=1 ,
                  name='QNetwork'):
-        
+    '''
+    def __init__(self, learning_rate, state_size, action_size, hidden_size, step_size, name='QNetwork'):
         with tf.variable_scope(name):
             self.inputs_ = tf.placeholder(tf.float32, [None,step_size, state_size], name='inputs_')
             self.actions_ = tf.placeholder(tf.int32, [None], name='actions')
             one_hot_actions = tf.one_hot(self.actions_, action_size)
 
+            print ("hidden_size %d" % (hidden_size))
+            print ("state_size %d" % (state_size))
+            print ("action_size %d" % (action_size))
 
             
             self.targetQs_ = tf.placeholder(tf.float32, [None], name='target')
@@ -65,31 +70,3 @@ class QNetwork:
             
             self.loss = tf.reduce_mean(tf.square(self.targetQs_ - self.Q))
             self.opt = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
-
-
-
-
-
-from collections import deque
-
-class Memory():
-    def __init__(self, max_size=1000):
-        self.buffer = deque(maxlen=max_size)
-    
-    def add(self, experience):
-        self.buffer.append(experience)
-            
-    def sample(self, batch_size,step_size):
-        idx = np.random.choice(np.arange(len(self.buffer)-step_size), 
-                               size=batch_size, replace=False)
-        
-        res = []                       
-                             
-        for i in idx:
-            temp_buffer = []  
-            for j in range(step_size):
-                temp_buffer.append(self.buffer[i+j])
-            res.append(temp_buffer)
-        return res    
-        
-

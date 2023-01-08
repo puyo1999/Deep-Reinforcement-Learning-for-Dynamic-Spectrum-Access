@@ -3,12 +3,13 @@ import random
 import sys
 import os
 
-
-TIME_SLOTS = 1
-NUM_CHANNELS = 3
-NUM_USERS = 5
+"""
+TIME_SLOTS = 1000
+NUM_CHANNELS = 8
+NUM_USERS = 20
 ATTEMPT_PROB = 0.6
 GAMMA = 0.90
+"""
 
 class env_network:
     def __init__(self,num_users,num_channels,attempt_prob):
