@@ -30,16 +30,18 @@ class DQNetwork:
             self.h1 = tf.matmul(self.reduced_out, self.w1) + self.b1
             self.h1 = tf.nn.relu(self.h1)
             #self.h1 = tf.contrib.layers.layer_norm(self.h1)
-            input_layer_norm = kl.LayerNormalization(axis=-1, epsilon=1e-12, dtype=tf.float32)
-            self.h1 = input_layer_norm(self.h1)
+
+            """input_layer_norm = kl.LayerNormalization(axis=-1, epsilon=1e-12, dtype=tf.float32)
+            self.h1 = input_layer_norm(self.h1)"""
 
             self.w2 = tf.Variable(tf.random_uniform([hidden_size, hidden_size // 2]))
             self.b2 = tf.Variable(tf.constant(0.1, shape=[hidden_size // 2]))
             self.h2 = tf.matmul(self.h1, self.w2) + self.b2
             self.h2 = tf.nn.relu(self.h2)
             #self.h2 = tf.contrib.layers.layer_norm(self.h2)
-            input_layer_norm = kl.LayerNormalization(axis=-1, epsilon=1e-12, dtype=tf.float32)
-            self.h2 = input_layer_norm(self.h2)
+
+            """input_layer_norm = kl.LayerNormalization(axis=-1, epsilon=1e-12, dtype=tf.float32)
+            self.h2 = input_layer_norm(self.h2)"""
 
             self.w3 = tf.Variable(tf.random_uniform([hidden_size // 2, hidden_size // 4]))
             self.b3 = tf.Variable(tf.constant(0.1, shape=[hidden_size // 4]))
@@ -59,11 +61,12 @@ class DQNetwork:
 
             #self.fc1 = tensorflow.contrib.layers.fully_connected(self.h4, hidden_size)
             #self.fc2 = tensorflow.contrib.layers.fully_connected(self.fc1, hidden_size)
-            self.fc1 = tf.layers.dense(self.h4, hidden_size, activation=None)
-            self.fc2 = tf.layers.dense(self.fc1, hidden_size, activation=None)
+            self.fc1 = tf.layers.dense(self.h4, hidden_size, activation=tf.nn.relu)
+            self.fc2 = tf.layers.dense(self.fc1, hidden_size, activation=tf.nn.relu)
 
             #self.output = tf.contrib.layers.fully_connected(self.fc2, action_size,activation_fn=None)
-            self.output = tf.layers.dense(self.fc2, action_size, activation=None)
+            self.output = tf.layers.dense(self.fc2, action_size, activation=tf.nn.relu)
+
 
             self.Q = tf.reduce_sum(tf.multiply(self.output, one_hot_actions), axis=1)
 

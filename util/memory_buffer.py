@@ -21,6 +21,9 @@ class Memory():
             res.append(temp_buffer)
         return res
 
+    def get_length(self):
+        return len(self.buffer)
+
     def clear(self):
         self.buffer = deque()
 

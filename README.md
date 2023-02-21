@@ -16,7 +16,8 @@ We recommend to install with [Anaconda](https://anaconda.org/anaconda/python)
 ```bash
 git clone https://github.com/shkrwnd/Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access.git
 cd Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access
-python train.py
+python train.py --type DRQN
+python train.py --type DQN --with_per
 ```
 
 To understand the code , I have provided jupyter notebooks:
