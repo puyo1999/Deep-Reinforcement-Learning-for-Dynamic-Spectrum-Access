@@ -1,16 +1,17 @@
-import numpy
+import numpy as np
 
 """ Original Code by @jaara: https://github.com/jaara/AI-blog/blob/master/SumTree.py
 """
 
 class SumTree:
-    write = 0
+    #write = 0
 
     def __init__(self, capacity):
         self.capacity = capacity
-        self.tree = numpy.zeros(2 * capacity - 1 )
-        self.data = numpy.zeros(capacity, dtype=object )
-        self.n_entries = 0
+        self.tree = np.zeros(2 * capacity - 1 )
+        self.data = np.zeros(capacity, dtype=object)
+        #self.n_entries = 0
+        self.write = 0
 
     # update to the root node
     def _propagate(self, idx, change):
@@ -47,18 +48,36 @@ class SumTree:
         self.write += 1
         if self.write >= self.capacity:
             self.write = 0
-        if self.n_entries < self.capacity:
-            self.n_entries += 1
+        #if self.n_entries < self.capacity:
+            #self.n_entries += 1
 
     # update priority
     def update(self, idx, p):
+        tree_idx = idx
+        diff = p - self.tree[tree_idx]
+        self.tree[tree_idx] += diff
+        while tree_idx:
+            tree_idx = (tree_idx - 1) // 2
+            self.tree[tree_idx] += diff
+        '''
         change = p - self.tree[idx]
-
         self.tree[idx] = p
         self._propagate(idx, change)
+        '''
 
     def get(self, s):
         idx = self._retrieve(0, s)
         dataIdx = idx - self.capacity + 1
 
         return (idx, self.tree[idx], self.data[dataIdx])
+
+    @property
+    def total_p(self):
+        return self.tree[0]
+    @property
+    def max_p(self):
+        # 전체에서 max 값 추출
+        return np.max(self.tree[-self.capacity:])
+    @property
+    def min_p(self):
+        return np.min(self.tree[-self.capacity:])

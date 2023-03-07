@@ -6,6 +6,7 @@ from model.ActorNetwork import ActorNetwork
 from model.CriticNetwork import CriticNetwork
 from model.drqn import QNetwork
 from model.dqn import DQNetwork
+from model.ddqn import DDQN
 import numpy as np
 import random
 import sys
@@ -15,37 +16,37 @@ import os
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import time
+import yaml
 
-#TIME_SLOTS = 100000                            # number of time-slots to run simulation
-#TIME_SLOTS = 1000
-TIME_SLOTS = 100
-NUM_CHANNELS = 2                               # Total number of channels
-NUM_USERS = 3                                 # Total number of users
-ATTEMPT_PROB = 1                               # attempt probability of ALOHA based  models 
-
-REPLAY_MEMORY_SIZE = 100
-MINIMUM_REPLAY_MEMORY = 32
-MINIBATCH_SIZE = 32
-DISCOUNT = 0.99
-VALUE_SIZE = 6
+with open('./config/config.yaml') as f:
+    config = yaml.safe_load(f)
+print(config)
 
 args = None
 args = Parser.parse_args(args)
 
+#TIME_SLOTS = 100000                            # number of time-slots to run simulation
+#TIME_SLOTS = 1000
+#TIME_SLOTS = args.time_slot
+TIME_SLOTS = config['time_slot']
+NUM_CHANNELS = 2                               # Total number of channels
+NUM_USERS = 3                                 # Total number of users
+ATTEMPT_PROB = 1                               # attempt probability of ALOHA based  models 
+
+MINIMUM_REPLAY_MEMORY = 32
+
 #It creates a one hot vector of a number as num with size as len
-def one_hot(num,len):
-    assert num >=0 and num < len ,"error"
+def one_hot(num, len):
+    assert num >= 0 and num < len, "!! one_hot error"
     vec = np.zeros([len],np.int32)
     vec[num] = 1
     return vec
 
-
-
 #generates next-state from action and observation
-def state_generator(action,obs):
+def state_generator(action, obs):
     input_vector = []
     if action is None:
-        print ('None')
+        print('no action, hence, no next_state !')
         sys.exit()
     for user_i in range(action.size):
         input_vector_i = one_hot(action[user_i],NUM_CHANNELS+1)
@@ -56,27 +57,50 @@ def state_generator(action,obs):
     return input_vector
 
 memory_size = 1000                      #size of experience replay deque
-batch_size = 6                          # Num of batches to train at each time_slot
+
+batch_size = 32                          # Num of batches to train at each time_slot
 pretrain_length = batch_size            #this is done to fill the deque up to batch size before training
 hidden_size = 128                       #Number of hidden neurons
-learning_rate = 0.0001                  #learning rate
+learning_rate = 1e-4                    #learning rate
 explore_start = .02                     #initial exploration rate
-explore_stop = 0.01                     #final exploration rate
-decay_rate = 0.0001                     #rate of exponential decay of exploration
-gamma = 0.9                             #discount  factor
-noise = 0.1
-step_size=1+2+2                         #length of history sequence for each datapoint  in batch
-state_size = 2 *(NUM_CHANNELS + 1)      #length of input (2 * k + 2)   :k = NUM_CHANNELS
+explore_stop = .01                      #final exploration rate
+decay_rate = .0001                     #rate of exponential decay of exploration
+gamma = .99                            #discount  factor
+
+'''
+batch_size = args.batch_size
+pretrain_length = batch_size  # this is done to fill the deque up to batch size before training
+hidden_size = args.hidden  # Number of hidden neurons
+learning_rate = args.lr  # learning rate
+explore_start = args.explore_start  # initial exploration rate
+explore_stop = args.explore_stop  # final exploration rate
+decay_rate = args.decay_rate  # rate of exponential decay of exploration
+gamma = args.gamma  # discount  factor
+print("+++ batch_size : ", batch_size)
+print("+++ pretrain_length : ", pretrain_length)
+print("+++ hidden_size : ", hidden_size)
+print("+++ learning_rate : ", learning_rate)
+print("+++ explore_start : ", explore_start)
+print("+++ explore_stop : ", explore_stop)
+print("+++ decay_rate : ", decay_rate)
+print("+++ gamma : ", gamma)
+'''
+
+step_size = 1 + 2 + 2                   #length of history sequence for each datapoint  in batch
+state_size = 2 * (NUM_CHANNELS + 1)     #length of input (2 * k + 2)   :k = NUM_CHANNELS
 action_size = NUM_CHANNELS+1            #length of output  (k+1)
-alpha=0                                 #co-operative fairness constant
+alpha = 0                               #co-operative fairness constant
 beta = 1                                #Annealing constant for Monte - Carlo
+
 
 # reseting default tensorflow computational graph
 tf.reset_default_graph()
 sess = tf.Session()
 
-#initializing the environment
+# initializing the environment
 env = env_network(NUM_USERS,NUM_CHANNELS,ATTEMPT_PROB)
+
+args.type = config['type']
 
 #initializing deep Q network
 if args.type == "DQN":
@@ -89,10 +113,13 @@ elif args.type == "A2C":
     print("##### A2C #####")
     actor = ActorNetwork(sess, state_size, action_size)
     critic = CriticNetwork(sess, state_size, action_size)
+elif args.type == "DDQN":
+    print("#### DDQN #####")
+    ddqn = DDQN(name='main', learning_rate=learning_rate, state_size=state_size, action_size=action_size)
 
 #this is experience replay buffer(deque) from which each batch will be sampled and fed to the neural network for training
 if args.with_per:
-    memory = PerMemory(capacity=memory_size)
+    memory = PerMemory(capacity=memory_size, prior=True)
 else:
     memory = Memory(max_size=memory_size)
 
@@ -117,7 +144,8 @@ for ii in range(pretrain_length*step_size*5):
     obs = env.step(action)      # obs is a list of tuple with [[(ACK,REW) for each user] ,CHANNEL_RESIDUAL_CAPACITY_VECTOR]
     next_state = state_generator(action,obs)
     reward = [i[1] for i in obs[:NUM_USERS]]
-    if(args.with_per):
+    # ToDo :: td_error 실제 계산 과정 필요
+    if args.with_per:
         td_error = 1
     else:
         td_error = 0
@@ -132,18 +160,16 @@ for ii in range(pretrain_length*step_size*5):
     history_input.append(state)
 
 ##############################################
-    
 def get_states(batch): 
     states = []
-    for  i in batch:
+    for i in batch:
         states_per_batch = []
         for step_i in i:
             states_per_step = []
             for user_i in step_i[0]:
                 states_per_step.append(user_i)
             states_per_batch.append(states_per_step)
-        states.append(states_per_batch)     
-   
+        states.append(states_per_batch)
     return states
 
 def get_actions(batch):
@@ -190,19 +216,18 @@ def get_states_user(batch):
         for each in batch:
             states_per_batch = []
             for step_i in each:
-                
                 try:
                     states_per_step = step_i[0][user]
                     
                 except IndexError:
-                    print (step_i)
-                    print ("-----------")
-                    
-                    print ("eror")
-                    
-                    '''for i in batch:
+                    print(step_i)
+                    print("-----------")
+                    print("get_states_user eror")
+                    '''
+                    for i in batch:
                         print i
-                        print "**********"'''
+                        print "**********"
+                    '''
                     sys.exit()
                 states_per_batch.append(states_per_step)
             states_per_user.append(states_per_batch)
@@ -235,10 +260,6 @@ def get_rewards_user(batch):
             rewards_per_user.append(rewards_per_batch)
         rewards.append(rewards_per_user)
     return np.array(rewards)
-
-
-
-
 # 
 def get_next_states_user(batch):
     next_states = []
@@ -266,17 +287,43 @@ sess = tf.Session()
 #initialing all the tensorflow variables
 sess.run(tf.global_variables_initializer())
 
+def train_ddqn(replay_memory, batch_size):
+    minibatch = random.sample(replay_memory, batch_size)
+    for index, sample in enumerate(minibatch):
+        if args.with_per:
+            batches, idx, weights = memory.sample(batch_size, step_size)
+        else:
+            cur_state, action, reward, next_state = sample
+
+    #for state, action, reward, next_state, done in minibatch:
+        target = ddqn.model.predict(state)
+        if time_step == TIME_SLOTS:
+            target[0][action] = reward
+        else:
+            # a = self.model.predict(next_state)[0]
+            t = ddqn.target_model.predict(next_state)[0]
+            target[0][action] = reward + ddqn.gamma * np.amax(t)
+            # target[0][action] = reward + self.gamma * t[np.argmax(a)]
+        ddqn.model.fit(state, target, epochs=1, verbose=0)
+    if ddqn.epsilon > ddqn.epsilon_min:
+        ddqn.epsilon *= ddqn.epsilon_decay
+
+    if args.with_per:
+        p = np.sum(np.abs(t - target), axis=1)
+        memory.update(idx, p)
+
+
 def train_advantage_actor_critic(replay_memory, actor, critic):
-    minibatch = random.sample(replay_memory, MINIBATCH_SIZE)
+    minibatch = random.sample(replay_memory, batch_size)
     X = []
     y = []
     # print("@ action_size : ", action_size)
     # print("@ action_dim : ", action_dim)
     # print("@ shape of X : ", np.shape(X))
 
-    advantages = np.zeros(shape=(MINIBATCH_SIZE, action_size))
-    value = np.zeros(shape=(MINIBATCH_SIZE, action_size))
-    next_value = np.zeros(shape=(MINIBATCH_SIZE, action_size))
+    advantages = np.zeros(shape=(batch_size, action_size))
+    value = np.zeros(shape=(batch_size, action_size))
+    next_value = np.zeros(shape=(batch_size, action_size))
     # advantages = np.zeros(shape=(action_size))
     # print("@ shape of advantages : ", np.shape(advantages))
     for index, sample in enumerate(minibatch):
@@ -319,11 +366,11 @@ def train_advantage_actor_critic(replay_memory, actor, critic):
         else:
             next_reward = critic.model.predict(next_state[0])[0]
             # Critic calculates the TD error
-            # advantages[index][action] = reward + DISCOUNT * next_reward - critic.model.predict(np.array(cur_state, dtype=object))[0][0]
-            advantages[index][action] = reward[action] + DISCOUNT * (next_value[index][action]) - value[index][action]
+            # advantages[index][action] = reward + gamma * next_reward - critic.model.predict(np.array(cur_state, dtype=object))[0][0]
+            advantages[index][action] = reward[action] + gamma * (next_value[index][action]) - value[index][action]
 
             # Updating reward to train state value fuction V(s_t)
-            reward = reward + DISCOUNT * next_value
+            reward = reward + gamma * next_value
 
         X.append(cur_state)
         y.append(reward)
@@ -343,13 +390,23 @@ def train_advantage_actor_critic(replay_memory, actor, critic):
     # print("@@@@@@@@@@ Actor Model Summary @@@@@@@@@@")
     actor.model.summary()
 
+    if args.with_per:
+        batches, idx, weights = memory.sample(batch_size, step_size)
+    p = np.sum(np.abs(y[0][0] - X[0][0]), axis=1)
+    memory.update(idx, p)
+
     actor.train(X[0][0], advantages)
-    # actor.model.fit(X, advantages, batch_size=MINIBATCH_SIZE, verbose=0)
-    critic.model.fit(X[0][0], y[0][0], batch_size=MINIBATCH_SIZE, verbose=0)
+    # actor.model.fit(X, advantages, batch_size=batch_size, verbose=0)
+    critic.model.fit(X[0][0], y[0][0], batch_size=batch_size, verbose=0)
 
 
-#list of total rewards
+
+# list of total rewards
 total_rewards = []
+
+# list mean reward
+all_means = []
+means = []
 
 # cumulative reward
 cum_r = [0]
@@ -366,9 +423,10 @@ for time_step in range(TIME_SLOTS):
     print()
     print()
     # changing beta at every 50 time-slots
-    if time_step %50 == 0:
+    if time_step % 50 == 0:
         if time_step < 5000:
-            beta -=0.001
+            print("***** every 50 time slots : beta decreasing *****")
+            beta -= 0.001
 
     #curent exploration probability
     explore_p = explore_stop + (explore_start - explore_stop) * np.exp(-decay_rate*time_step)
@@ -377,14 +435,14 @@ for time_step in range(TIME_SLOTS):
     # Exploration
     if explore_p > np.random.rand():
         #random action sampling
-        action  = env.sample()
-        print ("explored")
+        action = env.sample()
+        print("explored")
         
     # Exploitation
     else:
-        print ("exploited")
+        print("exploited")
         #initializing action vector
-        action = np.zeros([NUM_USERS],dtype=np.int32)
+        action = np.zeros([NUM_USERS], dtype=np.int32)
 
         #converting input history into numpy array
         state_vector = np.array(history_input)
@@ -428,44 +486,49 @@ for time_step in range(TIME_SLOTS):
 
             #action[each_user] = np.argmax(Qs,axis=1)
             if time_step % interval == 0:
-                print("state_vector")
-                print (state_vector[:,each_user])
+                print("@@ state_vector")
+                print(state_vector[:,each_user])
                 if args.type != "A2C":
                     print("Qs")
-                    print (Qs)
+                    print(Qs)
                     print("prob, sum of beta*Qs")
-                    print (prob, np.sum(np.exp(beta*Qs)))
+                    print(prob, np.sum(np.exp(beta*Qs)))
 
     # taking action as predicted from the q values and receiving the observation from thr envionment
     obs = env.step(action)           # obs is a list of tuple with [(ACK,REW) for each user ,(CHANNEL_RESIDUAL_CAPACITY_VECTOR)] 
-
-    print("action")
-    print (action)
-    print("obs")
-    print (obs)
+    print("@ action :")
+    print(action)
+    print("@@@@@@@@@")
+    print("@@ obs :")
+    print(obs)
+    print("@@@@@@@@@")
 
     # Generate next state from action and observation 
     next_state = state_generator(action,obs)
-    print("next_state")
-    print (next_state)
+    print("@@@ next_state :")
+    print(next_state)
+    print("@@@@@@@@@")
 
     # reward for all users given by environment
     reward = [i[1] for i in obs[:NUM_USERS]]
     
     # calculating sum of rewards
     sum_r = np.sum(reward)
-    print("$$$ sum_r={}".format(sum_r))
+    print("$$$ sum_r :")
+    print(sum_r)
+    print("$$$$$$$$$$")
 
-    #calculating cumulative reward
+    # calculating cumulative reward
     cum_r.append(cum_r[-1] + sum_r)
 
-    #If NUM_CHANNELS = 2 , total possible reward = 2 , therefore collision = (2 - sum_r) or (NUM_CHANNELS - sum_r) 
+    # If NUM_CHANNELS = 2 , total possible reward = 2 , therefore collision = (2 - sum_r) or (NUM_CHANNELS - sum_r)
     collision = NUM_CHANNELS - sum_r
-    print("@@@ collision={}".format(collision))
+    print("!!!!! collision :")
+    print(collision)
+    print("!!!!!!!!!!!!!!!!!!!!!!!!")
 
-    #calculating cumulative collision
+    # calculating cumulative collision
     cum_collision.append(cum_collision[-1] + collision)
-    
    
     #############################
     #  for co-operative policy we will give reward-sum to each user who have contributed
@@ -475,21 +538,40 @@ for time_step in range(TIME_SLOTS):
             reward[i] = sum_r
     #############################
 
-
     total_rewards.append(sum_r)
-    #print (reward)
-    print("$$$$$ reward={}".format(reward))
-    
+    print("$$$$ reward : ")
+    print(reward)
+    print("$$$$$$$$$$")
+    '''
+    print("$$$$$ total_rewards : ")
+    print(total_rewards)
+    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+    '''
+    #if time_step % 100 == 99:
+        #if time_step < 5000:
+            #print("***** every 100 time slots *****")
+            # TODO:: measures and stores the mean reward score over that period
+
+    means.append(cum_r[-1] / (time_step + 1))
+    print("&&& means :")
+    print(means)
+    print("&&&&&&&&&&")
+    all_means.append(means)
+    '''
+    print("&&&&& all_means :")
+    print(all_means)
+    print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+    '''
     # add new experiences into the memory buffer as (state, action , reward , next_state) for training
-    if(args.with_per):
+    if args.with_per:
         td_error = 1
     else:
         td_error = 0
+
     if args.with_per:
-        memory.add(td_error, (state, action,reward,next_state))
+        memory.add(td_error, (state, action, reward, next_state))
     else:
-        memory.add((state,action,reward,next_state))
-    
+        memory.add((state, action, reward, next_state))
     
     state = next_state
     #add new experience to generate input-history sequence for next state
@@ -506,13 +588,15 @@ for time_step in range(TIME_SLOTS):
         if train_advantage_actor_critic(replay_memory, actor, critic) == False:
             print("##### train_advantage_actor_critic FALSE !! #####")
             continue
+    elif args.type == "DDQN":
+        train_ddqn(replay_memory)
 
     #  sampling a batch from memory buffer for training
     if args.with_per:
         batch, idxs, is_weights = memory.sample(batch_size, step_size)
     else:
         batch = memory.sample(batch_size, step_size)
-    
+
     #   matrix of rank 4
     #   shape [NUM_USERS,batch_size,step_size,state_size]
     states = get_states_user(batch)
@@ -531,10 +615,12 @@ for time_step in range(TIME_SLOTS):
     
     #   Converting [NUM_USERS,batch_size]  ->   [NUM_USERS * batch_size]  
     #   first two axis are converted into first axis
-
-    print("##### shape of states : ", np.shape(states))
-    print("### shape of states.shape[1] : ", states.shape[1])
-    print("### shape of states.shape[2] : ", states.shape[2])
+    print("Before reshape")
+    print("## shape of states : ", np.shape(states))
+    print("## shape of states.shape[0] : ", states.shape[0])
+    print("## shape of states.shape[1] : ", states.shape[1])
+    print("## shape of states.shape[2] : ", states.shape[2])
+    print("## shape of states.shape[3] : ", states.shape[3])
     if args.type != "A2C":
         states = np.reshape(states,[-1,states.shape[2],states.shape[3]])
         actions = np.reshape(actions,[-1,actions.shape[2]])
@@ -545,7 +631,11 @@ for time_step in range(TIME_SLOTS):
         actions = np.reshape(actions,[-1,actions.shape[2]])
         rewards = np.reshape(rewards,[-1,rewards.shape[2]])
         next_states = np.reshape(next_states,[-1,next_states.shape[1],next_states.shape[2]])
-
+    print("After reshape")
+    print("### shape of states : ", np.shape(states))
+    print("### shape of states.shape[0] : ", states.shape[0])
+    print("### shape of states.shape[1] : ", states.shape[1])
+    print("### shape of states.shape[2] : ", states.shape[2])
     if args.type != "A2C":
         #  creating target vector (possible best action)
         target_Qs = sess.run(mainQN.output,feed_dict={mainQN.inputs_:next_states})
@@ -570,28 +660,39 @@ for time_step in range(TIME_SLOTS):
     
     #if time_step % 5000 == 4999:
     #if time_step % 1000 == 999:
-if time_step % 100 == 99:
+if time_step % TIME_SLOTS == (TIME_SLOTS-1):
     print("##### PLOT start ! #####")
     plt.figure(1)
-    plt.subplot(311)
-    plt.plot(np.arange(100),total_rewards,"r+")
+    plt.subplot(411)
+    plt.plot(np.arange(TIME_SLOTS), total_rewards ,"r+")
     plt.xlabel('Time Slots')
     plt.ylabel('total rewards')
     plt.title('total rewards given per time_step')
     #plt.show()
-    plt.subplot(312)
-    plt.plot(np.arange(101),cum_collision,"r-")
+    plt.subplot(412)
+    plt.plot(np.arange(TIME_SLOTS+1), cum_collision, "r-")
     plt.xlabel('Time Slot')
     plt.ylabel('cumulative collision')
     #plt.show()
-    plt.subplot(313)
-    plt.plot(np.arange(101),cum_r,"b-")
+    plt.subplot(413)
+    plt.plot(np.arange(TIME_SLOTS+1), cum_r, "b-")
     plt.xlabel('Time Slot')
     plt.ylabel('Cumulative reward of all users')
     #plt.title('Cumulative reward of all users')
+    plt.subplot(414)
+    plt.plot([2.00 for _ in range(time_step)], linestyle="--")
+    plt.plot(np.mean(all_means, axis=0))
+    if args.type == "A2C":
+        plt.legend(["Best Possible", "ActorCritic"])
+    plt.xlabel('Time Slot')
+    plt.ylabel('Mean reward of all users')
     plt.show()
 
+    greedy_scores = np.mean(all_means, axis=0)
+    np.save("+++++ greedy_scores", greedy_scores)
+
     total_rewards = []
+    means = []
     cum_r = [0]
     cum_collision = [0]
 
@@ -603,7 +704,7 @@ if time_step % 100 == 99:
         saver.save(sess,'checkpoints/actor-critic-user.ckpt')
     #print time_step,loss , sum(reward) , Qs
 
-print ("*************************************************")
+print("*************************************************")
 
    
 
