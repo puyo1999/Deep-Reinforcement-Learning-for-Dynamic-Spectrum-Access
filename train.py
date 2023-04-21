@@ -50,13 +50,13 @@ def state_generator(action, obs):
         sys.exit()
     for user_i in range(action.size):
         input_vector_i = one_hot(action[user_i],NUM_CHANNELS+1)
-        channel_alloc = obs[-1]
+        channel_alloc = obs[-1] # obs 뒤에서 첫번째
         input_vector_i = np.append(input_vector_i,channel_alloc)
         input_vector_i = np.append(input_vector_i,int(obs[user_i][0]))    #ACK
         input_vector.append(input_vector_i)
     return input_vector
 
-memory_size = 1000                      #size of experience replay deque
+#memory_size = 1000                      #size of experience replay deque
 
 batch_size = 32                          # Num of batches to train at each time_slot
 pretrain_length = batch_size            #this is done to fill the deque up to batch size before training
@@ -101,6 +101,23 @@ sess = tf.Session()
 env = env_network(NUM_USERS,NUM_CHANNELS,ATTEMPT_PROB)
 
 args.type = config['type']
+args.with_per = config['with_per']
+args.gamma = config['gamma']
+args.memory_size = config['memory_size']
+
+#to sample random actions for each user
+action = env.sample()
+
+#
+obs = env.step(action)
+state = state_generator(action,obs)
+reward = [i[1] for i in obs[:NUM_USERS]]
+print('Before init Deep Q Network action:{} obs:{} state:{} reward:{}'.format(action, obs, state, reward))
+#this is experience replay buffer(deque) from which each batch will be sampled and fed to the neural network for training
+if args.with_per:
+    memory = PerMemory(mem_size=args.memory_size, feature_size=NUM_USERS*2, prior=True)
+else:
+    memory = Memory(max_size=args.memory_size)
 
 #initializing deep Q network
 if args.type == "DQN":
@@ -111,46 +128,35 @@ elif args.type == "DRQN":
     mainQN = QNetwork(name='main',hidden_size=hidden_size,learning_rate=learning_rate,step_size=step_size,state_size=state_size,action_size=action_size)
 elif args.type == "A2C":
     print("##### A2C #####")
-    actor = ActorNetwork(sess, state_size, action_size)
-    critic = CriticNetwork(sess, state_size, action_size)
+    actor = ActorNetwork(sess, action_size, observation_dim=NUM_USERS*2, lr=learning_rate, memory=memory)
+    critic = CriticNetwork(sess, action_size,  observation_dim=NUM_USERS*2)
 elif args.type == "DDQN":
     print("#### DDQN #####")
-    ddqn = DDQN(name='main', learning_rate=learning_rate, state_size=state_size, action_size=action_size)
+    mainQN = DDQN(name='main', feature_size=NUM_USERS*2, learning_rate=learning_rate, state_size=state_size, actions=range(action_size), action_size=action_size, step_size=step_size, prior=args.with_per, memory=memory, gamma=args.gamma)
 
-#this is experience replay buffer(deque) from which each batch will be sampled and fed to the neural network for training
-if args.with_per:
-    memory = PerMemory(capacity=memory_size, prior=True)
-else:
-    memory = Memory(max_size=memory_size)
 
 replay_memory = deque(maxlen = 100)
 
 #this is our input buffer which will be used for  predicting next Q-values   
 history_input = deque(maxlen=step_size)
 
-#to sample random actions for each user
-action = env.sample()
-
-#
-obs = env.step(action)
-state = state_generator(action,obs)
-reward = [i[1] for i in obs[:NUM_USERS]]
-
-
+step = 0
+start_train = False
 ##############################################
 for ii in range(pretrain_length*step_size*5):
-    
+    done = False
     action = env.sample()
     obs = env.step(action)      # obs is a list of tuple with [[(ACK,REW) for each user] ,CHANNEL_RESIDUAL_CAPACITY_VECTOR]
     next_state = state_generator(action,obs)
     reward = [i[1] for i in obs[:NUM_USERS]]
-    # ToDo :: td_error 실제 계산 과정 필요
+
     if args.with_per:
-        td_error = 1
-    else:
-        td_error = 0
-    if args.with_per:
-        memory.add(td_error, (state, action, reward, next_state))
+        #memory.add(td_error, (state, action, reward, next_state))
+        if args.type == "A2C":
+            actor.store_transition(state, action, reward, next_state)
+        else:
+            mainQN.store_transition(state, action, reward, next_state)
+        #memory.store((state, action, reward, next_state))
     else:
         memory.add((state, action, reward, next_state))
 
@@ -158,6 +164,16 @@ for ii in range(pretrain_length*step_size*5):
 
     state = next_state
     history_input.append(state)
+    print('@@ Pretrain step:{} after store_transition'.format(step))
+
+    if step >= args.memory_size:
+        if not start_train:
+            start_train = True
+            print('@@ Now start_train:{}'.format(start_train))
+            break
+
+    step += 1
+
 
 ##############################################
 def get_states(batch): 
@@ -212,27 +228,31 @@ def get_next_states(batch):
 def get_states_user(batch):
     states = []
     for user in range(NUM_USERS):
+        print("user : ", user)
         states_per_user = []
         for each in batch:
             states_per_batch = []
+            step_cnt = 0
             for step_i in each:
+                if step_cnt >= 1:
+                    continue
+                step_cnt += 1
                 try:
                     states_per_step = step_i[0][user]
-                    
                 except IndexError:
                     print(step_i)
                     print("-----------")
-                    print("get_states_user eror")
-                    '''
+                    print("get_states_user error")
                     for i in batch:
-                        print i
-                        print "**********"
-                    '''
+                        print("i : ",i)
+                        print("**********")
                     sys.exit()
+
                 states_per_batch.append(states_per_step)
             states_per_user.append(states_per_batch)
         states.append(states_per_user)
     #print len(states)
+    print("@ get_states_user - states : ", states)
     return np.array(states)
 
 def get_actions_user(batch):
@@ -290,23 +310,26 @@ sess.run(tf.global_variables_initializer())
 def train_ddqn(replay_memory, batch_size):
     minibatch = random.sample(replay_memory, batch_size)
     for index, sample in enumerate(minibatch):
-        if args.with_per:
-            batches, idx, weights = memory.sample(batch_size, step_size)
-        else:
-            cur_state, action, reward, next_state = sample
+        cur_state, action, reward, next_state = sample
+
+    if args.with_per:
+        idx, weights, batches = memory.sample(batch_size)
+    else:
+        #cur_state, action, reward, next_state = sample
+        batches = memory.sample(batch_size, step_size)
 
     #for state, action, reward, next_state, done in minibatch:
-        target = ddqn.model.predict(state)
-        if time_step == TIME_SLOTS:
-            target[0][action] = reward
-        else:
-            # a = self.model.predict(next_state)[0]
-            t = ddqn.target_model.predict(next_state)[0]
-            target[0][action] = reward + ddqn.gamma * np.amax(t)
-            # target[0][action] = reward + self.gamma * t[np.argmax(a)]
-        ddqn.model.fit(state, target, epochs=1, verbose=0)
-    if ddqn.epsilon > ddqn.epsilon_min:
-        ddqn.epsilon *= ddqn.epsilon_decay
+    target = mainQN.model.predict(state)[0]
+    if time_step == TIME_SLOTS:
+        target[0][action] = reward
+    else:
+        # a = self.model.predict(next_state)[0]
+        t = mainQN.target_model.predict(next_state)[0]
+        #target[0][action] = reward + mainQN.gamma * np.amax(t)
+        target[0][action] = reward + mainQN.gamma * np.argmax(t)
+    mainQN.model.fit(state, target, epochs=1, verbose=0)
+    if mainQN.epsilon > mainQN.epsilon_min:
+        mainQN.epsilon *= mainQN.epsilon_decay
 
     if args.with_per:
         p = np.sum(np.abs(t - target), axis=1)
@@ -328,77 +351,63 @@ def train_advantage_actor_critic(replay_memory, actor, critic):
     # print("@ shape of advantages : ", np.shape(advantages))
     for index, sample in enumerate(minibatch):
         cur_state, action, reward, next_state = sample
-        print("##### time_step : ", time_step)
-        # print("# action : ", action)
-
-        #print("@@@ np.ndim(cur_state) : ", np.ndim(cur_state))
+        print('@ train_advantage_actor_critic cur_state:{} next_state:{}'.format(cur_state, next_state))
 
         # Critic 네트워크에서 예측한 가치
-        if np.shape(cur_state) != np.shape(next_state):
-            return False
+        #if np.shape(cur_state) != np.shape(next_state):
+            #return False
 
-        #print("@@@@@@@@@@ Critic Model Summary @@@@@@@@@@")
+        print("@@@@@@@@@@ Critic Model Summary @@@@@@@@@@")
 
-        #critic.model.summary()
+        critic.model.summary()
         # Critic 네트워크에서 예측한 가치
-
-        #print("@@@ shape of cur_state : ", np.shape(cur_state))
-        #print("@@@ shape of cur_state[0] : ", np.shape(cur_state[0]))
-        #print("@@@ shape of reward : ", np.shape(reward))
-        if np.ndim(cur_state) == 2 and np.size(cur_state) == 18:
-            cur_state[0] = np.array([cur_state[0]])
-        #print("KKK shape of cur_state : ", np.shape(cur_state))
-        #print("KKK shape of cur_state[0] : ", np.shape(cur_state[0]))
+        print("@ shape of cur_state[0] : {}".format(np.shape(cur_state[0])))
+        print("@ shape of cur_state : {}".format(np.shape(cur_state)))
+        print("@ shape of next_state[0] : {}".format(np.shape(next_state[0])))
+        print("@ shape of next_state : {}".format(np.shape(next_state)))
 
         value[index][action] = critic.model.predict(cur_state[0])[0][0]
-
-        if np.ndim(next_state) == 2 and np.size(next_state) == 18:
-            next_state[0] = np.array([next_state[0]])
-        #print("KKK shape of next_state : ", np.shape(next_state))
-        #print("KKK shape of next_state[0] : ", np.shape(next_state[0]))
         next_value[index][action] = critic.model.predict(next_state[0])[0][0]
-        # print("@@@ shape of value : ", np.shape(value))
-        # print("@@@ shape of next_value : ", np.shape(next_value))
-        # print("@@@ shape of reward : ", np.shape(reward))
+        #next_value[index][action] = critic.model.predict(np.expand_dims(next_state[0], axis=0))[0][0]
         if time_step == TIME_SLOTS:
             # advantages[index][action] = reward - critic.model.predict(np.expand_dims(cur_state, axis=0))[0][0]
             advantages[index][action] = reward[action] - value[index][action]
         else:
-            next_reward = critic.model.predict(next_state[0])[0]
+            next_reward = critic.model.predict(next_state[0])[0][0]
             # Critic calculates the TD error
-            # advantages[index][action] = reward + gamma * next_reward - critic.model.predict(np.array(cur_state, dtype=object))[0][0]
-            advantages[index][action] = reward[action] + gamma * (next_value[index][action]) - value[index][action]
+            #advantages[index][action] = reward + gamma * next_reward - value[index][action]
+            advantages[index][action] = reward[action] + gamma * next_reward - critic.model.predict(cur_state[0])[0][0]
+            #advantages[index][action] = reward[action] + gamma * (next_value[index][action]) - value[index][action]
 
             # Updating reward to train state value fuction V(s_t)
             reward = reward + gamma * next_value
 
         X.append(cur_state)
         y.append(reward)
-    # print("222 shape of X : ", np.shape(X))
+
+        #p = np.sum(np.abs(y[0][0] - X[0][0]), axis=1)
+        #print('before memory update p:{}'.format(p))
+        #memory.update(index, p)
+        #print('after memory update')
 
     X = np.array(X)
     y = np.array(y)
 
-    # X = np.expand_dims(X, axis=1)
-    y = np.expand_dims(y, axis=2)
-    # dvantages = np.expand_dims(advantages, axis=0)
+    #X = np.expand_dims(X, axis=1)
+    y = np.expand_dims(y, axis=1)
+    advantages = np.expand_dims(advantages, axis=0)
     # Actor와 Critic 훈련
     # print("@@ shape of X : ", np.shape(X))
     # print("@@ shape of y : ", np.shape(y))
-    # print("@@ shape of advantages : ", np.shape(advantages))
+    print("@@ X:{} y:{} advantages:{} ".format(X, y, advantages))
 
     # print("@@@@@@@@@@ Actor Model Summary @@@@@@@@@@")
     actor.model.summary()
 
-    if args.with_per:
-        batches, idx, weights = memory.sample(batch_size, step_size)
-    p = np.sum(np.abs(y[0][0] - X[0][0]), axis=1)
-    memory.update(idx, p)
-
-    actor.train(X[0][0], advantages)
-    # actor.model.fit(X, advantages, batch_size=batch_size, verbose=0)
-    critic.model.fit(X[0][0], y[0][0], batch_size=batch_size, verbose=0)
-
+    actor.train(X, advantages)
+    actor.model.fit(X, advantages, batch_size=batch_size, verbose=0)
+    critic.model.fit(X, y, batch_size=batch_size, verbose=0)
+    print('End training actor critic')
 
 
 # list of total rewards
@@ -417,9 +426,8 @@ cum_collision = [0]
 ##########################################################################
 ####                      main simulation loop                    ########
 
-
 for time_step in range(TIME_SLOTS):
-    print("$$$$$")
+    print('##### main simulation loop START - time_step{} #####'.format(time_step))
     print()
     print()
     # changing beta at every 50 time-slots
@@ -447,8 +455,8 @@ for time_step in range(TIME_SLOTS):
         #converting input history into numpy array
         state_vector = np.array(history_input)
 
-        #print np.array(history_input)
-        print ("///////////////")
+        print("state_vector : ", state_vector)
+        print("/////////////// each_user iter starts ///////////////")
 
         for each_user in range(NUM_USERS):
 
@@ -456,8 +464,14 @@ for time_step in range(TIME_SLOTS):
                 state[each_user] = np.resize(state[each_user], [1,state_size])
                 policy = actor.model.predict(state[each_user], batch_size=1).flatten()
 
+            elif args.type == "DDQN":
+                state[each_user] = np.resize(state[each_user], [1, state_size])
+                #state[each_user] = state_vector[:,each_user].reshape(step_size,state_size)
+                Qs = mainQN.model.predict([np.array(state[each_user]), np.ones((1, 1))])
+                prob1 = (1-alpha)*np.exp(beta*Qs)
+                prob = prob1/np.sum(np.exp(beta*Qs)) + alpha/(NUM_CHANNELS+1)
             else:
-                #feeding the input-history-sequence of (t-1) slot for each user seperately
+                #feeding the input-history-sequence of (t-1) slot for each user separately
                 feed = {mainQN.inputs_:state_vector[:,each_user].reshape(1,step_size,state_size)}
 
                 #predicting Q-values of state respectively
@@ -481,33 +495,40 @@ for time_step in range(TIME_SLOTS):
             #  choosing action with max probability
             if args.type == "A2C":
                 action[each_user] = np.random.choice(action_size, 1, p=policy)[0]
+                #action[each_user] = np.argmax(prob, axis=1)
+            elif args.type == "DDQN":
+                action[each_user] = mainQN.actor(obs[each_user])
+                #action[each_user] = np.argmax(prob, axis=1)
             else:
                 action[each_user] = np.argmax(prob,axis=1)
 
+            #action[each_user] = np.random.choice(action_size, 1, p=policy)[0]
             #action[each_user] = np.argmax(Qs,axis=1)
-            if time_step % interval == 0:
-                print("@@ state_vector")
-                print(state_vector[:,each_user])
-                if args.type != "A2C":
-                    print("Qs")
-                    print(Qs)
-                    print("prob, sum of beta*Qs")
-                    print(prob, np.sum(np.exp(beta*Qs)))
 
-    # taking action as predicted from the q values and receiving the observation from thr envionment
-    obs = env.step(action)           # obs is a list of tuple with [(ACK,REW) for each user ,(CHANNEL_RESIDUAL_CAPACITY_VECTOR)] 
-    print("@ action :")
+            if time_step % interval == 0:
+                print('EachUser:{} Debugging state_vector:{}'.format(each_user, state_vector[:,each_user]))
+                if args.type != "A2C":#and args.type != "DDQN":
+                    print('Qs:{}'.format(Qs))
+                    print('prob:{}, sum of beta*Qs:{}'.format(prob, np.sum(np.exp(beta*Qs))))
+                    print('End')
+
+    # taking action as predicted from the q values and receiving the observation from the environment
+    state = state_generator(action, obs)
+
+    obs = env.step(action)           # obs is a list of tuple with [(ACK,REW) for each user ,(CHANNEL_RESIDUAL_CAPACITY_VECTOR)]
+    print("@@ action :")
     print(action)
-    print("@@@@@@@@@")
+    print("@@ action end @@")
     print("@@ obs :")
     print(obs)
-    print("@@@@@@@@@")
+    print("@@ obs len :", len(obs))
+    print("@@ obs end @@")
 
     # Generate next state from action and observation 
     next_state = state_generator(action,obs)
     print("@@@ next_state :")
     print(next_state)
-    print("@@@@@@@@@")
+    print("@@@ next_state @@@")
 
     # reward for all users given by environment
     reward = [i[1] for i in obs[:NUM_USERS]]
@@ -553,35 +574,107 @@ for time_step in range(TIME_SLOTS):
             # TODO:: measures and stores the mean reward score over that period
 
     means.append(cum_r[-1] / (time_step + 1))
-    print("&&& means :")
-    print(means)
-    print("&&&&&&&&&&")
+    #print("&&& means :")
+    #print(means)
+    #print("&&&&&&&&&&")
     all_means.append(means)
-    '''
-    print("&&&&& all_means :")
-    print(all_means)
-    print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
-    '''
+
+    #print("&&&&& all_means :")
+    #print(all_means)
+    #print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+
     # add new experiences into the memory buffer as (state, action , reward , next_state) for training
-    if args.with_per:
+    '''if args.with_per:
         td_error = 1
     else:
-        td_error = 0
+        td_error = 0'''
 
     if args.with_per:
-        memory.add(td_error, (state, action, reward, next_state))
+        #memory.add(td_error, (state, action, reward, next_state))
+
+        #memory.store((state, action, reward, next_state))
+        print('Before store_transition - state:{}'.format(state))
+        if args.type == "A2C":
+            actor.store_transition(state, action, reward, next_state)
+        else:
+            mainQN.store_transition(state, action, reward, next_state)
     else:
         memory.add((state, action, reward, next_state))
-    
+
     state = next_state
     #add new experience to generate input-history sequence for next state
     history_input.append(state)
 
-
     #  Training block starts
     ###################################################################################
 
-    if args.type == "A2C":
+    print("///// Training block START /////")
+
+    #  sampling a batch from memory buffer for training
+    if args.with_per:
+        idx, is_weights, batch = memory.sample(batch_size)
+    else:
+        batch = memory.sample(batch_size, step_size)
+
+    if not args.with_per:
+        #   matrix of rank 4
+        #   shape [NUM_USERS,batch_size,step_size,state_size]
+        print("@@ after sampling - batch : ", batch)
+        states = get_states_user(batch)
+
+        #   matrix of rank 3
+        #   shape [NUM_USERS,batch_size,step_size]
+        actions = get_actions_user(batch)
+
+        #   matrix of rank 3
+        #   shape [NUM_USERS,batch_size,step_size]
+        rewards = get_rewards_user(batch)
+
+        #   matrix of rank 4
+        #   shape [NUM_USERS,batch_size,step_size,state_size]
+        next_states = get_next_states_user(batch)
+    
+        #   Converting [NUM_USERS,batch_size]  ->   [NUM_USERS * batch_size]
+        #   first two axis are converted into first axis
+        print("Before reshape")
+        print("## shape of states : ", np.shape(states))
+        print("## shape of states.shape[0] : ", states.shape[0])
+        print("## shape of states.shape[1] : ", states.shape[1])
+        print("## shape of states.shape[2] : ", states.shape[2])
+        print("## shape of states.shape[3] : ", states.shape[3])
+        if args.type != "A2C" and args.type != "DDQN":
+            states = np.reshape(states,[-1,states.shape[2],states.shape[3]])
+            actions = np.reshape(actions,[-1,actions.shape[2]])
+            rewards = np.reshape(rewards,[-1,rewards.shape[2]])
+            next_states = np.reshape(next_states,[-1,next_states.shape[2],next_states.shape[3]])
+        '''
+        else:
+            states = np.reshape(states,[-1,states.shape[1],states.shape[2]])
+            actions = np.reshape(actions,[-1,actions.shape[2]])
+            rewards = np.reshape(rewards,[-1,rewards.shape[2]])
+            next_states = np.reshape(next_states,[-1,next_states.shape[1],next_states.shape[2]])
+        '''
+        print("After reshape")
+        print("### shape of states : ", np.shape(states))
+        print("### shape of states.shape[0] : ", states.shape[0])
+        print("### shape of states.shape[1] : ", states.shape[1])
+        print("### shape of states.shape[2] : ", states.shape[2])
+
+    if args.type != "A2C" and args.type != "DDQN":
+        #  creating target vector (possible best action)
+        target_Qs = sess.run(mainQN.output,feed_dict={mainQN.inputs_:next_states})
+
+        #  Q_target =  reward + gamma * Q_next
+        targets = rewards[:,-1] + gamma * np.max(target_Qs,axis=1)
+
+
+        #  calculating loss and train using Adam optimizer
+        loss, _ = sess.run([mainQN.loss,mainQN.opt],
+                                feed_dict={mainQN.inputs_:states,
+                                mainQN.targetQs_:targets,
+                                mainQN.actions_:actions[:,-1]})
+
+    elif args.type == "A2C":
         print("replay_memory length:", len(replay_memory))
         if len(replay_memory) < MINIMUM_REPLAY_MEMORY:
             continue
@@ -589,80 +682,23 @@ for time_step in range(TIME_SLOTS):
             print("##### train_advantage_actor_critic FALSE !! #####")
             continue
     elif args.type == "DDQN":
-        train_ddqn(replay_memory)
-
-    #  sampling a batch from memory buffer for training
-    if args.with_per:
-        batch, idxs, is_weights = memory.sample(batch_size, step_size)
+        #train_ddqn(replay_memory, batch_size)
+        mainQN.learn(memory, replay_memory, batch_size)
     else:
-        batch = memory.sample(batch_size, step_size)
-
-    #   matrix of rank 4
-    #   shape [NUM_USERS,batch_size,step_size,state_size]
-    states = get_states_user(batch)
-  
-    #   matrix of rank 3
-    #   shape [NUM_USERS,batch_size,step_size]
-    actions = get_actions_user(batch)
-    
-    #   matrix of rank 3
-    #   shape [NUM_USERS,batch_size,step_size]
-    rewards = get_rewards_user(batch)
-    
-    #   matrix of rank 4
-    #   shape [NUM_USERS,batch_size,step_size,state_size]
-    next_states = get_next_states_user(batch)
-    
-    #   Converting [NUM_USERS,batch_size]  ->   [NUM_USERS * batch_size]  
-    #   first two axis are converted into first axis
-    print("Before reshape")
-    print("## shape of states : ", np.shape(states))
-    print("## shape of states.shape[0] : ", states.shape[0])
-    print("## shape of states.shape[1] : ", states.shape[1])
-    print("## shape of states.shape[2] : ", states.shape[2])
-    print("## shape of states.shape[3] : ", states.shape[3])
-    if args.type != "A2C":
-        states = np.reshape(states,[-1,states.shape[2],states.shape[3]])
-        actions = np.reshape(actions,[-1,actions.shape[2]])
-        rewards = np.reshape(rewards,[-1,rewards.shape[2]])
-        next_states = np.reshape(next_states,[-1,next_states.shape[2],next_states.shape[3]])
-    else:
-        states = np.reshape(states,[-1,states.shape[1],states.shape[2]])
-        actions = np.reshape(actions,[-1,actions.shape[2]])
-        rewards = np.reshape(rewards,[-1,rewards.shape[2]])
-        next_states = np.reshape(next_states,[-1,next_states.shape[1],next_states.shape[2]])
-    print("After reshape")
-    print("### shape of states : ", np.shape(states))
-    print("### shape of states.shape[0] : ", states.shape[0])
-    print("### shape of states.shape[1] : ", states.shape[1])
-    print("### shape of states.shape[2] : ", states.shape[2])
-    if args.type != "A2C":
-        #  creating target vector (possible best action)
-        target_Qs = sess.run(mainQN.output,feed_dict={mainQN.inputs_:next_states})
-
-        #  Q_target =  reward + gamma * Q_next
-        targets = rewards[:,-1] + gamma * np.max(target_Qs,axis=1)
-
-        #  calculating loss and train using Adam  optimizer
-        loss, _ = sess.run([mainQN.loss,mainQN.opt],
-                                feed_dict={mainQN.inputs_:states,
-                                mainQN.targetQs_:targets,
-                                mainQN.actions_:actions[:,-1]})
-    else:
-        print("### No need to do sess.run in A2C model ###")
-        print()
-        print()
-        print()
+        print("### No need to do sess.run in other model ###")
         print()
 
+    print("///// Training block END /////")
     #   Training block ends
     ########################################################################################
-    
-    #if time_step % 5000 == 4999:
-    #if time_step % 1000 == 999:
+
+    print('##### main simulation loop END - time_step:{} #####'.format(time_step))
+
+#if time_step % 5000 == 4999:
+#if time_step % 1000 == 999:
 if time_step % TIME_SLOTS == (TIME_SLOTS-1):
     print("##### PLOT start ! #####")
-    plt.figure(1)
+    plt.figure(1, figsize=(15, 10), dpi= 80, facecolor='w', edgecolor='k')
     plt.subplot(411)
     plt.plot(np.arange(TIME_SLOTS), total_rewards ,"r+")
     plt.xlabel('Time Slots')
@@ -681,23 +717,48 @@ if time_step % TIME_SLOTS == (TIME_SLOTS-1):
     #plt.title('Cumulative reward of all users')
     plt.subplot(414)
     plt.plot([2.00 for _ in range(time_step)], linestyle="--")
+
+    a2c_scores = []
+    drqn_scores = []
+    ddqn_scores = []
+
     plt.plot(np.mean(all_means, axis=0))
+
     if args.type == "A2C":
         plt.legend(["Best Possible", "ActorCritic"])
+        a2c_scores = np.mean(all_means, axis=0)
+        np.save("a2c_scores", a2c_scores)
+        np.savetxt("a2c_scores.txt", a2c_scores, fmt=['%1.16f'], header='all_means', delimiter= ',')
+
+    elif args.type == "DRQN":
+        plt.legend(["Best Possible", "DRQN"])
+        drqn_scores = np.mean(all_means, axis=0)
+        np.save("drqn_scores", drqn_scores)
+        np.savetxt("drqn_scores.txt", drqn_scores, fmt=['%1.16f'], header='all_means', delimiter= ',')
+
+    elif args.type == "DDQN":
+        plt.legend(["Best Possible", "DDQN"])
+        ddqn_scores = np.mean(all_means, axis=0)
+        np.save("ddqn_scores", ddqn_scores)
+        np.savetxt("ddqn_scores.txt", ddqn_scores, fmt=['%1.16f'], header='all_means', delimiter= ',')
+
+    #np.load("a2c_scores.npy")
+    #plt.plot(a2c_scores)
+
     plt.xlabel('Time Slot')
     plt.ylabel('Mean reward of all users')
     plt.show()
 
-    greedy_scores = np.mean(all_means, axis=0)
-    np.save("+++++ greedy_scores", greedy_scores)
-
     total_rewards = []
     means = []
+    all_means = []
     cum_r = [0]
     cum_collision = [0]
 
     if args.type == "DQN":
         saver.save(sess,'checkpoints/dqn-user.ckpt')
+    elif args.type == "DDQN":
+        saver.save(sess,'checkpoints/ddqn-user.ckpt')
     elif args.type == "DRQN":
         saver.save(sess,'checkpoints/drqn-user.ckpt')
     elif args.type == "A2C":

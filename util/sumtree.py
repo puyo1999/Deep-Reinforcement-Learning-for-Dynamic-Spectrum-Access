@@ -6,11 +6,13 @@ import numpy as np
 class SumTree:
     #write = 0
 
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.tree = np.zeros(2 * capacity - 1 )
-        self.data = np.zeros(capacity, dtype=object)
+    def __init__(self, mem_size, data_len):
+        self.tree = np.zeros(2 * mem_size - 1 )
+        self.data = np.zeros((mem_size, data_len), dtype=object)
+        print("### shape of SumTree data : ", np.shape(self.data))
+
         #self.n_entries = 0
+        self.size = mem_size
         self.write = 0
 
     # update to the root node
@@ -40,44 +42,48 @@ class SumTree:
 
     # store priority and sample
     def add(self, p, data):
-        idx = self.write + self.capacity - 1
-
+        print("@ SumTree : add - shape of data = ", np.shape(data))
         self.data[self.write] = data
-        self.update(idx, p)
+        self.update(self.write, p)
 
         self.write += 1
-        if self.write >= self.capacity:
+        if self.write == self.size:
             self.write = 0
-        #if self.n_entries < self.capacity:
-            #self.n_entries += 1
 
     # update priority
     def update(self, idx, p):
-        tree_idx = idx
+        tree_idx = idx + self.size - 1
         diff = p - self.tree[tree_idx]
         self.tree[tree_idx] += diff
         while tree_idx:
             tree_idx = (tree_idx - 1) // 2
             self.tree[tree_idx] += diff
-        '''
-        change = p - self.tree[idx]
-        self.tree[idx] = p
-        self._propagate(idx, change)
-        '''
 
     def get(self, s):
         idx = self._retrieve(0, s)
-        dataIdx = idx - self.capacity + 1
-
+        dataIdx = idx - self.size + 1
         return (idx, self.tree[idx], self.data[dataIdx])
 
+    def sample(self, value):
+        ptr = 0
+        while ptr < self.size - 1:
+            left = 2 * ptr + 1
+            if value < self.tree[left]:
+                ptr = left
+            else:
+                value -= self.tree[left]
+                ptr = left + 1
+
+        return ptr - (self.size - 1), self.tree[ptr], self.data[ptr - (self.size - 1)]
     @property
     def total_p(self):
         return self.tree[0]
     @property
     def max_p(self):
         # 전체에서 max 값 추출
-        return np.max(self.tree[-self.capacity:])
+        return np.max(self.tree[-self.size:])
     @property
     def min_p(self):
-        return np.min(self.tree[-self.capacity:])
+        # 전체에서 min 값 추출
+        print('@@@ pyk : min_p:{}'.format(np.min(self.tree[-self.size:])))
+        return np.min(self.tree[-self.size:])

@@ -10,21 +10,41 @@ class PerMemory(object):
     """
     p_upper = 1.
     e = .01
-    a = .6
-    beta = .4
+    a = .7
+    beta = .5
     beta_increment_per_sampling = .001
 
-    def __init__(self, capacity, prior=True):
+    # feature_size = state_size 이므로 2 * (NUM_CHANNELS + 1)
+    def __init__(self, mem_size, feature_size, prior=True):
         """ Initialization
         """
+        print("@ PerMemory : init - feature_size = ", feature_size)
         self.prior = prior
-        self.capacity = capacity
+        self.data_len = 6 * feature_size + 6
+        #self.data_len = feature_size
+
         # Prioritized Experience Replay
         if prior:
-            self.tree = SumTree(capacity)
+            self.tree = SumTree(mem_size, self.data_len)
         else:
-            self.mem = np.zeros(capacity, dtype=object)
+            self.mem_size = mem_size
+            self.mem = np.zeros(mem_size, self.data_len, dtype=object)
             self.mem_ptr = 0
+
+    def store(self, transition):
+        if self.prior:
+            p = self.tree.max_p
+            if not p:
+                p = self.p_upper
+            print("@ PerMemory : store")
+            print("@ PerMemory : p = ", p)
+            print("@ PerMemory : transition = ", transition)
+            self.tree.add(p, transition)
+        else:
+            self.mem[self.mem_ptr] = transition
+            self.mem_ptr += 1
+            if self.mem_ptr == self.mem_size:
+                self.mem_ptr = 0
 
     def add(self, error, sample):
         """ Save an experience to memory, optionally with its TD-Error
@@ -32,13 +52,13 @@ class PerMemory(object):
         if self.prior:
             p = self.tree.max_p
             if not p:
-                p = self.p_upper
-                #p = self._get_priority(error)
+                #p = self.p_upper
+                p = self._get_priority(error)
             self.tree.add(p, sample)
         else:
             self.mem[self.mem_ptr] = sample
             self.mem_ptr += 1
-            if self.mem_ptr == self.capacity:
+            if self.mem_ptr == self.mem_size:
                 self.mem_ptr = 0
 
     def _get_priority(self, error):
@@ -46,26 +66,30 @@ class PerMemory(object):
         """
         return (np.abs(error) + self.e) ** self.a
 
-    def sample(self, n, step_size):
+    def sample(self, n):
         """ Sample a batch, optionally with (PER)
         """
         if self.prior:
             min_p = self.tree.min_p
             segment = self.tree.total_p / n
-            batch = np.zeros((n, self.capacity), dtype=object)
+            batch = np.zeros((n, self.data_len), dtype=object)
             w = np.zeros((n,1), np.float32)
             idx = np.zeros(n, np.int32)
             a = 0
             for i in range(n):
                 b = a + segment
                 v = np.random.uniform(a, b)
-                idx[i], p, batch[i] = self.tree.get(v)
-                w[i] = (p/min_p) ** (-self.beta)
+                #idx[i], p, batch[i] = self.tree.get(v)
+                idx[i], p, batch[i] = self.tree.sample(v)
+                print("min_p : ", min_p)
+                if min_p == 0:
+                    min_p = .01
+                w[i] = (p / min_p) ** (-self.beta)
                 a += segment
             self.beta = min(1., self.a + .01)
             return idx, w, batch
         else:
-            mask = np.random.choice(range(self.capacity), n)
+            mask = np.random.choice(range(self.mem_size), n)
             return self.mem[mask]
         '''
         batch = []

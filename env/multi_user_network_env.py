@@ -22,10 +22,12 @@ class env_network:
         self.action_space = np.arange(self.NUM_CHANNELS+1)
         self.users_action = np.zeros([self.NUM_USERS],np.int32) 
         self.users_observation = np.zeros([self.NUM_USERS],np.int32)
+        print('@@ EnvNetwork init - users_observation:{}'.format(self.users_observation))
     def reset(self):
         pass
     def sample(self):
-        x =  np.random.choice(self.action_space,size=self.NUM_USERS)
+        x = np.random.choice(self.action_space,size=self.NUM_USERS)
+        print('@@ EnvNetwork - action by sampling:{}'.format(x))
         return x
     def step(self,action):
         #print 
@@ -49,7 +51,7 @@ class env_network:
         for i in range(len(action)):
             
             self.users_observation[i] = channel_alloc_frequency[self.users_action[i]]
-            if self.users_action[i] ==0:   #accessing no channel
+            if self.users_action[i] == 0:   #accessing no channel
                 self.users_observation[i] = 0
             if self.users_observation[i] == 1:
                 reward[i] = 1

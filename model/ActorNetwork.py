@@ -14,35 +14,51 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
+tf.set_random_seed(2212)
+
 class ActorNetwork:
-	def __init__(self, sess, state_dim, action_dim):
-		self.learning_rate = 0.0001
-		self.state_dim, self.action_dim = state_dim, action_dim
-		
+	def __init__(self, sess, action_dim, observation_dim, lr, memory):
+		self.lr = lr
+		self.action_dim, self.observation_dim = action_dim, observation_dim
+		self.memory = memory
+
+		# setting the our created session as default session
 		K.set_session(sess)
 		self.sess = sess
 		self.state_input, self.output, self.model = self.create_model()
 
+		# Placeholder for advantage values
 		self.advantages = tf.placeholder(tf.float32, shape=[None, action_dim])
 		model_weights = self.model.trainable_weights
 
+		# Adding small number inside log to avoid log(0) = -infinity
 		log_prob = tf.math.log(self.output + 10e-10)
+
 		neg_log_prob = tf.multiply(log_prob, -1)
 
 		actor_gradients = tf.gradients(neg_log_prob, model_weights, self.advantages)
 		grads = zip(actor_gradients, model_weights)
-		self.optimize = tf.train.AdamOptimizer(0.0001).apply_gradients(grads)
+		self.optimize = tf.train.AdamOptimizer(self.lr).apply_gradients(grads)
 
 
 	def create_model(self):
-		state_input = Input(shape=(self.state_dim,))
+		state_input = Input(shape=(self.observation_dim,))
 		state_h1 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_input)
 		state_h2 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_h1)
 		output = Dense(self.action_dim, activation='softmax', kernel_initializer='he_uniform')(state_h2)
 		model = Model(inputs=state_input, outputs=output)
-		adam = Adam(learning_rate=0.001)
+		adam = Adam(self.lr)
 		model.compile(loss='categorical_crossentropy', optimizer='adam')
 		return state_input, output, model
+
+	def store_transition(self, s, a, r, s_):
+		print('shape of s:{} a:{}'.format(np.shape(s), np.shape(a)))
+		print('StoreTransition - s:{} a:{} r:{} s_:{}'.format(s, a, r, s_))
+		transition = np.hstack(
+			[list(s[0]), list(s[1]), list(s[2]), list(np.r_[a, r]), list(s_[0]), list(s_[1]), list(s_[2])])
+		print('StoreTransition - transition:{}'.format(transition))
+		self.memory.store(transition)
+		#self.step_cnt += 1
 
 	def train(self, X, y):
 

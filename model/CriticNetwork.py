@@ -22,7 +22,8 @@ class CriticNetwork:
 	
 	def create_model(self):
 		#state_input = Input(shape=self.observation_dim)
-		state_input = Input(shape=(self.state_dim,))
+		#state_input = Input(shape=(self.state_dim,))
+		state_input = Input(shape=(1,))
 		state_h1 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_input)
 		state_h2 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_h1)
 		state_h3 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_h2)
