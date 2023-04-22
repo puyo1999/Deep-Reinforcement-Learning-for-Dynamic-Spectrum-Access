@@ -14,8 +14,6 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
-tf.set_random_seed(2212)
-
 class ActorNetwork:
 	def __init__(self, sess, action_dim, observation_dim, lr, memory):
 		self.lr = lr
@@ -38,7 +36,8 @@ class ActorNetwork:
 
 		actor_gradients = tf.gradients(neg_log_prob, model_weights, self.advantages)
 		grads = zip(actor_gradients, model_weights)
-		self.optimize = tf.train.AdamOptimizer(self.lr).apply_gradients(grads)
+		#self.optimize = tf.train.AdamOptimizer(self.lr).apply_gradients(grads)
+		self.optimize = Adam(self.lr).apply_gradients(grads)
 
 
 	def create_model(self):

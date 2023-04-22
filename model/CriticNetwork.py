@@ -9,32 +9,35 @@ from keras import Model
 from keras.layers import Add, Multiply
 from keras.optimizers import Adam
 
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 NUM_USERS = 3		# Total number of users
 
 class CriticNetwork:
-	def __init__(self, sess, state_dim, action_dim):
-		self.state_dim = state_dim
-		self.action_dim = action_dim
+	def __init__(self, sess, action_dim, observation_dim, lr):
+		self.action_dim, self.observation_dim = action_dim, observation_dim
+		self.lr = lr
 		K.set_session(sess)
 		self.value_size = NUM_USERS
 		self.model = self.create_model()
 		#self.model = self.create_model2()
 	
 	def create_model(self):
-		#state_input = Input(shape=self.observation_dim)
+		state_input = Input(shape=(self.observation_dim,))
 		#state_input = Input(shape=(self.state_dim,))
-		state_input = Input(shape=(1,))
+		#state_input = Input(shape=(1,))
 		state_h1 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_input)
 		state_h2 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_h1)
 		state_h3 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_h2)
 		state_h4 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_h3)
 		output = Dense(self.value_size, activation='linear', kernel_initializer='he_uniform')(state_h4)
 		model = Model(inputs=state_input, outputs=output)
-		model.compile(loss="mse", optimizer=Adam(learning_rate=0.0005))
+		model.compile(loss="mse", optimizer=Adam(learning_rate=self.lr))
 		return model
 
 	def create_model2(self):
-		state_input = Input(shape=(self.state_dim,))
+		state_input = Input(shape=(self.observation_dim,))
 		state_h1 = Dense(24, activation='relu')(state_input)
 		state_h2 = Dense(48)(state_h1)
 		

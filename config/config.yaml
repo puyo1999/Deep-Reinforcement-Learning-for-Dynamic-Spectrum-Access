@@ -3,4 +3,4 @@ type: "A2C"
 #type: "DDQN"
 gamma: 0.99
 with_per: True
-memory_size: 100
+memory_size: 50

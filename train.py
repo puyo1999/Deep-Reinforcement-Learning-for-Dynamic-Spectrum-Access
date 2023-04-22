@@ -62,6 +62,7 @@ batch_size = 32                          # Num of batches to train at each time_
 pretrain_length = batch_size            #this is done to fill the deque up to batch size before training
 hidden_size = 128                       #Number of hidden neurons
 learning_rate = 1e-4                    #learning rate
+critic_learning_rate = 5e-4             #critic learning rate
 explore_start = .02                     #initial exploration rate
 explore_stop = .01                      #final exploration rate
 decay_rate = .0001                     #rate of exponential decay of exploration
@@ -129,7 +130,7 @@ elif args.type == "DRQN":
 elif args.type == "A2C":
     print("##### A2C #####")
     actor = ActorNetwork(sess, action_size, observation_dim=NUM_USERS*2, lr=learning_rate, memory=memory)
-    critic = CriticNetwork(sess, action_size,  observation_dim=NUM_USERS*2)
+    critic = CriticNetwork(sess, action_size, observation_dim=NUM_USERS*2, lr=critic_learning_rate)
 elif args.type == "DDQN":
     print("#### DDQN #####")
     mainQN = DDQN(name='main', feature_size=NUM_USERS*2, learning_rate=learning_rate, state_size=state_size, actions=range(action_size), action_size=action_size, step_size=step_size, prior=args.with_per, memory=memory, gamma=args.gamma)
@@ -345,42 +346,48 @@ def train_advantage_actor_critic(replay_memory, actor, critic):
     # print("@ shape of X : ", np.shape(X))
 
     advantages = np.zeros(shape=(batch_size, action_size))
+
     value = np.zeros(shape=(batch_size, action_size))
     next_value = np.zeros(shape=(batch_size, action_size))
+
     # advantages = np.zeros(shape=(action_size))
-    # print("@ shape of advantages : ", np.shape(advantages))
     for index, sample in enumerate(minibatch):
         cur_state, action, reward, next_state = sample
         print('@ train_advantage_actor_critic cur_state:{} next_state:{}'.format(cur_state, next_state))
 
-        # Critic 네트워크에서 예측한 가치
-        #if np.shape(cur_state) != np.shape(next_state):
-            #return False
 
         print("@@@@@@@@@@ Critic Model Summary @@@@@@@@@@")
-
         critic.model.summary()
         # Critic 네트워크에서 예측한 가치
-        print("@ shape of cur_state[0] : {}".format(np.shape(cur_state[0])))
+        print("@ shape of cur_state[0] : {}".format(cur_state[0]))
         print("@ shape of cur_state : {}".format(np.shape(cur_state)))
-        print("@ shape of next_state[0] : {}".format(np.shape(next_state[0])))
+        print("@ shape of next_state[0] : {}".format(next_state[0]))
         print("@ shape of next_state : {}".format(np.shape(next_state)))
 
-        value[index][action] = critic.model.predict(cur_state[0])[0][0]
-        next_value[index][action] = critic.model.predict(next_state[0])[0][0]
-        #next_value[index][action] = critic.model.predict(np.expand_dims(next_state[0], axis=0))[0][0]
+        if np.shape(cur_state) != np.shape(next_state):
+            next_state = np.reshape(next_state, [3, 6])
+        # Critic 네트워크에서 예측한 가치
+        print('!!! after np.array (cur_state):{}'.format(cur_state))
+        print('!!! after np.array (next_state):{}'.format(next_state))
+
+        #value[index][action] = critic.model.predict(cur_state[index])[0][0]
+        value[index][action] = critic.model.predict(np.array(cur_state))[0][0]
+        #next_value[index][action] = critic.model.predict(next_state[index])[0][0]
+        next_value[index][action] = critic.model.predict(np.array(next_state))[0][0]
+        
+        # if done: 과 동일
         if time_step == TIME_SLOTS:
-            # advantages[index][action] = reward - critic.model.predict(np.expand_dims(cur_state, axis=0))[0][0]
+            #advantages[index][action] = reward - critic.model.predict(np.expand_dims(cur_state, axis=0))[0][0]
             advantages[index][action] = reward[action] - value[index][action]
         else:
-            next_reward = critic.model.predict(next_state[0])[0][0]
+            next_reward = next_value[index][action]
             # Critic calculates the TD error
-            #advantages[index][action] = reward + gamma * next_reward - value[index][action]
-            advantages[index][action] = reward[action] + gamma * next_reward - critic.model.predict(cur_state[0])[0][0]
+            advantages[index][action] = reward[action] + gamma * next_reward - value[index][action]
+            #advantages[index][action] = reward[action] + gamma * next_reward - critic.model.predict(np.expand_dims(cur_state[index], axis=0))[0][0]
             #advantages[index][action] = reward[action] + gamma * (next_value[index][action]) - value[index][action]
 
             # Updating reward to train state value fuction V(s_t)
-            reward = reward + gamma * next_value
+            reward = reward + gamma * next_reward
 
         X.append(cur_state)
         y.append(reward)
@@ -395,7 +402,7 @@ def train_advantage_actor_critic(replay_memory, actor, critic):
 
     #X = np.expand_dims(X, axis=1)
     y = np.expand_dims(y, axis=1)
-    advantages = np.expand_dims(advantages, axis=0)
+    #advantages = np.expand_dims(advantages, axis=0)
     # Actor와 Critic 훈련
     # print("@@ shape of X : ", np.shape(X))
     # print("@@ shape of y : ", np.shape(y))
@@ -404,8 +411,11 @@ def train_advantage_actor_critic(replay_memory, actor, critic):
     # print("@@@@@@@@@@ Actor Model Summary @@@@@@@@@@")
     actor.model.summary()
 
+    X = np.reshape(X, [32*3, 6])
     actor.train(X, advantages)
-    actor.model.fit(X, advantages, batch_size=batch_size, verbose=0)
+
+    #actor.model.fit(X, advantages, batch_size=batch_size, verbose=0)
+
     critic.model.fit(X, y, batch_size=batch_size, verbose=0)
     print('End training actor critic')
 
