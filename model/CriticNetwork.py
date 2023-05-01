@@ -20,11 +20,12 @@ class CriticNetwork:
 		self.lr = lr
 		K.set_session(sess)
 		self.value_size = NUM_USERS
+		#self.value_size = 1
 		self.model = self.create_model()
 		#self.model = self.create_model2()
 	
 	def create_model(self):
-		state_input = Input(shape=(self.observation_dim,))
+		state_input = Input(shape=(self.action_dim, self.observation_dim))
 		#state_input = Input(shape=(self.state_dim,))
 		#state_input = Input(shape=(1,))
 		state_h1 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_input)
