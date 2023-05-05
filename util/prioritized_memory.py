@@ -22,10 +22,12 @@ class PerMemory(object):
         self.prior = prior
         self.data_len = 6 * feature_size + 6
         #self.data_len = feature_size
+        print("@ PerMemory : init - data_len : {}".format(self.data_len))
 
         # Prioritized Experience Replay
         if prior:
             self.tree = SumTree(mem_size, self.data_len)
+
         else:
             self.mem_size = mem_size
             self.mem = np.zeros(mem_size, self.data_len, dtype=object)
@@ -34,12 +36,14 @@ class PerMemory(object):
     def store(self, transition):
         if self.prior:
             p = self.tree.max_p
+            print('@ store with p(max_p): {}\n'.format(p))
             if not p:
                 p = self.p_upper
             print("@ PerMemory : store")
             print("@ PerMemory : p = ", p)
             print("@ PerMemory : transition = ", transition)
             self.tree.add(p, transition)
+            print('@ after store, check min_p:{}\n'.format(self.tree.min_p))
         else:
             self.mem[self.mem_ptr] = transition
             self.mem_ptr += 1
@@ -71,8 +75,11 @@ class PerMemory(object):
         """
         if self.prior:
             min_p = self.tree.min_p
+            print('@ sample : check current min_p : {}'.format(min_p))
+            if min_p == 0:
+                min_p = .873
             segment = self.tree.total_p / n
-            batch = np.zeros((n, self.data_len), dtype=object)
+            batch = np.zeros((n, self.data_len), dtype=np.float32)
             w = np.zeros((n,1), np.float32)
             idx = np.zeros(n, np.int32)
             a = 0
@@ -81,9 +88,8 @@ class PerMemory(object):
                 v = np.random.uniform(a, b)
                 #idx[i], p, batch[i] = self.tree.get(v)
                 idx[i], p, batch[i] = self.tree.sample(v)
-                print("min_p : ", min_p)
                 if min_p == 0:
-                    min_p = .01
+                    min_p = .873
                 w[i] = (p / min_p) ** (-self.beta)
                 a += segment
             self.beta = min(1., self.a + .01)
@@ -123,9 +129,9 @@ class PerMemory(object):
         """ Update priority for idx (PER)
         """
         if self.prior:
-            tderr += self.e
-            tderr = np.minimum(tderr, self.p_upper)
             for i in range(len(idx)):
+                tderr[i] += self.e
+                tderr[i] = np.minimum(tderr[i], self.p_upper)
                 self.tree.update(idx[i], tderr[i] ** self.a)
         '''
         p = self._get_priority(error)

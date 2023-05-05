@@ -75,6 +75,20 @@ class ActorNetwork:
 		self.memory.store(transition)
 		#self.step_cnt += 1
 
+	def learn(self, batch, batch_size, feature_size):
+		if self.prior:
+			idx, w, transition = self.memory.sample(batch_size)
+		else:
+			transition = self.memory.sample(batch_size)
+		print('@ actor learn - transition:\n{}\n'.format(transition))
+		s = transition[:,:feature_size]
+
+		if self.prior:
+			#q_pred = self.q_eval_model.predict([s, np.ones((self.batch_size, 1))])
+			#p = np.sum(np.abs(q_pred - q_target), axis=1)
+			self.memory.update(idx, 0.001)
+
+
 	def train(self, X, y):
 
 		self.sess.run(self.optimize, feed_dict={self.state_input:X, self.advantages:y})

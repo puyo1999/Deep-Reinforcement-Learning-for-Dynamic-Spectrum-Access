@@ -1,7 +1,7 @@
 """
 CriticNetwork.py
 """
-
+import keras.losses
 import tensorflow as tf
 from keras.layers import Dense, Input
 import keras.backend as K
@@ -19,11 +19,11 @@ class CriticNetwork:
 		self.action_dim, self.observation_dim = action_dim, observation_dim
 		self.lr = lr
 		K.set_session(sess)
-		self.value_size = NUM_USERS
-		#self.value_size = 1
+		#self.value_size = NUM_USERS
+		self.value_size = 1
 		self.model = self.create_model()
 		#self.model = self.create_model2()
-	
+
 	def create_model(self):
 		state_input = Input(shape=(self.action_dim, self.observation_dim))
 		#state_input = Input(shape=(self.state_dim,))
@@ -34,7 +34,7 @@ class CriticNetwork:
 		state_h4 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_h3)
 		output = Dense(self.value_size, activation='linear', kernel_initializer='he_uniform')(state_h4)
 		model = Model(inputs=state_input, outputs=output)
-		model.compile(loss="mse", optimizer=Adam(learning_rate=self.lr))
+		model.compile(loss=keras.losses.mse, optimizer=Adam(learning_rate=self.lr))
 		return model
 
 	def create_model2(self):
@@ -53,5 +53,4 @@ class CriticNetwork:
 		adam  = Adam(learning_rate=0.001)
 		model.compile(loss="mse", optimizer=adam)
 		return model		
-
 
