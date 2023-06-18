@@ -53,14 +53,20 @@ class SumTree:
 
     # update priority
     def update(self, idx, p):
-        tree_idx = idx + self.size - 1
-        diff = p - self.tree[tree_idx]
-        self.tree[tree_idx] += diff
-        while tree_idx:
-            tree_idx = (tree_idx - 1) // 2
-            self.tree[tree_idx] += diff
-
+        #tree_idx = idx + self.size - 1
+        diff = p - self.tree[idx]
+        self.tree[idx] += diff
+        while idx:
+            idx = (idx - 1) // 2
+            self.tree[idx] += diff
+    '''
+    def update(self, idx, p):
+        change = p - self.tree[idx]
+        self.tree[idx] = p
+        self._propagate(idx, change)
+    '''
     def get(self, s):
+        assert s <= self.total()
         idx = self._retrieve(0, s)
         dataIdx = idx - self.size + 1
         return (idx, self.tree[idx], self.data[dataIdx])

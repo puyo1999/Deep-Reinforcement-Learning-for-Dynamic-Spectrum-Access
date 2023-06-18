@@ -1,6 +1,8 @@
 time_slot: 100
-type: "A2C"
+#type: "A2C"
+type: "DDPG"
 #type: "DDQN"
 gamma: 0.99
 with_per: True
 memory_size: 10000
+#memory_size: 20000

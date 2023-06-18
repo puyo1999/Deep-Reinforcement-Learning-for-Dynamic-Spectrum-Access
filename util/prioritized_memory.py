@@ -30,7 +30,7 @@ class PerMemory(object):
 
         else:
             self.mem_size = mem_size
-            self.mem = np.zeros(mem_size, self.data_len, dtype=object)
+            self.mem = np.zeros(mem_size, self.data_len, dtype=np.float32)
             self.mem_ptr = 0
 
     def store(self, transition):
@@ -50,14 +50,11 @@ class PerMemory(object):
             if self.mem_ptr == self.mem_size:
                 self.mem_ptr = 0
 
-    def add(self, error, sample):
+    def add(self, sample, error=100000):
         """ Save an experience to memory, optionally with its TD-Error
         """
         if self.prior:
-            p = self.tree.max_p
-            if not p:
-                #p = self.p_upper
-                p = self._get_priority(error)
+            p = self._get_priority(error)
             self.tree.add(p, sample)
         else:
             self.mem[self.mem_ptr] = sample
@@ -68,7 +65,10 @@ class PerMemory(object):
     def _get_priority(self, error):
         """ Compute an experience priority, as per Schaul et al.
         """
-        return (np.abs(error) + self.e) ** self.a
+        print('@ _get_priority : {}'.format(np.power(error + self.e, self.a).squeeze()))
+        return np.power(error + self.e, self.a).squeeze()
+        #print('@ _get_priority : {}'.format((np.abs(error) + self.e) ** self.a))
+        #return (np.abs(error) + self.e) ** self.a
 
     def sample(self, n):
         """ Sample a batch, optionally with (PER)
@@ -86,8 +86,8 @@ class PerMemory(object):
             for i in range(n):
                 b = a + segment
                 v = np.random.uniform(a, b)
-                #idx[i], p, batch[i] = self.tree.get(v)
-                idx[i], p, batch[i] = self.tree.sample(v)
+                idx[i], p, batch[i] = self.tree.get(v)
+                #idx[i], p, batch[i] = self.tree.sample(v)
                 if min_p == 0:
                     min_p = .873
                 w[i] = (p / min_p) ** (-self.beta)
@@ -130,10 +130,15 @@ class PerMemory(object):
         """
         if self.prior:
             for i in range(len(idx)):
+                '''
                 tderr[i] += self.e
                 tderr[i] = np.minimum(tderr[i], self.p_upper)
                 self.tree.update(idx[i], tderr[i] ** self.a)
-        '''
-        p = self._get_priority(error)
-        self.tree.update(idx, p)
-        '''
+                '''
+                priorities = self._get_priority(tderr[i])
+                self.tree.update(idx[i], priorities)
+
+                '''
+                p = self._get_priority(tderr[i])
+                self.tree.update(idx, p)
+                '''

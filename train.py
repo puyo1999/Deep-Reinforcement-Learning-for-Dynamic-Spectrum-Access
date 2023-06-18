@@ -4,6 +4,7 @@ from util.prioritized_memory import PerMemory
 from util.parser import Parser
 from model.ActorNetwork import ActorNetwork
 from model.CriticNetwork import CriticNetwork
+from model.DDPG.ddpg import DDPG
 from model.drqn import QNetwork
 from model.dqn import DQNetwork
 from model.ddqn import DDQN
@@ -37,7 +38,8 @@ MINIMUM_REPLAY_MEMORY = 32
 
 #It creates a one hot vector of a number as num with size as len
 def one_hot(num, len):
-    assert num >= 0 and num < len, "!! one_hot error"
+    #assert num >= 0 and num < len, "!! one_hot error"
+    assert (num >= 0) & (num < len), "!! one_hot error"
     vec = np.zeros([len],np.int32)
     vec[num] = 1
     return vec
@@ -48,7 +50,9 @@ def state_generator(action, obs):
     if action is None:
         print('no action, hence, no next_state !')
         sys.exit()
+    print('action.size:{}'.format(action.size))
     for user_i in range(action.size):
+        print('user_i:{} action:{}'.format(user_i, action[user_i]))
         input_vector_i = one_hot(action[user_i],NUM_CHANNELS+1)
         channel_alloc = obs[-1] # obs 뒤에서 첫번째
         input_vector_i = np.append(input_vector_i,channel_alloc)
@@ -58,15 +62,15 @@ def state_generator(action, obs):
 
 #memory_size = 1000                      #size of experience replay deque
 
-batch_size = 32                          # Num of batches to train at each time_slot
-pretrain_length = batch_size            #this is done to fill the deque up to batch size before training
-hidden_size = 128                       #Number of hidden neurons
-learning_rate = 1e-4                    #learning rate
-critic_learning_rate = 5e-4             #critic learning rate
-explore_start = .02                     #initial exploration rate
-explore_stop = .01                      #final exploration rate
-decay_rate = .0001                     #rate of exponential decay of exploration
-gamma = .99                            #discount  factor
+batch_size = 32                         # Num of batches to train at each time_slot
+pretrain_length = batch_size            # this is done to fill the deque up to batch size before training
+hidden_size = 128                       # Number of hidden neurons
+learning_rate = 1e-4                    # learning rate
+critic_learning_rate = 5e-4             # critic learning rate
+explore_start = .02                     # initial exploration rate
+explore_stop = .01                      # final exploration rate
+decay_rate = .0001                      # rate of exponential decay of exploration
+gamma = .99                             # discount  factor
 
 '''
 batch_size = args.batch_size
@@ -92,7 +96,6 @@ state_size = 2 * (NUM_CHANNELS + 1)     #length of input (2 * k + 2)   :k = NUM_
 action_size = NUM_CHANNELS+1            #length of output  (k+1)
 alpha = 0                               #co-operative fairness constant
 beta = 1                                #Annealing constant for Monte - Carlo
-
 
 # reseting default tensorflow computational graph
 tf.reset_default_graph()
@@ -134,7 +137,9 @@ elif args.type == "A2C":
 elif args.type == "DDQN":
     print("#### DDQN #####")
     mainQN = DDQN(name='main', feature_size=NUM_USERS*2, learning_rate=learning_rate, state_size=state_size, actions=range(action_size), action_size=action_size, step_size=step_size, prior=args.with_per, memory=memory, gamma=args.gamma)
-
+elif args.type == "DDPG":
+    #mainQN = DDPG(name= 'main', env=env, obs_dim=env.action_space.shape, act_dim=env.action_space.shape, memory=memory, steps=10000)
+    mainQN = DDPG(name='main', env=env, obs_dim=NUM_USERS*2, act_dim=action_size, memory=memory, steps=10000)
 
 replay_memory = deque(maxlen = 100)
 
@@ -310,6 +315,25 @@ saver = tf.train.Saver()
 
 #initialing all the tensorflow variables
 sess.run(tf.global_variables_initializer())
+
+def train_ddpg(replay_memory, batch_size):
+    global_steps = 0
+    epochs = 0
+    rewards_list = []
+    minibatch = random.sample(replay_memory, batch_size)
+    for index, sample in enumerate(minibatch):
+        cur_state, action, reward, next_state = sample
+
+    if args.with_per:
+        idx, weights, transition = memory.sample(batch_size)
+    else:
+        #cur_state, action, reward, next_state = sample
+        transition = memory.sample(batch_size, step_size)
+
+    mainQN.learn(*map(lambda x: np.stack(x).astype('float32'), np.transpose(transition)))
+    mainQN.soft_target_update()
+
+    mainQN.actor.save_weights("./ddpg_actor/actor", overwrite=True)
 
 def train_ddqn(replay_memory, batch_size):
     minibatch = random.sample(replay_memory, batch_size)
@@ -565,15 +589,14 @@ for time_step in range(TIME_SLOTS):
     else:
         print("exploited")
         #initializing action vector
-        action = np.zeros([NUM_USERS], dtype=np.int32)
+        #action = np.zeros([NUM_USERS], dtype=np.int32)
+        action = np.zeros([NUM_USERS], dtype=np.object)
 
         #converting input history into numpy array
         state_vector = np.array(history_input)
 
         print("@@@ pyk @@@\n history_input :\n{}\n --> state_vector :\n{}\n".format(history_input, state_vector))
         print("/////////////// each_user iter starts ///////////////")
-
-
 
         for each_user in range(NUM_USERS):
 
@@ -600,6 +623,11 @@ for time_step in range(TIME_SLOTS):
                 state[each_user] = np.resize(state[each_user], [1, state_size])
                 #state[each_user] = state_vector[:,each_user].reshape(step_size,state_size)
                 Qs = mainQN.model.predict([np.array(state[each_user]), np.ones((1, 1))])
+                prob1 = (1-alpha)*np.exp(beta*Qs)
+                prob = prob1/np.sum(np.exp(beta*Qs)) + alpha/(NUM_CHANNELS+1)
+            elif args.type == "DDPG":
+                state[each_user] = np.resize(state[each_user], [1, state_size])
+                Qs = mainQN.actor.predict(state[each_user])
                 prob1 = (1-alpha)*np.exp(beta*Qs)
                 prob = prob1/np.sum(np.exp(beta*Qs)) + alpha/(NUM_CHANNELS+1)
             else:
@@ -631,6 +659,11 @@ for time_step in range(TIME_SLOTS):
             elif args.type == "DDQN":
                 action[each_user] = mainQN.actor(obs[each_user])
                 #action[each_user] = np.argmax(prob, axis=1)
+            elif args.type == "DDPG":
+                #a = mainQN.policy_action(obs[each_user])
+                #a = mainQN.policy_action(state[each_user])
+                #print('@@ ddpg after policy_action a:{}'.format(a))
+                action[each_user] = mainQN.get_action(state[each_user], True)
             else:
                 action[each_user] = np.argmax(prob,axis=1)
 
@@ -738,9 +771,9 @@ for time_step in range(TIME_SLOTS):
     #add new experience to generate input-history sequence for next state
     history_input.append(state)
 
+    print('///// BEFORE Training at time_step:{} /////'.foramt(time_step))
     #  Training block starts
     ###################################################################################
-
     print("////////////////////////////////")
     print("///// Training block START /////")
 
@@ -796,13 +829,12 @@ for time_step in range(TIME_SLOTS):
         print("### shape of states.shape[1] : ", states.shape[1])
         print("### shape of states.shape[2] : ", states.shape[2])
 
-    if args.type != "A2C" and args.type != "DDQN":
+    if args.type != "A2C" and args.type != "DDQN" and args.type != "DDPG":
         #  creating target vector (possible best action)
         target_Qs = sess.run(mainQN.output,feed_dict={mainQN.inputs_:next_states})
 
         #  Q_target =  reward + gamma * Q_next
         targets = rewards[:,-1] + gamma * np.max(target_Qs,axis=1)
-
 
         #  calculating loss and train using Adam optimizer
         loss, _ = sess.run([mainQN.loss,mainQN.opt],
@@ -824,6 +856,10 @@ for time_step in range(TIME_SLOTS):
     elif args.type == "DDQN":
         #train_ddqn(replay_memory, batch_size)
         mainQN.learn(memory, replay_memory, batch_size)
+    elif args.type == "DDPG":
+        train_ddpg(replay_memory, batch_size)
+        #mainQN.learn(states, actions, next_states, rewards, False)
+        #mainQN.soft_target_update()
     else:
         print("### No need to do sess.run in other model ###")
         print()
@@ -861,6 +897,7 @@ if time_step % TIME_SLOTS == (TIME_SLOTS-1):
     a2c_scores = []
     drqn_scores = []
     ddqn_scores = []
+    ddpg_scores = []
 
     plt.plot(np.mean(all_means, axis=0))
 
@@ -882,6 +919,12 @@ if time_step % TIME_SLOTS == (TIME_SLOTS-1):
         np.save("ddqn_scores", ddqn_scores)
         np.savetxt("ddqn_scores.txt", ddqn_scores, fmt=['%1.16f'], header='all_means', delimiter= ',')
 
+    elif args.type == "DDPG":
+        plt.legend(["Best Possible", "DDPG"])
+        ddpg_scores = np.mean(all_means, axis=0)
+        np.save("ddpg_scores", ddpg_scores)
+        np.savetxt("ddpg_scores.txt", ddpg_scores, fmt=['%1.16f'], header='all_means', delimiter= ',')
+
     #np.load("a2c_scores.npy")
     #plt.plot(a2c_scores)
 
@@ -901,6 +944,8 @@ if time_step % TIME_SLOTS == (TIME_SLOTS-1):
         saver.save(sess,'checkpoints/ddqn-user.ckpt')
     elif args.type == "DRQN":
         saver.save(sess,'checkpoints/drqn-user.ckpt')
+    elif args.type == "DDPG":
+        saver.save(sess, 'checkpoints/ddpg-user.ckpt')
     elif args.type == "A2C":
         saver.save(sess,'checkpoints/actor-critic-user.ckpt')
     #print time_step,loss , sum(reward) , Qs

@@ -72,7 +72,9 @@ class ActorNetwork:
 		transition = np.hstack(
 			[list(s[0]), list(s[1]), list(s[2]), list(np.r_[a, r]), list(s_[0]), list(s_[1]), list(s_[2])])
 		print('StoreTransition - transition:{}'.format(transition))
-		self.memory.store(transition)
+		#self.memory.store(transition)
+		self.memory.add(transition, error=100000)
+
 		#self.step_cnt += 1
 
 	def learn(self, batch, batch_size, feature_size):
@@ -86,6 +88,8 @@ class ActorNetwork:
 		if self.prior:
 			#q_pred = self.q_eval_model.predict([s, np.ones((self.batch_size, 1))])
 			#p = np.sum(np.abs(q_pred - q_target), axis=1)
+			#errors = (q_preds - q_targets).abs().cpu().numpy()
+			#print('##### Before memory.update() p:\n{}\n'.format(p))
 			self.memory.update(idx, 0.001)
 
 
