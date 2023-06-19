@@ -1,8 +1,11 @@
 time_slot: 100
+#type: "DRQN"
+type: "DQN"
 #type: "A2C"
-type: "DDPG"
+#type: "A3C"
+#type: "DDPG"
 #type: "DDQN"
 gamma: 0.99
-with_per: True
+with_per: False
 memory_size: 10000
 #memory_size: 20000

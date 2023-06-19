@@ -144,8 +144,8 @@ elif args.type == "DDPG":
 replay_memory = deque(maxlen = 100)
 
 #this is our input buffer which will be used for  predicting next Q-values   
-#history_input = deque(maxlen=step_size)
-history_input = deque(maxlen=action_size)
+history_input = deque(maxlen=step_size)
+#history_input = deque(maxlen=action_size)
 
 step = 0
 start_train = False
@@ -243,6 +243,7 @@ def get_states_user(batch):
             states_per_batch = []
             step_cnt = 0
             for step_i in each:
+                '''
                 if step_cnt >= 1:
                     continue
                 step_cnt += 1
@@ -256,12 +257,13 @@ def get_states_user(batch):
                         print("i : ",i)
                         print("**********")
                     sys.exit()
-
+                '''
+                states_per_step = step_i[0][user]
                 states_per_batch.append(states_per_step)
             states_per_user.append(states_per_batch)
         states.append(states_per_user)
     #print len(states)
-    print("@ get_states_user - states : ", states)
+    print("@ get_states_user - states\n : {}".format(states))
     return np.array(states)
 
 def get_actions_user(batch):
@@ -301,6 +303,7 @@ def get_next_states_user(batch):
                 next_states_per_batch.append(next_states_per_step)
             next_states_per_user.append(next_states_per_batch)
         next_states.append(next_states_per_user)
+    print("@ get_next_states_user - states : ", next_states)
     return np.array(next_states)
 
 
@@ -577,17 +580,17 @@ for time_step in range(TIME_SLOTS):
 
     #curent exploration probability
     explore_p = explore_stop + (explore_start - explore_stop) * np.exp(-decay_rate*time_step)
-   
+    print('explore_p:{}'.format(explore_p))
 
     # Exploration
     if explore_p > np.random.rand():
         #random action sampling
         action = env.sample()
-        print("explored")
+        print("+++++ Explored +++++")
         
     # Exploitation
     else:
-        print("exploited")
+        print("----- Exploited -----")
         #initializing action vector
         #action = np.zeros([NUM_USERS], dtype=np.int32)
         action = np.zeros([NUM_USERS], dtype=np.object)
@@ -771,7 +774,7 @@ for time_step in range(TIME_SLOTS):
     #add new experience to generate input-history sequence for next state
     history_input.append(state)
 
-    print('///// BEFORE Training at time_step:{} /////'.foramt(time_step))
+    print('///// BEFORE Training at time_step:{} /////'.format(time_step))
     #  Training block starts
     ###################################################################################
     print("////////////////////////////////")
@@ -788,7 +791,7 @@ for time_step in range(TIME_SLOTS):
     if not args.with_per:
         #   matrix of rank 4
         #   shape [NUM_USERS,batch_size,step_size,state_size]
-        print("@@ after sampling - batch : ", batch)
+        print("@@ after sampling - batch\n : {}".format(batch))
         states = get_states_user(batch)
 
         #   matrix of rank 3

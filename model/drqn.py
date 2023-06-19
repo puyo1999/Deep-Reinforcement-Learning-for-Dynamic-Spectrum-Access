@@ -14,7 +14,7 @@ class QNetwork:
     '''
     def __init__(self, learning_rate, state_size, action_size, hidden_size, step_size, name='QNetwork'):
         with tf.variable_scope(name):
-            self.inputs_ = tf.placeholder(tf.float32, [None,step_size, state_size], name='inputs_')
+            self.inputs_ = tf.placeholder(tf.float32, [None, step_size, state_size], name='inputs_')
             self.actions_ = tf.placeholder(tf.int32, [None], name='actions')
             one_hot_actions = tf.one_hot(self.actions_, action_size)
 
