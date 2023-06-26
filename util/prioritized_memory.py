@@ -10,19 +10,19 @@ class PerMemory(object):
     """
     p_upper = 1.
     e = .01
-    a = .7
-    beta = .5
+    a = .6
+    beta = .4
     beta_increment_per_sampling = .001
 
     # feature_size = state_size 이므로 2 * (NUM_CHANNELS + 1)
-    def __init__(self, mem_size, feature_size, prior=True):
+    def __init__(self, mem_size, feature_size, prior=False):
         """ Initialization
         """
         print("@ PerMemory : init - feature_size = ", feature_size)
         self.prior = prior
         self.data_len = 6 * feature_size + 6
         #self.data_len = feature_size
-        print("@ PerMemory : init - data_len : {}".format(self.data_len))
+        print("@ PerMemory : init - prior:{} data_len:{}".format(self.prior ,self.data_len))
 
         # Prioritized Experience Replay
         if prior:
@@ -36,64 +36,73 @@ class PerMemory(object):
     def store(self, transition):
         if self.prior:
             p = self.tree.max_p
-            print('@ store with p(max_p): {}\n'.format(p))
+            print('PER @ store with p(max_p): {}\n'.format(p))
             if not p:
                 p = self.p_upper
-            print("@ PerMemory : store")
-            print("@ PerMemory : p = ", p)
-            print("@ PerMemory : transition = ", transition)
+            print("PER @ store - p:{}".format(p))
+            print("PER @ store - transition:{}".format(transition))
             self.tree.add(p, transition)
-            print('@ after store, check min_p:{}\n'.format(self.tree.min_p))
+            print('PER @ store - check min_p:{}\n'.format(self.tree.min_p))
         else:
             self.mem[self.mem_ptr] = transition
             self.mem_ptr += 1
             if self.mem_ptr == self.mem_size:
                 self.mem_ptr = 0
 
-    def add(self, sample, error=100000):
+    def add(self, sample, error):
         """ Save an experience to memory, optionally with its TD-Error
         """
         if self.prior:
             p = self._get_priority(error)
+            print('PER @ add - p: {}'.format(p))
             self.tree.add(p, sample)
         else:
             self.mem[self.mem_ptr] = sample
             self.mem_ptr += 1
             if self.mem_ptr == self.mem_size:
                 self.mem_ptr = 0
+        #print('PER @ add - check min_p:{}\n'.format(self.tree.min_p))
 
     def _get_priority(self, error):
         """ Compute an experience priority, as per Schaul et al.
         """
-        print('@ _get_priority : {}'.format(np.power(error + self.e, self.a).squeeze()))
-        return np.power(error + self.e, self.a).squeeze()
-        #print('@ _get_priority : {}'.format((np.abs(error) + self.e) ** self.a))
-        #return (np.abs(error) + self.e) ** self.a
+        #print('PER @ _get_priority : {}'.format(np.power(error + self.e, self.a).squeeze()))
+        #return np.power(error + self.e, self.a).squeeze()
+        print('PER @ _get_priority : {}'.format((np.abs(error) + self.e) ** self.a))
+        return (np.abs(error) + self.e) ** self.a
 
     def sample(self, n):
         """ Sample a batch, optionally with (PER)
         """
         if self.prior:
-            min_p = self.tree.min_p
-            print('@ sample : check current min_p : {}'.format(min_p))
-            if min_p == 0:
-                min_p = .873
-            segment = self.tree.total_p / n
-            batch = np.zeros((n, self.data_len), dtype=np.float32)
-            w = np.zeros((n,1), np.float32)
-            idx = np.zeros(n, np.int32)
+            #min_p = self.tree.min_p
+            #print('PER @ sample : check current min_p : {}'.format(min_p))
+
+            segment = self.tree.total() / n
+            #batch = np.zeros((n, self.data_len), dtype=np.float32)
+            batch = []
+            #w = np.zeros((n,1), np.float32)
+            #idx = np.zeros(n, np.int32)
+            idxs = []
             a = 0
+            priorities = []
+            self.beta = np.min([1., self.beta + self.beta_increment_per_sampling])
             for i in range(n):
                 b = a + segment
                 v = np.random.uniform(a, b)
-                idx[i], p, batch[i] = self.tree.get(v)
-                #idx[i], p, batch[i] = self.tree.sample(v)
-                if min_p == 0:
-                    min_p = .873
-                w[i] = (p / min_p) ** (-self.beta)
+                #idx[i], p, batch[i] = self.tree.get(v)
+                (idx, p, data) = self.tree.get(v)
+                priorities.append(p)
+                batch.append(data)
+                idxs.append(idx)
+
+                #w[i] = (p / min_p) ** (-self.beta)
                 a += segment
-            self.beta = min(1., self.a + .01)
-            return idx, w, batch
+            #self.beta = min(1., self.a + .01)
+            sampling_probabilities = priorities / self.tree.total()
+            is_weight = np.power(self.tree.write * sampling_probabilities, -self.beta)
+            is_weight = is_weight.max()
+            return idxs, is_weight, batch
         else:
             mask = np.random.choice(range(self.mem_size), n)
             return self.mem[mask]
@@ -142,3 +151,4 @@ class PerMemory(object):
                 p = self._get_priority(tderr[i])
                 self.tree.update(idx, p)
                 '''
+

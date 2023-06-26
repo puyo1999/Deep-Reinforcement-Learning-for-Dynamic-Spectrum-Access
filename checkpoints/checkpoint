@@ -1,2 +1,2 @@
-model_checkpoint_path: "actor-critic-user.ckpt"
-all_model_checkpoint_paths: "actor-critic-user.ckpt"
+model_checkpoint_path: "drqn-user.ckpt"
+all_model_checkpoint_paths: "drqn-user.ckpt"

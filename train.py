@@ -2,6 +2,7 @@ from env.multi_user_network_env import env_network
 from util.memory_buffer import Memory
 from util.prioritized_memory import PerMemory
 from util.parser import Parser
+from util.utils import get_states_user, get_actions_user, get_rewards_user, get_next_states_user
 from model.ActorNetwork import ActorNetwork
 from model.CriticNetwork import CriticNetwork
 from model.DDPG.ddpg import DDPG
@@ -129,7 +130,7 @@ if args.type == "DQN":
     mainQN = DQNetwork(name='main',hidden_size=hidden_size,learning_rate=learning_rate,step_size=step_size,state_size=state_size,action_size=action_size)
 elif args.type == "DRQN":
     print("##### DRQN #####")
-    mainQN = QNetwork(name='main',hidden_size=hidden_size,learning_rate=learning_rate,step_size=step_size,state_size=state_size,action_size=action_size)
+    mainQN = QNetwork(name='QNetwork',hidden_size=hidden_size,learning_rate=learning_rate,step_size=step_size,state_size=state_size,action_size=action_size, memory=memory)
 elif args.type == "A2C":
     print("##### A2C #####")
     actor = ActorNetwork(sess, action_size, observation_dim=NUM_USERS*2, lr=learning_rate, memory=memory)
@@ -184,127 +185,7 @@ for ii in range(pretrain_length*step_size*5):
     step += 1
 
 
-##############################################
-def get_states(batch): 
-    states = []
-    for i in batch:
-        states_per_batch = []
-        for step_i in i:
-            states_per_step = []
-            for user_i in step_i[0]:
-                states_per_step.append(user_i)
-            states_per_batch.append(states_per_step)
-        states.append(states_per_batch)
-    return states
 
-def get_actions(batch):
-    actions = []
-    for each in batch:
-        actions_per_batch = []
-        for step_i in each:
-            actions_per_step = []
-            for user_i in step_i[1]:
-                actions_per_step.append(user_i)
-            actions_per_batch.append(actions_per_step)
-        actions.append(actions_per_batch)
-
-    return actions
-
-def get_rewards(batch):
-    rewards = []
-    for each in batch:
-        rewards_per_batch = []
-        for step_i in each:
-            rewards_per_step = []
-            for user_i in step_i[2]:
-                rewards_per_step.append(user_i)
-            rewards_per_batch.append(rewards_per_step)
-        rewards.append(rewards_per_batch)
-    return rewards
-
-def get_next_states(batch):
-    next_states = []
-    for each in batch:
-        next_states_per_batch = []
-        for step_i in each:
-            next_states_per_step = []
-            for user_i in step_i[3]:
-                next_states_per_step.append(user_i)
-            next_states_per_batch.append(next_states_per_step)
-        next_states.append(next_states_per_batch)
-    return next_states        
-
-def get_states_user(batch):
-    states = []
-    for user in range(NUM_USERS):
-        print("user : ", user)
-        states_per_user = []
-        for each in batch:
-            states_per_batch = []
-            step_cnt = 0
-            for step_i in each:
-                '''
-                if step_cnt >= 1:
-                    continue
-                step_cnt += 1
-                try:
-                    states_per_step = step_i[0][user]
-                except IndexError:
-                    print(step_i)
-                    print("-----------")
-                    print("get_states_user error")
-                    for i in batch:
-                        print("i : ",i)
-                        print("**********")
-                    sys.exit()
-                '''
-                states_per_step = step_i[0][user]
-                states_per_batch.append(states_per_step)
-            states_per_user.append(states_per_batch)
-        states.append(states_per_user)
-    #print len(states)
-    print("@ get_states_user - states\n : {}".format(states))
-    return np.array(states)
-
-def get_actions_user(batch):
-    actions = []
-    for user in range(NUM_USERS):
-        actions_per_user = []
-        for each in batch:
-            actions_per_batch = []
-            for step_i in each:
-                actions_per_step = step_i[1][user]
-                actions_per_batch.append(actions_per_step)
-            actions_per_user.append(actions_per_batch)
-        actions.append(actions_per_user)
-    return np.array(actions)
-
-def get_rewards_user(batch):
-    rewards = []
-    for user in range(NUM_USERS):
-        rewards_per_user = []
-        for each in batch:
-            rewards_per_batch = []
-            for step_i in each:
-                rewards_per_step = step_i[2][user] 
-                rewards_per_batch.append(rewards_per_step)
-            rewards_per_user.append(rewards_per_batch)
-        rewards.append(rewards_per_user)
-    return np.array(rewards)
-# 
-def get_next_states_user(batch):
-    next_states = []
-    for user in range(NUM_USERS):
-        next_states_per_user = []
-        for each in batch:
-            next_states_per_batch = []
-            for step_i in each:
-                next_states_per_step = step_i[3][user] 
-                next_states_per_batch.append(next_states_per_step)
-            next_states_per_user.append(next_states_per_batch)
-        next_states.append(next_states_per_user)
-    print("@ get_next_states_user - states : ", next_states)
-    return np.array(next_states)
 
 
 
@@ -783,12 +664,37 @@ for time_step in range(TIME_SLOTS):
     #  sampling a batch from memory buffer for training
     if args.with_per:
         idx, is_weights, batch = memory.sample(batch_size)
+        batch = np.array(batch)
     else:
         batch = memory.sample(batch_size, step_size)
 
+    print('shape of batch:\n{}\n'.format(np.shape(batch)))
     print('batch:\n{}\n'.format(batch))
 
-    if not args.with_per:
+    if args.with_per:
+        #next_states = np.vstack(batch[3])
+        #next_states = get_next_states_user(batch)
+        #idx, w, batch = memory.sample(batch_size)
+
+        '''
+        for index, sample in enumerate(batch):
+            states, actions, rewards, next_states = sample
+            print('@ after sampling memory.update index:\n{} \n states:\n{}\n'.format(index, states))
+        '''
+        idx, is_weights, tmpBatch = memory.sample(5)
+        tmpBatch = np.array(tmpBatch)
+        states = tmpBatch[:, :(NUM_USERS*2)]
+        states = states[np.newaxis, :]
+
+        actions = tmpBatch[:, (NUM_USERS*2)*3:(NUM_USERS*2)*3++3]
+        rewards = tmpBatch[:, (NUM_USERS*2)*3+3:(NUM_USERS*2)*3+6]
+        print('@ after sampling memory.update with states :\n{}\n'.format(states))
+        print('@ after sampling  memory.update with rewards :\n{}\n'.format(rewards))
+        next_states = tmpBatch[:, (NUM_USERS*2)*4 : (NUM_USERS * 2)*5]
+        next_states = next_states[np.newaxis, :]
+        print('@ after sampling  memory.update with next_states :\n{}\n'.format(next_states))
+
+    else:
         #   matrix of rank 4
         #   shape [NUM_USERS,batch_size,step_size,state_size]
         print("@@ after sampling - batch\n : {}".format(batch))
@@ -805,7 +711,7 @@ for time_step in range(TIME_SLOTS):
         #   matrix of rank 4
         #   shape [NUM_USERS,batch_size,step_size,state_size]
         next_states = get_next_states_user(batch)
-    
+
         #   Converting [NUM_USERS,batch_size]  ->   [NUM_USERS * batch_size]
         #   first two axis are converted into first axis
         print("Before reshape")
@@ -844,6 +750,10 @@ for time_step in range(TIME_SLOTS):
                                 feed_dict={mainQN.inputs_:states,
                                 mainQN.targetQs_:targets,
                                 mainQN.actions_:actions[:,-1]})
+        if args.with_per:
+            old_val = np.max(target_Qs, axis=1)
+            error = abs(old_val - targets)
+            mainQN.learn(error)
 
     elif args.type == "A2C":
         print('compare replay_memory len:{} with MINIMUM_REPLAY_MEMORY:{}'.format(len(replay_memory), MINIMUM_REPLAY_MEMORY))
