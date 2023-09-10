@@ -126,7 +126,51 @@ def get_next_states_user(batch):
     print("@ get_next_states_user - states : ", next_states)
     return np.array(next_states)
 
-def draw_res(time_step, cum_collision, cum_r):
-    if time_step % 5000 == 4999:
+def draw_res2(time_step, cum_collision, cum_r, loss_list, means, mean_scores, time_slots):
+    if time_step % time_slots == time_slots-1:
         plt.figure(1)
+        plt.subplot(411)
+        # plt.plot(np.arange(1000),total_rewards,"r+")
+        # plt.xlabel('Time Slots')
+        # plt.ylabel('total rewards')
+        # plt.title('total rewards given per time_step')
+        # plt.show()
+        plt.plot(np.arange(time_slots+1), cum_collision, "r-")
+        plt.xlabel('Time Slot')
+        plt.ylabel('cumulative collision')
 
+        plt.subplot(412)
+        plt.plot(np.arange(time_slots+1), cum_r, "b-")
+        plt.xlabel('Time Slot')
+        plt.ylabel('Cumulative reward of all users')
+
+        plt.subplot(413)
+        plt.plot(np.arange(len(means)), means, "c-")
+        plt.xlabel('Time Slot')
+        plt.ylabel('All Means')
+
+        plt.subplot(414)
+        plt.plot(np.arange(len(loss_list)), loss_list, "g-")
+        plt.xlabel('Time Slot')
+        plt.ylabel('Loss')
+
+        plt.show()
+
+        total_rewards = []
+        cum_r = [0]
+        cum_collision = [0]
+        #saver.save(sess, 'checkpoints/dqn_multi-user.ckpt')
+        #print(time_step, loss, sum(reward), Qs)
+
+    # print ("*************************************************")
+
+def draw_multi_algorithm(data1, data2, data3):
+    plt.xlabel('Time Slot')
+    plt.ylabel('all means')
+
+    t1 = np.arange(0, 1000, 1)
+    t2 = np.arange(0, 5000, 1)
+    t3 = np.arange(0, 100, 1)
+
+    plt.plot(t1, data1, t2, data2, t3, data3, 'r-')
+    plt.show()

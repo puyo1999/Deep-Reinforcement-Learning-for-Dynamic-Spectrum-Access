@@ -68,8 +68,8 @@ class SumTree:
     '''
     def update(self, idx, p):
         change = p - self.tree[idx]
-        print('SumTree @ update - idx:{} change:{}\n'.format(idx, change))
-        print('SumTree @ update - avg of p:{}'.format(np.average(p)))
+        #print('SumTree @ update - idx:{} change:{}\n'.format(idx, change))
+        #print('SumTree @ update - avg of p:{}'.format(np.average(p)))
         self.tree[idx] = np.average(p)
         self._propagate(idx, np.average(change))
 
@@ -77,7 +77,7 @@ class SumTree:
         assert s <= self.total()
         idx = self._retrieve(0, s)
         dataIdx = idx - self.size + 1
-        print('SumTree @ get - idx:{} dataIdx:{}'.format(idx, dataIdx))
+        #print('SumTree @ get - idx:{}\ntree[{}]:{}\ndata[{}]:{}\n'.format(idx, idx, self.tree[idx], dataIdx, self.data[dataIdx]))
         return (idx, self.tree[idx], self.data[dataIdx])
 
     def sample(self, value):

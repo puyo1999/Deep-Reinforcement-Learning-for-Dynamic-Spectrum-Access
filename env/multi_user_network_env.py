@@ -20,7 +20,7 @@ class env_network:
 
         #self.channel_alloc_freq = 
         self.action_space = np.arange(self.NUM_CHANNELS+1)
-        self.users_action = np.zeros([self.NUM_USERS],np.int32) 
+        self.users_action = np.zeros([self.NUM_USERS],np.int32)
         self.users_observation = np.zeros([self.NUM_USERS],np.int32)
         print('@@ EnvNetwork init - users_observation:{}'.format(self.users_observation))
     def reset(self):
@@ -31,18 +31,18 @@ class env_network:
         return x
     def step(self,action):
         #print 
-        assert (action.size) == self.NUM_USERS, "action and user should have same dim {}".format(action)
+        assert (action.size) == self.NUM_USERS, "action and user should have same dim action.size:\n{}".format(action.size)
         channel_alloc_frequency = np.zeros([self.NUM_CHANNELS + 1],np.int32)  #0 for no chnnel access
         obs = []
         reward = np.zeros([self.NUM_USERS])
         j = 0
-        for  each in action:
+        for each in action:
             prob = random.uniform(0,1)
             if prob <= self.ATTEMPT_PROB:
                 self.users_action[j] = each  # action
                 
-                channel_alloc_frequency[each]+=1
-            j+=1
+                channel_alloc_frequency[each] += 1
+            j += 1
 
         for i in range(1,len(channel_alloc_frequency)):
             if channel_alloc_frequency[i] > 1:

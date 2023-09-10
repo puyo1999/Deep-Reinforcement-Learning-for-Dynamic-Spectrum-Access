@@ -11,6 +11,7 @@ class PerMemory(object):
     p_upper = 1.
     e = .01
     a = .6
+    a_decrement_per_sampling = .002
     beta = .4
     beta_increment_per_sampling = .001
 
@@ -68,6 +69,7 @@ class PerMemory(object):
         """
         #print('PER @ _get_priority : {}'.format(np.power(error + self.e, self.a).squeeze()))
         #return np.power(error + self.e, self.a).squeeze()
+        self.a = np.max([1., self.a - self.a_decrement_per_sampling])
         print('PER @ _get_priority : {}'.format((np.abs(error) + self.e) ** self.a))
         return (np.abs(error) + self.e) ** self.a
 

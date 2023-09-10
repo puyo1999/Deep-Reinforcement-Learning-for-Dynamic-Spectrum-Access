@@ -84,10 +84,10 @@ class DDQN:
         self.q_target_model.set_weights(self.q_eval_model.get_weights())
 
     def store_transition(self, s, a, r, s_):
-        print('shape of s:{} a:{}'.format(np.shape(s), np.shape(a)))
-        print('StoreTransition - s:{} a:{} r:{} s_:{}'.format(s,a,r,s_))
+        #print('shape of s:{} a:{}'.format(np.shape(s), np.shape(a)))
+        #print('StoreTransition - s:{} a:{} r:{} s_:{}'.format(s,a,r,s_))
         transition = np.hstack([list(s[0]),list(s[1]), list(s[2]), list(np.r_[a, r]), list(s_[0]), list(s_[1]),list(s_[2])])
-        print('StoreTransition - transition:{}'.format(transition))
+        #print('StoreTransition - transition:{}'.format(transition))
         self.memory.store(transition)
         self.step_cnt += 1
 

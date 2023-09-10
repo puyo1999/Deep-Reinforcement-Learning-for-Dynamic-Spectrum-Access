@@ -17,6 +17,7 @@ tf.disable_v2_behavior()
 
 
 class ActorNetwork:
+	# action : 3, observation : 6
 	def __init__(self, sess, action_dim, observation_dim, lr, memory):
 		self.lr = lr
 		self.action_dim, self.observation_dim = action_dim, observation_dim
@@ -46,6 +47,7 @@ class ActorNetwork:
 
 
 	def create_model(self):
+		# state_input [3, 6]
 		state_input = Input(shape=(self.action_dim, self.observation_dim))
 		delta = Input(shape=[self.action_dim])
 		#delta = Input(shape=[1])
@@ -67,12 +69,15 @@ class ActorNetwork:
 		return state_input, output, model, policy
 
 	def store_transition(self, s, a, r, s_):
-		print('shape of s:{} a:{}'.format(np.shape(s), np.shape(a)))
-		print('StoreTransition - s:{} a:{} r:{} s_:{}'.format(s, a, r, s_))
+		#print('shape of s:{} a:{}'.format(np.shape(s), np.shape(a)))
+		#print('StoreTransition - s:{} a:{} r:{} s_:{}'.format(s, a, r, s_))
 		transition = np.hstack(
 			[list(s[0]), list(s[1]), list(s[2]), list(np.r_[a, r]), list(s_[0]), list(s_[1]), list(s_[2])])
-		print('StoreTransition - transition:{}'.format(transition))
+		#print('StoreTransition - transition:{}'.format(transition))
 		#self.memory.store(transition)
+
+		error = 1010
+
 		self.memory.add(transition, error=100000)
 
 		#self.step_cnt += 1
