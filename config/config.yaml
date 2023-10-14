@@ -1,6 +1,6 @@
-time_slots: 5000
-#time_slots: 4000
-#time_slots: 100
+#time_slots: 5000
+#time_slots: 3000
+time_slots: 100
 num_channels: 2
 num_users: 3
 #type: "DQN"
@@ -10,10 +10,10 @@ num_users: 3
 type: "A2C"
 #type: "A3C"
 gamma: 0.99
-reward_discount: 0.11
+reward_discount: 0.03
 with_per: True
 memory_size: 1000
 #memory_size: 20000
 batch_size: 32
 graph_drawing: False
-log_level_info: True
+log_level_info: False

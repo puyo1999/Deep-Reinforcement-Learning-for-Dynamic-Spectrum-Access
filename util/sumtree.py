@@ -42,7 +42,7 @@ class SumTree:
 
     # store priority and sample
     def add(self, p, data):
-        print('SumTree @ add - p:{}'.format(p))
+        #print('SumTree @ add - p:{}'.format(p))
         idx = self.write + self.size - 1
         self.data[self.write] = data
         self.update(idx, p)
@@ -52,7 +52,7 @@ class SumTree:
             self.write = 0
         if self.n_entries < self.size:
             self.n_entries += 1
-        print('SumTree @ add - write:{} n_entries:{}\n'.format(self.write, self.n_entries))
+        #print('SumTree @ add - write:{} n_entries:{}\n'.format(self.write, self.n_entries))
 
     # update priority
     '''

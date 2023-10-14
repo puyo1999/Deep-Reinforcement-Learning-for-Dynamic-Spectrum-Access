@@ -1,7 +1,7 @@
 import keras.losses
 import tensorflow as tf
 from keras.layers import Dense, Flatten, Input
-from keras.initializers.initializers_v2 import RandomUniform
+from keras.initializers import RandomUniform
 import keras.backend as K
 from keras.models import Model
 from keras.optimizers import Adam

@@ -37,13 +37,13 @@ class PerMemory(object):
     def store(self, transition):
         if self.prior:
             p = self.tree.max_p
-            print('PER @ store with p(max_p): {}\n'.format(p))
+            #print('PER @ store with p(max_p): {}\n'.format(p))
             if not p:
                 p = self.p_upper
-            print("PER @ store - p:{}".format(p))
-            print("PER @ store - transition:{}".format(transition))
+            #print("PER @ store - p:{}".format(p))
+            #print("PER @ store - transition:{}".format(transition))
             self.tree.add(p, transition)
-            print('PER @ store - check min_p:{}\n'.format(self.tree.min_p))
+            #print('PER @ store - check min_p:{}\n'.format(self.tree.min_p))
         else:
             self.mem[self.mem_ptr] = transition
             self.mem_ptr += 1
@@ -55,7 +55,7 @@ class PerMemory(object):
         """
         if self.prior:
             p = self._get_priority(error)
-            print('PER @ add - p: {}'.format(p))
+            #print('PER @ add - p: {}'.format(p))
             self.tree.add(p, sample)
         else:
             self.mem[self.mem_ptr] = sample
@@ -70,7 +70,7 @@ class PerMemory(object):
         #print('PER @ _get_priority : {}'.format(np.power(error + self.e, self.a).squeeze()))
         #return np.power(error + self.e, self.a).squeeze()
         self.a = np.max([1., self.a - self.a_decrement_per_sampling])
-        print('PER @ _get_priority : {}'.format((np.abs(error) + self.e) ** self.a))
+        #print('PER @ _get_priority : {}'.format((np.abs(error) + self.e) ** self.a))
         return (np.abs(error) + self.e) ** self.a
 
     def sample(self, n):
@@ -90,7 +90,9 @@ class PerMemory(object):
             priorities = []
             self.beta = np.min([1., self.beta + self.beta_increment_per_sampling])
             for i in range(n):
-                b = a + segment
+                #b = a + segment
+                a = segment * i
+                b = segment * (i + 1)
                 v = np.random.uniform(a, b)
                 #idx[i], p, batch[i] = self.tree.get(v)
                 (idx, p, data) = self.tree.get(v)
@@ -103,7 +105,7 @@ class PerMemory(object):
             #self.beta = min(1., self.a + .01)
             sampling_probabilities = priorities / self.tree.total()
             is_weight = np.power(self.tree.write * sampling_probabilities, -self.beta)
-            is_weight = is_weight.max()
+            is_weight /= is_weight.max()
             return idxs, is_weight, batch
         else:
             mask = np.random.choice(range(self.mem_size), n)

@@ -9,7 +9,7 @@ tf.disable_v2_behavior()
 import numpy as np
 import keras.backend as K
 from keras.models import Sequential, Model, clone_model
-from keras.layers.core import Dense, Activation, Lambda
+from keras.layers import Dense, Activation, Lambda
 from keras.layers import Input, LSTM, TimeDistributed, RepeatVector, Reshape, Dropout, Bidirectional, Concatenate
 #from keras.layers.normalization import BatchNormalization
 from keras.optimizers import RMSprop

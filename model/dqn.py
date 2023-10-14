@@ -1,9 +1,9 @@
-import keras.layers.rnn.legacy_cells
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
 from keras.layers import LayerNormalization
 import keras.layers as kl
+import keras.src.layers.rnn as kslr
 
 import numpy as np
 

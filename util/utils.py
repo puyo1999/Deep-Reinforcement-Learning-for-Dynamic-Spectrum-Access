@@ -174,3 +174,4 @@ def draw_multi_algorithm(data1, data2, data3):
 
     plt.plot(t1, data1, t2, data2, t3, data3, 'r-')
     plt.show()
+
