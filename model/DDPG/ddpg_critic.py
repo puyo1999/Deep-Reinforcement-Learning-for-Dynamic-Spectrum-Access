@@ -23,10 +23,18 @@ class Critic(keras.Model):
 
     def call(self, inputs, training=None, mask=None):
         obs, action = inputs
-        z = tf.concat([obs, action], axis=1)
+        print(f'@Critic - obs {obs}')     # (1,5,6)
+        print(f'@Critic - action {action}')   # (1,5,3)
 
-        x = self.o_dense1(z)
-        x = self.o_dense2(z)
+        #action_ = tf.repeat(action, repeats=[2], axis=-1)
+        #print('action_ {}'.format(action_))
+
+        #z = tf.concat([obs, action_], axis=1)
+
+        x = self.o_dense1(obs)
+        x = self.o_dense2(action)
+        #x = self.o_dense2(z)
+
         return self.output_layer(x)
     
 

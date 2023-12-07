@@ -1,3 +1,4 @@
+import keras.src.layers.rnn.legacy_cells
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
@@ -27,7 +28,8 @@ class QNetwork:
             self.targetQs_ = tf.placeholder(tf.float32, [None], name='target')
             ##########################################
 
-            self.lstm = kslr.legacy_cells.BasicLSTMCell(hidden_size)
+            self.lstm = keras.src.layers.LSTMCell(hidden_size)
+            #self.lstm = kslr.legacy_cells.BasicLSTMCell(hidden_size)
             #self.lstm = tf.contrib.rnn.BasicLSTMCell(hidden_size)
             
             self.lstm_out, self.state = tf.nn.dynamic_rnn(self.lstm,self.inputs_,dtype=tf.float32)

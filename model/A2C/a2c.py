@@ -96,6 +96,13 @@ class A2C:
 
         return actor_loss + critic_loss
 
+    def learn_(self, states, actions, discnt_rewards):
+        with tf.GradientTape() as tape1, tf.GradientTape() as tape2:
+            p = self.actor(states, training=True)
+            values = self.critic(states, training=True)
+            loss = self.compute_loss(actions, values, discnt_rewards)
+
+
     def learn(self, states, actions, discnt_rewards):
         discnt_rewards = tf.reshape(discnt_rewards, (len(discnt_rewards),))
 
@@ -128,10 +135,13 @@ class A2C:
             #returns = get_expected_return(rewards, gamma)
             #loss = self.compute_loss(actions, values, discnt_rewards)
 
+
+
         grads1 = tape1.gradient(a_loss, self.actor.trainable_variables)
         grads2 = tape2.gradient(c_loss, self.critic.trainable_variables)
         self.a_opt.apply_gradients(zip(grads1, self.actor.trainable_variables))
         self.c_opt.apply_gradients(zip(grads2, self.critic.trainable_variables))
+
 
 
         return a_loss, c_loss

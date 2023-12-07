@@ -156,3 +156,10 @@ class PerMemory(object):
                 self.tree.update(idx, p)
                 '''
 
+    def update_priorities(self, batch_indices, batch_priorities):
+        if self.prior:
+            for idx, prio in zip(batch_indices, batch_priorities):
+                priorities = self._get_priority(abs(prio))
+                self.tree.update(idx, priorities)
+
+

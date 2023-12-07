@@ -20,10 +20,11 @@ import sys
 from collections import deque
 from multiprocessing import Queue
 import tensorflow.compat.v1 as tf
-#tf.disable_v2_behavior()
 
-from tensorflow.python.framework.ops import enable_eager_execution
-enable_eager_execution()
+
+
+
+
 
 import yaml
 
@@ -99,6 +100,12 @@ args.reward_discount = config['reward_discount']
 args.type = config['type']              # DL algorithm
 args.with_per = config['with_per']
 args.graph_drawing = config['graph_drawing']
+
+if args.type == "A2C":
+    from tensorflow.python.framework.ops import enable_eager_execution
+    enable_eager_execution()
+else:
+    tf.disable_v2_behavior()
 
 if args.graph_drawing:
     data1 = np.genfromtxt("a2c_scores.txt", delimiter=",")
@@ -207,7 +214,7 @@ elif args.type == "DDQN":
 elif args.type == "DDPG":
     #mainQN = DDPG(name= 'main', env=env, obs_dim=env.action_space.shape, act_dim=env.action_space.shape, memory=memory, steps=10000)
     mainQN = DDPG(name='main', env=env, obs_dim=NUM_USERS*2, act_dim=action_size, memory=memory, steps=10000)
-
+    #mainQN = DDPG(name='main', env=env, obs_dim=NUM_USERS, act_dim=action_size, memory=memory, steps=10000)
 replay_memory = deque(maxlen=100)
 
 #this is our input buffer which will be used for  predicting next Q-values
@@ -262,7 +269,10 @@ saver = tf.train.Checkpoint()
 sess = tf.Session()
 
 #initialing all the tensorflow variables
-#sess.run(tf.global_variables_initializer())
+if args.type != "A2C":
+    logger.error(f'sess.run(tf.global_variables_initializer()')
+
+    sess.run(tf.global_variables_initializer())
 
 def train_ddpg(replay_memory, batch_size):
     global_steps = 0
@@ -272,13 +282,22 @@ def train_ddpg(replay_memory, batch_size):
     for index, sample in enumerate(minibatch):
         cur_state, action, reward, next_state = sample
 
+        #mainQN.learn(cur_state, action, next_state, reward, done=False)
+
     if args.with_per:
         idx, weights, transition = memory.sample(batch_size)
     else:
         #cur_state, action, reward, next_state = sample
         transition = memory.sample(batch_size, step_size)
+    logger.error(f': {transition}')
+    a = np.split(transition, 6)
+    ob = a[0]
+    ac = a[3]
+    reward_ = a[4]
+    next_ob = a[5]
+    mainQN.learn(ob, ac, next_ob, reward_, done=False)
 
-    mainQN.learn(*map(lambda x: np.stack(x).astype('float32'), np.transpose(transition)))
+    #mainQN.learn(*map(lambda x: np.stack(x).astype('float32'), np.transpose(transition)))
     mainQN.soft_target_update()
 
     mainQN.actor.save_weights("./ddpg_actor/actor", overwrite=True)
@@ -575,8 +594,12 @@ for time_step in range(TIME_SLOTS):
     else:
         logger.info(f"----- Exploited -----")
         #initializing action vector
-        action = np.zeros([NUM_USERS], dtype=np.int32)
-        #action = np.zeros([NUM_USERS], dtype=np.object)
+
+        if args.type == "A2C" or args.type == "DDPG":
+            action = np.zeros([NUM_USERS], dtype=np.int32)
+        else:
+            #action = np.zeros((NUM_USERS,6),)
+            action = np.zeros([NUM_USERS], dtype=object)
 
         #converting input history into numpy array
         state_vector = np.array(history_input)
@@ -586,7 +609,7 @@ for time_step in range(TIME_SLOTS):
 
         for each_user in range(NUM_USERS):
 
-            if args.type == "A2C":
+            if args.type == "A2C" or args.type == "DDPG":
                 #logger.info(f'*** state_vector[uid{}] :\n {}'.format(each_user, state_vector[:,each_user]))
                 #logger.info(f'*** state[uid{}] :\n {}'.format(each_user, state[each_user]))
 
@@ -612,11 +635,14 @@ for time_step in range(TIME_SLOTS):
                 Qs = mainQN.model.predict([np.array(state[each_user]), np.ones((1, 1))])
                 prob1 = (1-alpha)*np.exp(beta*Qs)
                 prob = prob1/np.sum(np.exp(beta*Qs)) + alpha/(NUM_CHANNELS+1)
-            elif args.type == "DDPG":
+                '''
+            elif args.type == "DDPG":                
                 state[each_user] = np.resize(state[each_user], [1, state_size])
                 Qs = mainQN.actor.predict(state[each_user])
                 prob1 = (1-alpha)*np.exp(beta*Qs)
                 prob = prob1/np.sum(np.exp(beta*Qs)) + alpha/(NUM_CHANNELS+1)
+                logger.error(f'prob1:{prob1} prob:{prob}\n')
+                '''
             else:
                 #feeding the input-history-sequence of (t-1) slot for each user separately
                 feed = {mainQN.inputs_:state_vector[:,each_user].reshape(1,step_size,state_size)}
@@ -652,7 +678,10 @@ for time_step in range(TIME_SLOTS):
                 #a = mainQN.policy_action(obs[each_user])
                 #a = mainQN.policy_action(state[each_user])
                 #logger.info(f'@@ ddpg after policy_action a:{}'.format(a))
-                action[each_user] = mainQN.get_action(state[each_user], True)
+                logger.error(f'state[{each_user}]: {state[each_user]}\n'.format(each_user, state[each_user]))
+                action[each_user] = mainQN.get_action(state[each_user], True)[0]
+                #action[each_user] = np.argmax(prob, axis=1)[0]
+
             else:
                 action[each_user] = np.argmax(prob,axis=1)
 
@@ -661,23 +690,26 @@ for time_step in range(TIME_SLOTS):
 
             if time_step % interval == 0:
                 logger.info(f'EachUser:{each_user} Debugging state_vector:\n{state_vector[:,each_user]}')
-                if args.type != "A2C": #and args.type != "DDQN":
+                if args.type != "A2C" and args.type != "DDPG":
                     logger.info(f'Qs:{Qs}')
                     logger.info(f'prob:{prob}, sum of beta*Qs:{np.sum(np.exp(beta*Qs))}')
                     logger.info(f'End')
 
+    logger.error(f'@@ action : {action}\n shape of action: {np.shape(action)}')
+
     # taking action as predicted from the q values and receiving the observation from the environment
-    if args.type != "A2C":
+    if args.type != "A2C" and args.type != "DDPG":
+    #if args.type != "A2C":
         state = state_generator(action, obs)
 
     #logger.info(f"@@ action :\n{}".format(action))
-    logger.info(f'@@ action :\n{action}')
-    logger.info(f'@@ argmax(action) :\n{np.argmax(action)}')
+
+    #logger.info(f'@@ argmax(action) :\n{np.argmax(action)}')
 
     obs = env.step(action)           # obs is a list of tuple with [(ACK,REW) for each user ,(CHANNEL_RESIDUAL_CAPACITY_VECTOR)]
 
-    logger.info(f"@@ obs :\n{obs}")
-    logger.info(f"@@ len(obs) :\n{len(obs)}")
+    logger.error(f"@@ obs :\n{obs}")
+    logger.error(f"@@ len(obs) :\n{len(obs)}")
 
     # Generate next state from action and observation 
     next_state = state_generator(action,obs)
@@ -739,7 +771,7 @@ for time_step in range(TIME_SLOTS):
         if args.type == "A2C":
             a2c.actor.store_transition(state, action, reward, next_state)
             #replay_memory.append((state, action, reward, next_state))
-        else:
+        elif args.type != "DRQN":
             mainQN.store_transition(state, action, reward, next_state)
     else:
         memory.add((state, action, reward, next_state))
@@ -865,7 +897,6 @@ for time_step in range(TIME_SLOTS):
         rewards = np.sum(rewards, axis=1)
         #rewards = tf.reshape(rewards, (15,))
 
-
         minibatch = random.sample(replay_memory, batch_size)
         for index, sample in enumerate(minibatch):
             cur_state, action, reward, next_state = sample
@@ -888,6 +919,18 @@ for time_step in range(TIME_SLOTS):
 
         al, cl = a2c.learn(state_batch, action_batch, reward_batch)
 
+        if args.with_per:
+            idx, weights, transition = memory.sample(batch_size)
+
+
+        if args.with_per:
+            prios = np.abs(tf.squeeze(((al + cl) / 2.0 + 1e-5)))
+            prios = prios.astype(int)
+            #prios = abs(((al + cl) / 2.0 + 1e-5).squeeze())
+            logger.error(f"idx : {idx} prios : {prios}")
+            memory.update_priorities(idx, prios)
+            #memory.update_priorities(idx, prios.data.cpu().numpy())
+
         actor_losses.append(al)
         critic_losses.append(cl)
         logger.error(f"al{al}")
@@ -909,9 +952,10 @@ for time_step in range(TIME_SLOTS):
         #train_ddqn(replay_memory, batch_size)
         mainQN.learn(memory, replay_memory, batch_size)
     elif args.type == "DDPG":
-        train_ddpg(replay_memory, batch_size)
-        #mainQN.learn(states, actions, next_states, rewards, False)
-        #mainQN.soft_target_update()
+        #train_ddpg(replay_memory, batch_size)
+
+        mainQN.learn(states, actions, next_states, rewards, False)
+        mainQN.soft_target_update()
     else:
         logger.info(f"### No need to do sess.run in other model ###")
         logger.info(f)

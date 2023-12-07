@@ -1,6 +1,6 @@
 #time_slots: 5000
 #time_slots: 3000
-time_slots: 100
+time_slots: 1000
 num_channels: 2
 num_users: 3
 #type: "DQN"
