@@ -25,7 +25,7 @@ huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 
 
 class A2C:
-    def __init__(self, sess, act_dim, obs_dim, memory, gamma=0.99, actor_lr=1e-4, critic_lr=5e-4):
+    def __init__(self, sess, act_dim, obs_dim, memory, gamma=0.99, actor_lr=1e-4, critic_lr=1e-5):
         self.gamma = gamma
         self.noise = OUNoise(act_dim * 2)
         self.a_opt = tf.keras.optimizers.Adam(learning_rate=actor_lr)

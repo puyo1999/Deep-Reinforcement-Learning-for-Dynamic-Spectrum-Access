@@ -51,9 +51,11 @@ class env_network:
         for i in range(len(action)):
             
             self.users_observation[i] = channel_alloc_frequency[self.users_action[i]]
+            print('@@@@@@@@@@ step - observation[{}] : {}'.format(i, self.users_observation[i]))
             if self.users_action[i] == 0:   #accessing no channel
                 self.users_observation[i] = 0
             if self.users_observation[i] == 1:
+                print('@@@@@@@@@@ step - reward : 1 !!!')
                 reward[i] = 1
             obs.append((self.users_observation[i],reward[i]))
         residual_channel_capacity = channel_alloc_frequency[1:]

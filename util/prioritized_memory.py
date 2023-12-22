@@ -37,7 +37,7 @@ class PerMemory(object):
     def store(self, transition):
         if self.prior:
             p = self.tree.max_p
-            #print('PER @ store with p(max_p): {}\n'.format(p))
+            print('PER @ store with p(max_p): {}\n'.format(p))
             if not p:
                 p = self.p_upper
             #print("PER @ store - p:{}".format(p))

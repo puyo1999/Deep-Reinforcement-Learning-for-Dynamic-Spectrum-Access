@@ -8,7 +8,9 @@ num_users: 3
 #type: "DRQN"
 #type: "DDPG"
 type: "A2C"
+#type: "A2C_ver2"
 #type: "A3C"
+decay_rate: 0.0001
 gamma: 0.99
 reward_discount: 0.03
 with_per: True
