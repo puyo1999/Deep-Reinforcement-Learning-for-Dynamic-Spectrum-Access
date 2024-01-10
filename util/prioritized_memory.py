@@ -73,6 +73,7 @@ class PerMemory(object):
         #print('PER @ _get_priority : {}'.format((np.abs(error) + self.e) ** self.a))
         return (np.abs(error) + self.e) ** self.a
 
+
     def sample(self, n):
         """ Sample a batch, optionally with (PER)
         """
@@ -89,6 +90,7 @@ class PerMemory(object):
             a = 0
             priorities = []
             self.beta = np.min([1., self.beta + self.beta_increment_per_sampling])
+
             for i in range(n):
                 #b = a + segment
                 a = segment * i
@@ -96,6 +98,7 @@ class PerMemory(object):
                 v = np.random.uniform(a, b)
                 #idx[i], p, batch[i] = self.tree.get(v)
                 (idx, p, data) = self.tree.get(v)
+                print(f'@@ sample idx:{idx}')
                 priorities.append(p)
                 batch.append(data)
                 idxs.append(idx)
@@ -162,4 +165,6 @@ class PerMemory(object):
                 priorities = self._get_priority(abs(prio))
                 self.tree.update(idx, priorities)
 
-
+    def update_priority(self, idx, prios):
+        priorities = self._get_priority(abs(prios))
+        self.tree.update(idx, priorities)

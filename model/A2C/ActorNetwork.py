@@ -16,11 +16,14 @@ import tensorflow.keras.backend as K
 from keras.models import Model
 from keras.optimizers.legacy import Adam
 
+import torch
+import torch.nn.functional as F
+from torch.distributions import Normal
+
 import numpy as np
 
 import tensorflow_probability as tfp
 import tensorflow.compat.v1 as tf
-
 
 class ActorNetwork(keras.Model):
 	# action : 3, observation : 6
@@ -29,6 +32,10 @@ class ActorNetwork(keras.Model):
 		self.lr = lr
 		self.action_dim, self.observation_dim = action_dim, observation_dim
 		self.memory = memory
+		self.log_std_min = -2
+		self.log_std_max = 2
+
+		self.relu = torch.nn.ReLU()
 
 		self.action_dim = np.squeeze(action_dim)
 
@@ -38,11 +45,17 @@ class ActorNetwork(keras.Model):
 		tf.keras.backend.set_session(sess)
 
 		self.sess = sess
-		self.state_input, self.d1, self.d2, self.a, self.output_, self.model, self.policy = self.create_model()
+		self.state_input, self.a, self.output_, self.model, self.policy = self.create_model()
+
 
 		self.state_h1 = Dense(24, activation='relu', kernel_initializer='he_uniform')
 		self.state_h2 = Dense(24, activation='relu', kernel_initializer='he_uniform')
+
+		self.mu = Dense(self.action_dim, activation=None, kernel_initializer='he_uniform')
+		self.log_std_linear = Dense(self.action_dim, activation=None)
+
 		self.output_layer = Dense(self.action_dim, activation='softmax', kernel_initializer='he_uniform')
+
 
 		# Placeholder for advantage values
 		#self.advantages = tf.placeholder(tf.float32, shape=[None, action_dim])
@@ -67,6 +80,7 @@ class ActorNetwork(keras.Model):
 	def call(self, inputs, training=None, mask=None):
 		x = self.state_h1(inputs)
 		x = self.state_h2(x)
+
 		return self.output_layer(x)
 
 	'''
@@ -78,6 +92,29 @@ class ActorNetwork(keras.Model):
 	'''
 
 	# return super(Actor,self).predict(np.expand_dims(state, axis=0))
+	def forward(self, state):
+		x = self.state_h1(state)
+		x = self.state_h2(x)
+
+		mu = self.mu(x)
+		log_std = self.log_std_linear(x)
+		print(f'@ forward - mu:{mu}\nlog_std:{log_std}')
+		log_std = np.clip(log_std, a_min=self.log_std_min, a_max=self.log_std_max)
+		#log_std = torch.clamp(log_std, self.log_std_min, self.log_std_max)
+		return mu, log_std
+
+	def get_action(self, state):
+		"""
+        returns the action based on a squashed gaussian policy. That means the samples are obtained according to:
+        a(s,e)= tanh(mu(s)+sigma(s)+e)
+        """
+		mu, log_std = self.forward(state)
+		std = log_std.exp()
+
+		dist = Normal(0, 1)
+		e = dist.sample()
+		action = np.tanh(mu + e * std).cpu()
+		return action[0]
 
 	def get_output(self, input_data):
 		x = self.d1(input_data)
@@ -90,12 +127,13 @@ class ActorNetwork(keras.Model):
 		state_input = Input(shape=(self.action_dim, self.observation_dim))
 		delta = Input(shape=[self.action_dim])
 		#delta = Input(shape=[1])
-		d1 = Dense(24, activation='relu', kernel_initializer='he_uniform')
+		#d1 = Dense(24, activation='relu', kernel_initializer='he_uniform')
 		d2 = Dense(24, activation='relu', kernel_initializer='he_uniform')
 		a = Dense(self.action_dim, activation='softmax', kernel_initializer='he_uniform')
 
 		state_h1 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_input)
 		state_h2 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_h1)
+
 		output_layer = Dense(self.action_dim, activation='softmax', kernel_initializer='he_uniform')(state_h2)
 
 		def custom_loss(y_true, y_pred):
@@ -111,19 +149,19 @@ class ActorNetwork(keras.Model):
 		#model.compile(loss='categorical_crossentropy', optimizer='adam')
 		#model.compile(loss=keras.losses.CategoricalCrossentropy(), optimizer=adam)
 		model.compile(loss=custom_loss, optimizer=adam, run_eagerly=True)
-		return state_input, d1, d2, a, output_layer, model, policy
+		return state_input, a, output_layer, model, policy
 
 	def store_transition(self, s, a, r, s_):
-		#print('shape of s:{} a:{}'.format(np.shape(s), np.shape(a)))
-		#print('StoreTransition - s:{} a:{} r:{} s_:{}'.format(s, a, r, s_))
+		print('a2c @shape of s:{} a:{}'.format(np.shape(s), np.shape(a)))
+		print('a2c @StoreTransition - s:{} a:{} r:{} s_:{}'.format(s, a, r, s_))
 		transition = np.hstack(
-			[list(s[0]), list(s[1]), list(s[2]), list(np.r_[a, r]), list(s_[0]), list(s_[1]), list(s_[2])])
-		#print('StoreTransition - transition:{}'.format(transition))
+			[(s[0]), (s[1]), (s[2]), (np.r_[a, r]), (s_[0]), (s_[1]), (s_[2])])
+		print('StoreTransition - transition:{}'.format(transition))
 		#self.memory.store(transition)
 
 		error = 1010
 
-		self.memory.add(transition, error=100000)
+		self.memory.add(transition, error=error)
 
 		#self.step_cnt += 1
 

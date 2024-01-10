@@ -1,13 +1,16 @@
 #time_slots: 5000
 #time_slots: 3000
 time_slots: 1000
+#time_slots: 100
 num_channels: 2
 num_users: 3
+#attempt_prob : 1
+attempt_prob : 0.75
 #type: "DQN"
 #type: "DDQN"
-#type: "DRQN"
+type: "DRQN"
 #type: "DDPG"
-type: "A2C"
+#type: "A2C"
 #type: "A2C_ver2"
 #type: "A3C"
 decay_rate: 0.0001
