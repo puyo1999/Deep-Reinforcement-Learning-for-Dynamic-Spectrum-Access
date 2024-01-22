@@ -56,13 +56,15 @@ def get_next_states(batch):
 def get_states_user(batch):
     states = []
     for user in range(NUM_USERS):
-        print("user : ", user)
+        print("@@@ get_states_user : ", user)
         states_per_user = []
         for each in batch:
             states_per_batch = []
             #step_cnt = 0
+            print(f"@ get_states_user - each\n : {each}")
             for step_i in each:
-                print('@ get_states_user - step_i:\n {}'.format(step_i))
+                print(f"@ get_states_user - step_i\n : {step_i}")
+                print(f"@ get_states_user - step_i[0][{user}]\n : {step_i[0][user]}")
                 '''
                 if step_cnt >= 1:
                     continue
@@ -91,12 +93,16 @@ def get_actions_user(batch):
     for user in range(NUM_USERS):
         actions_per_user = []
         for each in batch:
+            print(f"@ get_actions_user - each\n : {each}")
             actions_per_batch = []
             for step_i in each:
+                print(f"@ get_actions_user - step_i\n : {step_i}")
+                print(f"@ get_actions_user - step_i[1][{user}]\n : {step_i[1][user]}")
                 actions_per_step = step_i[1][user]
                 actions_per_batch.append(actions_per_step)
             actions_per_user.append(actions_per_batch)
         actions.append(actions_per_user)
+    print(f"@ get_actions_user - actions\n : {actions}")
     return np.array(actions)
 
 def get_rewards_user(batch):
@@ -147,7 +153,7 @@ def draw_res2(time_step, cum_collision, cum_r, loss_list, means, mean_scores, ti
         plt.subplot(413)
         plt.plot(np.arange(len(means)), means, "c-")
         plt.xlabel('Time Slot')
-        plt.ylabel('All Means')
+        plt.ylabel('cumulative reward Means')
 
         plt.subplot(414)
         plt.plot(np.arange(len(loss_list)), loss_list, "g-")

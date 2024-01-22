@@ -36,7 +36,7 @@ class CriticNetwork(keras.Model):
 		self.state_h4 = Dense(24, activation='relu', kernel_initializer='he_uniform')
 		self.output_layer = Dense(self.value_size, activation='linear', kernel_initializer='he_uniform')
 
-		#self.output, self.d1, self.d2, self.d3, self.d4, self.v, self.model = self.create_model()
+		self.model = self.create_model()
 		#self.model = self.create_model2()
 
 		self.build(input_shape=[self.action_dim, observation_dim])
@@ -62,12 +62,13 @@ class CriticNetwork(keras.Model):
 		#state_input = Input(shape=(self.state_dim,))
 		#state_input = Input(shape=(1,))
 
+		'''
 		d1 = Dense(24, activation='relu', kernel_initializer='he_uniform')
 		d2 = Dense(24, activation='relu', kernel_initializer='he_uniform')
 		d3 = Dense(24, activation='relu', kernel_initializer='he_uniform')
 		d4 = Dense(24, activation='relu', kernel_initializer='he_uniform')
 		v = Dense(self.value_size, activation='linear', kernel_initializer='he_uniform')
-
+		'''
 		state_h1 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_input)
 		state_h2 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_h1)
 		state_h3 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_h2)
@@ -75,7 +76,8 @@ class CriticNetwork(keras.Model):
 		output = Dense(self.value_size, activation='linear', kernel_initializer='he_uniform')(state_h4)
 		model = Model(inputs=state_input, outputs=output)
 		model.compile(loss=keras.losses.mse, optimizer=Adam(learning_rate=self.lr))
-		return output, d1, d2, d3, d4, v, model
+		#return output, d1, d2, d3, d4, v, model
+		return model
 
 	def create_model2(self):
 		state_input = Input(shape=(self.observation_dim,))

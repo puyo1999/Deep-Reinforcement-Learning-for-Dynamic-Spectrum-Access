@@ -45,8 +45,8 @@ class ActorNetwork(keras.Model):
 		tf.keras.backend.set_session(sess)
 
 		self.sess = sess
-		self.state_input, self.a, self.output_, self.model, self.policy = self.create_model()
-
+		#self.state_input, self.a, self.output, self.model, self.policy = self.create_model()
+		self.state_input, self.output_, self.model = self.create_model()
 
 		self.state_h1 = Dense(24, activation='relu', kernel_initializer='he_uniform')
 		self.state_h2 = Dense(24, activation='relu', kernel_initializer='he_uniform')
@@ -67,7 +67,7 @@ class ActorNetwork(keras.Model):
 		model_weights = self.model.trainable_weights
 
 		# Adding small number inside log to avoid log(0) = -infinity
-		self.log_prob = tf.math.log(self.output + 10e-10)
+		self.log_prob = tf.math.log(self.output_ + 10e-10)
 
 		neg_log_prob = tf.multiply(self.log_prob, -1)
 
@@ -149,7 +149,9 @@ class ActorNetwork(keras.Model):
 		#model.compile(loss='categorical_crossentropy', optimizer='adam')
 		#model.compile(loss=keras.losses.CategoricalCrossentropy(), optimizer=adam)
 		model.compile(loss=custom_loss, optimizer=adam, run_eagerly=True)
-		return state_input, a, output_layer, model, policy
+
+		#return state_input, a, output_layer, model, policy
+		return state_input, output_layer, model
 
 	def store_transition(self, s, a, r, s_):
 		print('a2c @shape of s:{} a:{}'.format(np.shape(s), np.shape(a)))

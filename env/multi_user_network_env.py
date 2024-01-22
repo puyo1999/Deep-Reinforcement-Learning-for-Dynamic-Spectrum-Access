@@ -26,7 +26,7 @@ class env_network:
     def reset(self):
         pass
     def sample(self):
-        x = np.random.choice(self.action_space,size=self.NUM_USERS)
+        x = np.random.choice(self.action_space, size=self.NUM_USERS)
         #print('@@ EnvNetwork - action by sampling:{}'.format(x))
         return x
     def step(self,action):

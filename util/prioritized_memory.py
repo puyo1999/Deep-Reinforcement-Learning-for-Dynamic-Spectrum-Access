@@ -98,7 +98,7 @@ class PerMemory(object):
                 v = np.random.uniform(a, b)
                 #idx[i], p, batch[i] = self.tree.get(v)
                 (idx, p, data) = self.tree.get(v)
-                print(f'@@ sample idx:{idx}')
+                #print(f'@@ sample idx:{idx}')
                 priorities.append(p)
                 batch.append(data)
                 idxs.append(idx)

@@ -250,6 +250,7 @@ class A2C:
 
             print(f'@ learn_ - TD_errors:\n{TD_errors}')
 
+            # Backpropagation
             grads1 = tape1.gradient(a_loss, self.actor.trainable_variables)
             grads2 = tape2.gradient(c_loss, self.critic.trainable_variables)
 
