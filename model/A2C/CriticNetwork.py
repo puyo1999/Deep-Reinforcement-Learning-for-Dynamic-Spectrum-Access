@@ -11,6 +11,7 @@ import tensorflow.keras.backend as K
 from keras.models import Model
 from keras.layers import Add, Multiply
 from keras.optimizers.legacy import Adam
+from tensorflow.keras import losses
 
 import tensorflow.compat.v1 as tf
 
@@ -36,7 +37,7 @@ class CriticNetwork(keras.Model):
 		self.state_h4 = Dense(24, activation='relu', kernel_initializer='he_uniform')
 		self.output_layer = Dense(self.value_size, activation='linear', kernel_initializer='he_uniform')
 
-		self.model = self.create_model()
+		self.state_input, self.output_, self.model = self.create_model()
 		#self.model = self.create_model2()
 
 		self.build(input_shape=[self.action_dim, observation_dim])
@@ -74,10 +75,17 @@ class CriticNetwork(keras.Model):
 		state_h3 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_h2)
 		state_h4 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_h3)
 		output = Dense(self.value_size, activation='linear', kernel_initializer='he_uniform')(state_h4)
+
+		def custom_loss(y_true, y_pred):
+			out = K.clip(y_pred, 1e-8, 1 - 1e-8)
+			log_lik = y_true * K.log(out)
+			print('Critic Loss - {}'.format(K.sum(-log_lik * state_input)))
+			return K.sum(-log_lik * state_input)
+
 		model = Model(inputs=state_input, outputs=output)
-		model.compile(loss=keras.losses.mse, optimizer=Adam(learning_rate=self.lr))
+		model.compile(loss=keras.losses.MeanAbsoluteError(), optimizer=Adam(learning_rate=self.lr), run_eagerly=True)
 		#return output, d1, d2, d3, d4, v, model
-		return model
+		return state_input, output, model
 
 	def create_model2(self):
 		state_input = Input(shape=(self.observation_dim,))

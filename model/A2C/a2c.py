@@ -30,11 +30,12 @@ huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 
 
 class A2C:
-    def __init__(self, env, sess, act_dim, obs_dim, memory, gamma=0.99, actor_lr=1e-4, critic_lr=1e-5):
+    def __init__(self, env, sess, act_dim, obs_dim, memory, prior, gamma=0.99, actor_lr=1e-4, critic_lr=1e-5):
         self.env = env
         self.gamma = gamma
         self.discount_factor = 0.8
         self.act_dim = act_dim
+        self.obs_dim = obs_dim
         self.eps = np.finfo(np.float32).eps.item()  # Smallest number such that 1.0 + eps != 1.0
 
         self.noise = OUNoise(act_dim * 2)
@@ -49,6 +50,7 @@ class A2C:
         self.critic_target = CriticNetwork(sess, action_dim=act_dim, observation_dim=obs_dim, lr=critic_lr)
 
         self.memory = memory
+        self.prior = prior
         self.actor.compile(optimizer=Adam(learning_rate=actor_lr))
         self.critic.compile(optimizer=Adam(learning_rate=critic_lr))
 
@@ -83,8 +85,11 @@ class A2C:
     def get_action(self, action_prob):
         # [[확률 형식으로 출력]]
         # [0]을 넣어 줌
-        # print("policy = ", policy)
-        return np.random.choice(self.act_dim, 1, p = np.squeeze(action_prob))[0]
+        print("action_prob[0] = ", action_prob[0])
+        if self.prior:
+            return np.random.choice(self.act_dim, 1, np.squeeze(action_prob[0]))
+        else:
+            return np.random.choice(self.act_dim, 1, np.squeeze(action_prob[0][0]))
 
     def actor_loss(self, probs, actions, td):
 
@@ -206,12 +211,12 @@ class A2C:
             critic = self.critic(states, training=True)
 
             print(f'@ learn_ - action_prob:\n{action_prob}\ncritic:\n{critic}')
-            print(f'@ learn_ - action_prob[0][0]:\n{action_prob[0][0]}')
+            print(f'@ learn_ - action_prob[0]:\n{action_prob[0]}')
             action = self.get_action(action_prob[0][0])
 
             print(f'@ learn_ - action: {action}')
 
-            # rewards 를 discounted factor로 다시 계산.
+            # rewards 를 discounted factor 로 다시 계산.
             returns = []
             discounted_sum = 0
             for r in discnt_rewards[::-1]:
@@ -221,30 +226,45 @@ class A2C:
             returns = np.array(returns)
             returns = (returns - np.mean(returns)) / (np.std(returns) + self.eps)
             returns = returns.tolist()
-            print(f'returns :\n{returns}')
 
             next_critic = self.critic(next_states, training=True)
-
             print(f'@ learn_ - next_critic:\n{next_critic}\ndiscnt_rewards:\n{discnt_rewards}')
-
+            print(f'@ learn_ - returns[0] :\n{returns[0]}')
             advantage = returns[0] - critic[0,0]
             #advantage = discnt_rewards + self.gamma * next_critic - critic
             #advantage = discnt_rewards - self.discount_factor * next_critic
             #advantage = discnt_rewards - critic[0,0]
-            print(f'advantage :\n{advantage}')
+
+            print(f'@ learn_ - advantage :\n{advantage}')
+            print(f'@ learn_ - critic[0,0] :\n{critic[0,0]}')
+            print(f'@ learn_ - action_prob[0][0] :\n{action_prob[0][0]}')
             # [ [prob, prob, ... ] ]형식으로 입력이 들어옴
-            print(f'action_prob[0][0, action] :\n{action_prob[0][0, action]}')
-            a_loss = -tf.math.log(action_prob[0][0, action]) * advantage
-            c_loss = huber_loss(critic[0,0], discnt_rewards)
+            a_loss = -tf.math.log(action_prob[0][0]) * np.transpose( advantage[:5][:3] )
+
+            critic = np.squeeze(critic)
+            #critic = np.swapaxes(critic, 1, 2)
+            critic = np.mean(critic)
+            print(f'@ learn_ - critic:\n{critic}\n')
+
+            c_loss = huber_loss(critic, discnt_rewards)
             print(f'actor loss :\n{a_loss}')
             print(f'critic loss :\n{c_loss}')
 
             #Compute the Q value estimate of the target network
             Q_target = self.critic_target(next_states, self.actor_target(next_states))
+            Q_target = np.squeeze(Q_target)
+            #Q_target = np.swapaxes(Q_target, 1, 2)
+            Q_target = np.mean(Q_target)
+
             #Compute Y
             Y = discnt_rewards + (self.gamma * Q_target)
             #Compute Q value estimate of critic
             Q = self.critic(states, action)
+
+            Q = np.squeeze(Q)
+            #Q = np.swapaxes(Q, 1, 2)
+            Q = np.mean(Q)
+
             #Calculate TD errors
             TD_errors = (Y - Q)
 
@@ -252,10 +272,13 @@ class A2C:
 
             # Backpropagation
             grads1 = tape1.gradient(a_loss, self.actor.trainable_variables)
-            grads2 = tape2.gradient(c_loss, self.critic.trainable_variables)
+            #grads2 = tape2.gradient(c_loss, self.critic.trainable_variables)
 
-            self.a_opt.apply_gradients(zip(grads1, self.actor.trainable_variables))
-            self.c_opt.apply_gradients(zip(grads2, self.critic.trainable_variables))
+            trainable_vars = self.critic.trainable_variables
+            grads2 = tape2.gradient(c_loss, trainable_vars)
+
+        self.a_opt.apply_gradients(zip(grads1, self.actor.trainable_variables))
+        #self.c_opt.apply_gradients(zip(grads2, self.critic.trainable_variables))
 
         return a_loss, c_loss, TD_errors
 

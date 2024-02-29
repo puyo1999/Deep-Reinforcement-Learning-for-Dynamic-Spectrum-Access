@@ -50,12 +50,18 @@ class PerMemory(object):
             if self.mem_ptr == self.mem_size:
                 self.mem_ptr = 0
 
+    def add2(self, transition):
+        max_p = np.max(self.tree.tree[-self.tree.size])
+        if max_p == 0:
+            max_p = self.p_upper
+        self.tree.add(max_p,transition)
+
     def add(self, sample, error):
         """ Save an experience to memory, optionally with its TD-Error
         """
         if self.prior:
             p = self._get_priority(error)
-            #print('PER @ add - p: {}'.format(p))
+            print(f'PER @ add - p: {p}, error:{error}')
             self.tree.add(p, sample)
         else:
             self.mem[self.mem_ptr] = sample

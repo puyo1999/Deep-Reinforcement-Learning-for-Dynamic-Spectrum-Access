@@ -89,9 +89,9 @@ file_error_handler.setLevel(logging.ERROR)
 file_error_handler.setFormatter(formatter)
 logger.addHandler(file_error_handler)
 
-logger.info('########## config.yaml ##########')
+logger.info('########## config.yaml start ##########')
 logger.info(config)
-logger.info('########## config.yaml ##########')
+logger.info('########## config.yaml end ##########')
 #logger.info(fconfig)
 
 args.gamma = config['gamma']
@@ -208,7 +208,8 @@ elif args.type == "DRQN":
     mainQN = QNetwork(name='DRQN',hidden_size=hidden_size,learning_rate=learning_rate,step_size=step_size,state_size=state_size,action_size=action_size, memory=memory)
 elif args.type == "A2C":
     logger.info(f"##### A2C #####")
-    a2c = A2C(env=env, sess=sess, act_dim=action_size, obs_dim=NUM_USERS*2, actor_lr=actor_lr, critic_lr=critic_lr, memory=memory)
+    #a2c = A2C(env=env, sess=sess, act_dim=action_size, obs_dim=NUM_USERS*2, actor_lr=actor_lr, critic_lr=critic_lr, memory=memory)
+    a2c = A2C(env=env, sess=sess, act_dim=action_size, obs_dim=state_size, memory=memory, actor_lr=actor_lr, critic_lr=critic_lr, prior=args.with_per)
 elif args.type == "A2C_ver2":
     logger.info(f"##### A2C_ver2 #####")
     a2c = A2C_ver2(name='A2C_ver2')
@@ -237,15 +238,15 @@ for ii in range(pretrain_length*step_size*5):
     next_state = state_generator(action,obs)
     reward = [i[1] for i in obs[:NUM_USERS]]
 
-    logger.info(f'@@@@@ Pretrain step: {step} @@@@@')
-    logger.info(f'@@@@@@@@@@')
+    logger.error(f'@@@@@ Pretrain step: {step} @@@@@')
+    logger.error(f'@@@@@@@@@@')
 
-    logger.info(f"@ shape of state : {np.shape(state)}")
+    logger.error(f"@ shape of state : {np.shape(state)}")
 
-    logger.info(f'state : {state}\n')
-    logger.info(f'action : {action}\n')
-    logger.info(f'reward : {reward}\n')
-    logger.info(f'next_state : {next_state}\n')
+    logger.error(f'state : {state}\n')
+    logger.error(f'action : {action}\n')
+    logger.error(f'reward : {reward}\n')
+    logger.error(f'next_state : {next_state}\n')
     logger.info(f'@@@@@@@@@@')
 
     if args.with_per:
@@ -904,18 +905,20 @@ for time_step in range(TIME_SLOTS):
             states, actions, rewards, next_states = sample
             logger.info(f'@ after sampling memory.update index:\n{} \n states:\n{}\n'.format(index, states))
         '''
-        idx, is_weights, tmpBatch = memory.sample(5)
+        #idx, is_weights, tmpBatch = memory.sample(5)
+        idx, is_weights, tmpBatch = memory.sample(batch_size)
         tmpBatch = np.array(tmpBatch)
         logger.error(f'@@ PER - tmpBatch :\n{tmpBatch}\n')
         logger.error(f'@@ PER - tmpBatch :\n{np.shape(tmpBatch)}\n')
 
-        #states = tmpBatch[:, :*(NUM_USERS*2)*1]
-        states = tmpBatch[:, (NUM_USERS*2)*2:(NUM_USERS*2)*3]
+        states = tmpBatch[:, :(NUM_CHANNELS+1)*2]
         states = states[np.newaxis, :]
+        #states = tmpBatch[:, (NUM_USERS*2)*2:(NUM_USERS*2)*3]
+        #states = states[np.newaxis, :]
 
         actions = tmpBatch[:, (NUM_USERS*2)*3:(NUM_USERS*2)*3+3]
         rewards = tmpBatch[:, (NUM_USERS*2)*3+3:(NUM_USERS*2)*3+6]
-        logger.info(f'@@ PER - after sampling memory.update with states :\n{states}\n')
+        logger.error(f'@@ PER - after sampling memory.update with states :\n{states}\n')
         logger.info(f'@@ PER - after sampling memory.update with actions :\n{actions}\n')
         logger.info(f'@@ PER - after sampling  memory.update with rewards :\n{rewards}\n')
         #next_states = tmpBatch[:, (NUM_USERS*2)*4:(NUM_USERS * 2)*5]
@@ -1036,7 +1039,7 @@ for time_step in range(TIME_SLOTS):
         state_batch, action_batch, next_state_batch, reward_batch = preprocess2(s_queue, a_queue, n_s_queue, r_queue)
 
         logger.info('##### after preprocess2 #####\n')
-        logger.info(f'@@ state_batch :\n{state_batch}\n@@@ action_batch :\n{action_batch}\n@@@ reward_batch :\n{reward_batch}\n@@@ next_state_batch :\n{next_state_batch}')
+        logger.error(f'@@ state_batch :\n{state_batch}\n@@@ action_batch :\n{action_batch}\n@@@ reward_batch :\n{reward_batch}\n@@@ next_state_batch :\n{next_state_batch}')
         logger.info(f'@@ shape(action_batch):{np.shape(action_batch)}\n')
 
         #al, cl = a2c.learn(state_batch, action_batch, reward_batch)
@@ -1057,27 +1060,32 @@ for time_step in range(TIME_SLOTS):
             prios = prios.astype(int)
             #prios = abs(((al + cl) / 2.0 + 1e-5).squeeze())
 
-            td_errors = TD_errors.numpy()
+            td_errors = TD_errors
             new_priorities = np.abs(td_errors) + explore_p
             logger.info(f'new_priorities.shape():{np.shape(new_priorities)}\nnew_priorities : {new_priorities}')
             new_priorities = np.squeeze(new_priorities)
 
-            priorities.append(np.max(new_priorities, axis=1))
+            #priorities.append(np.max(new_priorities, axis=1))
+            priorities.append(np.max(new_priorities))
 
-        logger.info(f"@@@ idx : {idx}\npriorities : {priorities}")
+            logger.info(f"@@@ idx : {idx}\npriorities : {priorities}")
 
-        memory.update_priorities(idx, priorities)
-        #memory.update_priorities(idx, prios.data.cpu().numpy())
+            memory.update_priorities(idx, priorities)
+            #memory.update_priorities(idx, prios.data.cpu().numpy())
 
 
-        logger.info(f"al : {al}\n")
-        logger.info(f"cl : {cl}\n")
+        logger.error(f"al : {al}\n")
+        logger.error(f"cl : {cl}\n")
 
-        actor_losses.append(al)
+        if args.with_per:
+            actor_losses.append(al)
+        else:
+            al = np.mean(al)
+            actor_losses.append(al)
         critic_losses.append(cl)
 
         total_loss = al + cl
-        logger.info(f'---------- total_loss : {total_loss}')
+        logger.error(f'---------- total_loss : {total_loss}')
         loss_list.append(total_loss)
 
         '''

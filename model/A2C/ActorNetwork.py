@@ -124,12 +124,13 @@ class ActorNetwork(keras.Model):
 
 	def create_model(self):
 		# state_input [3, 6]
+		# state_input [17, 34]
 		state_input = Input(shape=(self.action_dim, self.observation_dim))
 		delta = Input(shape=[self.action_dim])
 		#delta = Input(shape=[1])
 		#d1 = Dense(24, activation='relu', kernel_initializer='he_uniform')
-		d2 = Dense(24, activation='relu', kernel_initializer='he_uniform')
-		a = Dense(self.action_dim, activation='softmax', kernel_initializer='he_uniform')
+		#d2 = Dense(24, activation='relu', kernel_initializer='he_uniform')
+		#a = Dense(self.action_dim, activation='softmax', kernel_initializer='he_uniform')
 
 		state_h1 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_input)
 		state_h2 = Dense(24, activation='relu', kernel_initializer='he_uniform')(state_h1)
@@ -161,9 +162,9 @@ class ActorNetwork(keras.Model):
 		print('StoreTransition - transition:{}'.format(transition))
 		#self.memory.store(transition)
 
-		error = 1010
-
-		self.memory.add(transition, error=error)
+		#error = 1010
+		#self.memory.add(transition, error=error)
+		self.memory.add2(transition)
 
 		#self.step_cnt += 1
 
