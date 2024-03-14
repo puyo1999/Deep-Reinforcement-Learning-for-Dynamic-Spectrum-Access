@@ -52,6 +52,7 @@ class PerMemory(object):
 
     def add2(self, transition):
         max_p = np.max(self.tree.tree[-self.tree.size])
+        print(f'PER @ add2 - max_p: {max_p}')
         if max_p == 0:
             max_p = self.p_upper
         self.tree.add(max_p,transition)
@@ -169,6 +170,9 @@ class PerMemory(object):
         if self.prior:
             for idx, prio in zip(batch_indices, batch_priorities):
                 priorities = self._get_priority(abs(prio))
+
+                print(f'PER @ update_priorities - idx: {idx} priorities : {priorities}')
+
                 self.tree.update(idx, priorities)
 
     def update_priority(self, idx, prios):

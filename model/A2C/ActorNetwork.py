@@ -163,8 +163,9 @@ class ActorNetwork(keras.Model):
 		#self.memory.store(transition)
 
 		#error = 1010
-		#self.memory.add(transition, error=error)
-		self.memory.add2(transition)
+		error = 1007
+		self.memory.add(transition, error=error)
+		#self.memory.add2(transition)
 
 		#self.step_cnt += 1
 

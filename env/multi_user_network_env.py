@@ -27,6 +27,7 @@ class env_network:
         pass
     def sample(self):
         x = np.random.choice(self.action_space, size=self.NUM_USERS)
+        print(f'##### MuEnv @@@@@ sample - action_space:{self.action_space}')
         #print('@@ EnvNetwork - action by sampling:{}'.format(x))
         return x
     def step(self,action):
@@ -38,9 +39,9 @@ class env_network:
         j = 0
         for each in action:
             prob = random.uniform(0,1)
+            print(f'@@@@@@@@@@ step - prob: {prob}')
             if prob <= self.ATTEMPT_PROB:
                 self.users_action[j] = each  # action
-                
                 channel_alloc_frequency[each] += 1
             j += 1
 
@@ -48,6 +49,7 @@ class env_network:
             if channel_alloc_frequency[i] > 1:
                 channel_alloc_frequency[i] = 0
         #print channel_alloc_frequency
+        print(f'@@@@@@@@@@ step - channel_alloc_frequency: {channel_alloc_frequency}')
         for i in range(len(action)):
             
             self.users_observation[i] = channel_alloc_frequency[self.users_action[i]]
@@ -60,7 +62,9 @@ class env_network:
             obs.append((self.users_observation[i],reward[i]))
         residual_channel_capacity = channel_alloc_frequency[1:]
         residual_channel_capacity = 1-residual_channel_capacity
+        print(f'@@@@@@@@@@ step - residual_channel_capacity: {residual_channel_capacity}')
         obs.append(residual_channel_capacity)
+        print(f'@@@@@@@@@@ step - obs: {obs}')
         return obs
 
 

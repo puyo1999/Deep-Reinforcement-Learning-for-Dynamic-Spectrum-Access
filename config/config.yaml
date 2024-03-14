@@ -12,8 +12,8 @@ attempt_prob : 0.75
 #type: "DDQN"
 #type: "DRQN"
 #type: "DDPG"
-type: "A2C"
-#type: "A2C_ver2"
+#type: "A2C"
+type: "A2C_ver2"
 #type: "A3C"
 decay_rate: 0.0001
 gamma: 0.99

@@ -8,6 +8,7 @@ from util.memory_buffer import Memory
 from util.prioritized_memory import PerMemory
 from util.parser import Parser
 from util.utils import get_states_user, get_actions_user, get_rewards_user, get_next_states_user
+from util.utils import state_generator
 from util.utils import draw_res2, draw_multi_algorithm
 from model.A2C.a2c import A2C
 from model.A2C_ver2.a2c import A2C_ver2
@@ -43,6 +44,8 @@ ATTEMPT_PROB = config['attempt_prob']                               # attempt pr
 BATCH_SIZE = config['batch_size']
 PRETRAIN_LEN = config['pretrain_length']
 STEP_SIZE = config['step_size']
+ACTOR_LR = config['actor_lr']
+CRITIC_LR = config['critic_lr']
 
 MINIMUM_REPLAY_MEMORY = 32
 
@@ -147,31 +150,6 @@ action_size = NUM_CHANNELS+1            #length of output  (k+1)
 alpha = 0                               #co-operative fairness constant
 beta = 1                                #Annealing constant for Monte - Carlo
 
-#It creates a one hot vector of a number as num with size as len
-def one_hot(num, len):
-    #assert num >= 0 and num < len, "!! one_hot error"
-    assert (num >= 0) & (num < len), "!! one_hot error"
-    vec = np.zeros([len],np.int32)
-    vec[num] = 1
-    return vec
-
-#generates next-state from action and observation
-def state_generator(action, obs):
-    input_vector = []
-    if action is None:
-        logger.info(f'no action, hence, no next_state !')
-        sys.exit()
-    logger.info(f'action.size:{action.size}')
-    for user_i in range(action.size):
-        logger.info(f'user_i:{user_i} action:{action[user_i]}')
-        input_vector_i = one_hot(action[user_i],NUM_CHANNELS+1)
-        channel_alloc = obs[-1] # obs 뒤에서 첫번째
-        input_vector_i = np.append(input_vector_i,channel_alloc)
-        input_vector_i = np.append(input_vector_i,int(obs[user_i][0]))    #ACK
-        input_vector.append(input_vector_i)
-    return input_vector
-
-
 # reseting default tensorflow computational graph
 tf.reset_default_graph()
 sess = tf.Session()
@@ -179,9 +157,9 @@ sess = tf.Session()
 # initializing the environment
 env = env_network(NUM_USERS,NUM_CHANNELS,ATTEMPT_PROB)
 
-#to sample random actions for each user
+# to sample random actions for each user
 action = env.sample()
-
+logger.error(f'##### action:{action}')
 #
 obs = env.step(action)
 state = state_generator(action,obs)
@@ -275,7 +253,7 @@ for ii in range(pretrain_length*step_size*5):
     if step >= args.memory_size:
         if not start_train:
             start_train = True
-            logger.info(f'@@ Now start_train:{start_train}')
+            logger.error(f'@@ Now start_train:{start_train}')
             break
         #if args.type == 'A2C':
             #actor.learn(batch, batch_size, feature_size=NUM_USERS*2)
