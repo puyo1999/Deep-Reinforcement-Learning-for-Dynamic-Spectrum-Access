@@ -19,11 +19,11 @@ fig.set_facecolor('white') ## 캔버스 색상 설정
 
 plt.title('Scores/Losses DRL models', fontsize=15)
 
-ax = fig.add_subplot(211) ## 그림 뼈대(프레임) 생성
+ax = fig.add_subplot(211) ## 그림 뼈대(프레임) 생성, 2x1 matrix 의 1행
 plt.xlabel('Time Slot')
 plt.ylabel('Average Scores')
 
-bx = fig.add_subplot(212)
+bx = fig.add_subplot(212) # 2x1 matrix 의 2행
 plt.xlabel('Time Slot')
 plt.ylabel('Average Losses')
 

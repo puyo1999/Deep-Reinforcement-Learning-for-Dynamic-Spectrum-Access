@@ -18,7 +18,11 @@ class env_network:
         self.NUM_CHANNELS = num_channels
         self.REWARD = 1
 
-        #self.channel_alloc_freq = 
+        self.DOUBLE_REWARD = 2
+        self.channel_pattern = np.zeros([self.NUM_CHANNELS+1],np.int32)
+
+        #self.channel_alloc_freq =
+
         self.action_space = np.arange(self.NUM_CHANNELS+1)
         self.users_action = np.zeros([self.NUM_USERS],np.int32)
         self.users_observation = np.zeros([self.NUM_USERS],np.int32)
@@ -31,7 +35,7 @@ class env_network:
         #print('@@ EnvNetwork - action by sampling:{}'.format(x))
         return x
     def step(self,action):
-        #print 
+        print(f'action.size: {action.size}, NUM_USER: {self.NUM_USERS}')
         assert (action.size) == self.NUM_USERS, "action and user should have same dim action.size:\n{}".format(action.size)
         channel_alloc_frequency = np.zeros([self.NUM_CHANNELS + 1],np.int32)  #0 for no chnnel access
         obs = []
@@ -44,12 +48,14 @@ class env_network:
                 self.users_action[j] = each  # action
                 channel_alloc_frequency[each] += 1
             j += 1
+        print(f'@@@@@@@@@@ step - original channel_alloc_frequency: {channel_alloc_frequency}')
 
         for i in range(1,len(channel_alloc_frequency)):
             if channel_alloc_frequency[i] > 1:
                 channel_alloc_frequency[i] = 0
+
         #print channel_alloc_frequency
-        print(f'@@@@@@@@@@ step - channel_alloc_frequency: {channel_alloc_frequency}')
+        print(f'@@@@@@@@@@ step - modified channel_alloc_frequency: {channel_alloc_frequency}')
         for i in range(len(action)):
             
             self.users_observation[i] = channel_alloc_frequency[self.users_action[i]]
@@ -59,6 +65,8 @@ class env_network:
             if self.users_observation[i] == 1:
                 print('@@@@@@@@@@ step - reward : 1 !!!')
                 reward[i] = 1
+            elif self.users_observation[i] == 2:
+                reward[i] = 2
             obs.append((self.users_observation[i],reward[i]))
         residual_channel_capacity = channel_alloc_frequency[1:]
         residual_channel_capacity = 1-residual_channel_capacity
@@ -67,7 +75,8 @@ class env_network:
         print(f'@@@@@@@@@@ step - obs: {obs}')
         return obs
 
-
+    def close(self):
+        pass
 
 
 

@@ -44,8 +44,8 @@ ATTEMPT_PROB = config['attempt_prob']                               # attempt pr
 BATCH_SIZE = config['batch_size']
 PRETRAIN_LEN = config['pretrain_length']
 STEP_SIZE = config['step_size']
-ACTOR_LR = config['actor_lr']
-CRITIC_LR = config['critic_lr']
+actor_lr = config['actor_lr']
+critic_lr = config['critic_lr']
 
 MINIMUM_REPLAY_MEMORY = 32
 
@@ -56,8 +56,10 @@ batch_size = BATCH_SIZE                         # Num of batches to train at eac
 pretrain_length = PRETRAIN_LEN            # this is done to fill the deque up to batch size before training
 hidden_size = 128                       # Number of hidden neurons
 learning_rate = 1e-4                    # learning rate
+'''
 actor_lr = 1e-4
 critic_lr = 5e-4             # critic learning rate
+'''
 explore_start = .02                     # initial exploration rate
 explore_stop = .01                      # final exploration rate
 decay_rate = config['decay_rate']                      # rate of exponential decay of exploration
@@ -111,16 +113,16 @@ else:
 
 if args.graph_drawing:
     data1 = np.genfromtxt("a2c_scores.txt", delimiter=",")
+    logger.error(f"@ shape of data1 : {np.shape(data1)}")
 
     data2 = np.load("a2c_scores.npy")
-    logger.info(f"@ shape of data1 : {np.shape(data1)}")
-    logger.info(f"@ shape of data2 : {np.shape(data2)}")
+    logger.error(f"@ shape of data2 : {np.shape(data2)}")
 
     data3 = np.load("drqn_scores.npy")
     data4 = np.load("ddqn_scores.npy")
-    logger.info(f"@ shape of data3 : {np.shape(data3)}")
-    logger.info(f"@ shape of data4 : {np.shape(data4)}")
-    draw_multi_algorithm(data2, data3, data4)
+    logger.error(f"@ shape of data3 : {np.shape(data3)}")
+    logger.error(f"@ shape of data4 : {np.shape(data4)}")
+    draw_multi_algorithm(data1, data2, data3, data4)
 
     exit()
 
@@ -205,6 +207,7 @@ if args.type == "A2C" or args.type == "A2C_ver2":
     history_input = deque(maxlen=action_size)
 else:
     history_input = deque(maxlen=step_size)
+
 
 step = 0
 start_train = False
@@ -367,6 +370,7 @@ def train_a2c(replay_memory, actor, critic):
 
 def train_actor_critic(replay_memory, actor, critic):
     logger.info(f'### train_actor_critic 시작 ###')
+    # weight 저장 필요
 
 def train_advantage_actor_critic(replay_memory, actor, critic):
     logger.info(f'############### A2C training 시작 ####################')
@@ -1023,6 +1027,7 @@ for time_step in range(TIME_SLOTS):
         #al, cl = a2c.learn(state_batch, action_batch, reward_batch)
         al, cl, TD_errors = a2c.learn_(states, actions, next_states, rewards)
 
+
         '''
         if args.with_per:
             idx, weights, transition = memory.sample(batch_size)
@@ -1074,6 +1079,7 @@ for time_step in range(TIME_SLOTS):
             logger.info(f"##### train_advantage_actor_critic TRUE !! #####")
             #actor.learn(batch, batch_size, feature_size=NUM_USERS*2)
         '''
+
     elif args.type == "A2C_ver2":
         total_loss = a2c.learn(states, actions, rewards, next_states, False)
         logger.info(f'---------- total_loss : {total_loss}')
@@ -1092,15 +1098,22 @@ for time_step in range(TIME_SLOTS):
         logger.info(f)
 
     logger.info(f'$$$$ until time:{time_step} loss_list:{loss_list}')
-    '''
+
     if args.type == "A2C":
         # some book keeping
         logger.info(f'@ Before book keeping episode_reward:{episode_reward} max_reward:{max_reward}\n')
         if (episode_reward > 400 and episode_reward > max_reward):
-            actor.model.save_weights(str(episode_reward) + ".h5")
+            a2c.actor.model.layer[1].save_weights(str(episode_reward) + "_actor"+ ".h5")
+            a2c.actor.critic.save_weights(str(episode_reward) + "_critic"+ ".h5")
+
+        if time_step % 50 == 0:
+            #a2c.actor.model.save_weights(str(episode_reward) + ".h5")
+            a2c.actor.save_weights("./save_weights/DSA_actor.h5")
+            a2c.critic.save_weights("./save_weights/DSA_critic.h5")
+
         max_reward = max(max_reward, episode_reward)
         logger.info(f'@ After book keeping episode_reward:{episode_reward} max_reward:{max_reward}\n')
-    '''
+
     logger.info(f"///// Training block END /////")
 
     #reward = -100
@@ -1108,7 +1121,7 @@ for time_step in range(TIME_SLOTS):
     #   Training block ends
     ########################################################################################
 
-    logger.info(f'##### main simulation loop END #####\n')
+    logger.error(f'##### main simulation loop END #####\n')
 
     '''
     if args.type == "A2C":
@@ -1120,7 +1133,7 @@ for time_step in range(TIME_SLOTS):
             logger.info(f'@ After book keeping episode_reward:{episode_reward}\n')
     '''
 
-    logger.info(f'##### t: {time_step}\n##### episode_reward: {episode_reward}\n##### max_reward: {max_reward}\n##### epsilon: {explore_p}')
+    logger.error(f'##### t: {time_step}\n##### episode_reward: {episode_reward}\n##### max_reward: {max_reward}\n##### epsilon: {explore_p}')
     '''
     #if time_step % 5000 == 4999:
     #if time_step % 1000 == 999:
@@ -1187,7 +1200,7 @@ for time_step in range(TIME_SLOTS):
         '''
 
 
-logger.info(f'%%%%%%%%%% npy saving & plot START %%%%%%%%%%\n')
+logger.error(f'%%%%%%%%%% npy saving & plot START %%%%%%%%%%\n')
 
 if args.type == "DQN":
     dqn_scores = []

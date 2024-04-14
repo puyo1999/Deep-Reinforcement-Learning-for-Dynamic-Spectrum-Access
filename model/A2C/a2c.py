@@ -29,7 +29,7 @@ from model.A2C.CriticNetwork import CriticNetwork
 huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 
 
-class A2C:
+class A2C(object):
     def __init__(self, env, sess, act_dim, obs_dim, memory, prior, gamma=0.99, actor_lr=1e-4, critic_lr=1e-5):
         self.env = env
         self.gamma = gamma
@@ -346,3 +346,8 @@ class A2C:
 
         print(f'##### actor_loss:{actor_loss}\n##### critic_loss:{critic_loss}\n')
         return actor_loss, critic_loss
+
+    ## 신경망 파라미터 로드
+    def load_weights(self, path):
+        self.actor.load_weights(path + 'DSA_actor.h5')
+        self.critic.load_weights(path + 'DSA_critic.h5')

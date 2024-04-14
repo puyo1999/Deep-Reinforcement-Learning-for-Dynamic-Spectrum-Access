@@ -204,14 +204,37 @@ def draw_res2(time_step, cum_collision, cum_r, loss_list, means, mean_scores, ti
 
     # print ("*************************************************")
 
-def draw_multi_algorithm(data1, data2, data3):
+def draw_multi_algorithm(data1, data2, data3, data4):
     plt.xlabel('Time Slot')
     plt.ylabel('all means')
 
-    t1 = np.arange(0, 1000, 1)
-    t2 = np.arange(0, 5000, 1)
+    #t1 = np.arange(0, 501, 10)
+    t1 = np.arange(0., 501., 1)
+    t2 = np.arange(0, 1001, 1)
     t3 = np.arange(0, 100, 1)
 
-    plt.plot(t1, data1, t2, data2, t3, data3, 'r-')
+    # evenly sampled time at 200ms intervals
+    t4 = np.arange(0., 5., 0.2)
+
+    # red dashes, blue squares and green triangles
+    plt.plot(t1, data1, 'r--', t2, data2, 'bs', t3, data3, 'g^')
+
+    #plt.plot(t1, data1, t2, data2, t3, data3, 'r-')
+
+    #plt.plot(t1, data1, marker="o", color="#0000FF", label="$a2c$")
+    #plt.plot(t2, data2, 'c^', color="#00FF00", label="$drqn$")
+    #plt.plot(t3, data3, "d--", color="#FF0000", label="$ddqn$")  # TODO: Fix the notation here
+    plt.legend(loc="upper left")
+
+    plt.title("Average Reward", fontsize=16, fontweight='bold')
     plt.show()
 
+
+def plot_rewards(rewards, time):
+    # evenly sampled time at 1s intervals
+    t1 = np.arange(0, time+1, 1)
+
+    # red dashes, blue squares and green triangles
+    # plt.plot(t1, rewards, 'r--', t2, data2, 'bs', t3, data3, 'g^')
+    plt.plot(t1, rewards, 'bs')
+    plt.show()

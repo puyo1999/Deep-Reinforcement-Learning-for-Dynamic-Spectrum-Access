@@ -25,6 +25,9 @@ import numpy as np
 import tensorflow_probability as tfp
 import tensorflow.compat.v1 as tf
 
+from config.setup import TRAIN_FREQ
+from config.setup import TO_TRAIN
+
 class ActorNetwork(keras.Model):
 	# action : 3, observation : 6
 	def __init__(self, sess, action_dim, observation_dim, lr, memory):
@@ -34,6 +37,8 @@ class ActorNetwork(keras.Model):
 		self.memory = memory
 		self.log_std_min = -2
 		self.log_std_max = 2
+
+		self.to_train = False
 
 		self.relu = torch.nn.ReLU()
 
@@ -168,6 +173,31 @@ class ActorNetwork(keras.Model):
 		#self.memory.add2(transition)
 
 		#self.step_cnt += 1
+
+	#def add_experience(self, state, action, reward, next_state, done):
+	def add_experience(self, s, a, r, s_):
+		'''Interface helper method for update() to add experience to memory'''
+		self.most_recent = (s, a, r, s_)
+		transition = np.hstack(
+			[(s[0]), (s[1]), (s[2]), (np.r_[a, r]), (s_[0]), (s_[1]), (s_[2])])
+		print('add_experience - transition:{}'.format(transition))
+
+		for idx, k in enumerate(self.data_keys):
+			self.cur_epi_data[k].append(self.most_recent[idx])
+		# If episode ended, add to memory and clear cur_epi_data
+
+		self.cur_epi_data = {k: [] for k in self.data_keys}
+
+		# most recent 활용 error 계산 공식 만들기
+		new_error = 20007
+		default_model_loss = 1003
+
+		# Track memory size and num experiences
+		self.memory.add(transition, new_error)
+		# If agent has collected the desired number of episodes, it is ready to train
+		# length is num of epis due to nested structure
+		if len(self.memory) == TRAIN_FREQ:
+			self.to_train = True
 
 	@tf.function
 	def actor_loss(self, probs, actions, td):
