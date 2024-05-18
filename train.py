@@ -103,6 +103,7 @@ args.gamma = config['gamma']
 args.reward_discount = config['reward_discount']
 args.type = config['type']              # DL algorithm
 args.with_per = config['with_per']
+args.with_ere = config['with_ere']
 args.graph_drawing = config['graph_drawing']
 
 if args.type == "A2C" or args.type == "A2C_ver2":
@@ -113,15 +114,15 @@ else:
 
 if args.graph_drawing:
     data1 = np.genfromtxt("a2c_scores.txt", delimiter=",")
-    logger.error(f"@ shape of data1 : {np.shape(data1)}")
+    logger.info(f"@ shape of data1 : {np.shape(data1)}")
 
     data2 = np.load("a2c_scores.npy")
-    logger.error(f"@ shape of data2 : {np.shape(data2)}")
+    logger.info(f"@ shape of data2 : {np.shape(data2)}")
 
     data3 = np.load("drqn_scores.npy")
     data4 = np.load("ddqn_scores.npy")
-    logger.error(f"@ shape of data3 : {np.shape(data3)}")
-    logger.error(f"@ shape of data4 : {np.shape(data4)}")
+    logger.info(f"@ shape of data3 : {np.shape(data3)}")
+    logger.info(f"@ shape of data4 : {np.shape(data4)}")
     draw_multi_algorithm(data1, data2, data3, data4)
 
     exit()
@@ -161,7 +162,7 @@ env = env_network(NUM_USERS,NUM_CHANNELS,ATTEMPT_PROB)
 
 # to sample random actions for each user
 action = env.sample()
-logger.error(f'##### action:{action}')
+logger.info(f'##### action:{action}')
 #
 obs = env.step(action)
 state = state_generator(action,obs)
@@ -219,15 +220,15 @@ for ii in range(pretrain_length*step_size*5):
     next_state = state_generator(action,obs)
     reward = [i[1] for i in obs[:NUM_USERS]]
 
-    logger.error(f'@@@@@ Pretrain step: {step} @@@@@')
-    logger.error(f'@@@@@@@@@@')
+    logger.info(f'@@@@@ Pretrain step: {step} @@@@@')
+    logger.info(f'@@@@@@@@@@')
 
-    logger.error(f"@ shape of state : {np.shape(state)}")
+    logger.info(f"@ shape of state : {np.shape(state)}")
 
-    logger.error(f'state : {state}\n')
-    logger.error(f'action : {action}\n')
-    logger.error(f'reward : {reward}\n')
-    logger.error(f'next_state : {next_state}\n')
+    logger.info(f'state : {state}\n')
+    logger.info(f'action : {action}\n')
+    logger.info(f'reward : {reward}\n')
+    logger.info(f'next_state : {next_state}\n')
     logger.info(f'@@@@@@@@@@')
 
     if args.with_per:
@@ -243,6 +244,8 @@ for ii in range(pretrain_length*step_size*5):
         else:
             mainQN.store_transition(state, action, reward, next_state)
         #memory.store((state, action, reward, next_state))
+    #elif args.with_ere:
+        #a2c.add()
     else:
         memory.add((state, action, reward, next_state))
 
@@ -256,7 +259,7 @@ for ii in range(pretrain_length*step_size*5):
     if step >= args.memory_size:
         if not start_train:
             start_train = True
-            logger.error(f'@@ Now start_train:{start_train}')
+            logger.info(f'@@ Now start_train:{start_train}')
             break
         #if args.type == 'A2C':
             #actor.learn(batch, batch_size, feature_size=NUM_USERS*2)
@@ -780,7 +783,7 @@ for time_step in range(TIME_SLOTS):
     obs = env.step(action)           # obs is a list of tuple with [(ACK,REW) for each user ,(CHANNEL_RESIDUAL_CAPACITY_VECTOR)]
 
     #logger.error(f"@@ obs{obs}\nshape of obs :{np.shape(obs)}")
-    logger.error(f"@@ obs{obs}\n")
+    logger.info(f"@@ obs{obs}\n")
 
     logger.info(f"@@ len(obs) :\n{len(obs)}")
 
@@ -866,11 +869,14 @@ for time_step in range(TIME_SLOTS):
     #  Training block starts
     ###################################################################################
     logger.info(f'////////////////////////////////')
-    logger.info(f'///// Training block START /////')
+    logger.error(f'///// Training block START /////')
 
     #  sampling a batch from memory buffer for training
     if args.with_per:
-        idx, is_weights, batch = memory.sample(batch_size)
+        if args.with_ere:
+            idx, is_weights, batch = memory.sample_ere(3)
+        else:
+            idx, is_weights, batch = memory.sample(batch_size)
         batch = np.array(batch)
     else:
         batch = memory.sample(batch_size, step_size)
@@ -890,8 +896,8 @@ for time_step in range(TIME_SLOTS):
         #idx, is_weights, tmpBatch = memory.sample(5)
         idx, is_weights, tmpBatch = memory.sample(batch_size)
         tmpBatch = np.array(tmpBatch)
-        logger.error(f'@@ PER - tmpBatch :\n{tmpBatch}\n')
-        logger.error(f'@@ PER - tmpBatch :\n{np.shape(tmpBatch)}\n')
+        logger.info(f'@@ PER - tmpBatch :\n{tmpBatch}\n')
+        logger.info(f'@@ PER - tmpBatch :\n{np.shape(tmpBatch)}\n')
 
         states = tmpBatch[:, :(NUM_CHANNELS+1)*2]
         states = states[np.newaxis, :]
@@ -900,14 +906,14 @@ for time_step in range(TIME_SLOTS):
 
         actions = tmpBatch[:, (NUM_USERS*2)*3:(NUM_USERS*2)*3+3]
         rewards = tmpBatch[:, (NUM_USERS*2)*3+3:(NUM_USERS*2)*3+6]
-        logger.error(f'@@ PER - after sampling memory.update with states :\n{states}\n')
+        logger.info(f'@@ PER - after sampling memory.update with states :\n{states}\n')
         logger.info(f'@@ PER - after sampling memory.update with actions :\n{actions}\n')
-        logger.info(f'@@ PER - after sampling  memory.update with rewards :\n{rewards}\n')
+        logger.error(f'@@ PER - after sampling  memory.update with rewards :\n{rewards}\n')
         #next_states = tmpBatch[:, (NUM_USERS*2)*4:(NUM_USERS * 2)*5]
         #next_states = tmpBatch[:, (NUM_USERS*2)*6:(NUM_USERS * 2)*7]
         next_states = tmpBatch[:, :(NUM_CHANNELS*2)+2]
         next_states = next_states[np.newaxis, :]
-        logger.error(f'@@ PER - after sampling  memory.update with next_states :\n{next_states}\n')
+        logger.info(f'@@ PER - after sampling  memory.update with next_states :\n{next_states}\n')
 
         # (1,5,6)
 
@@ -955,7 +961,7 @@ for time_step in range(TIME_SLOTS):
         logger.info(f"### shape of states.shape[1] : {states.shape[1]}")
         logger.info(f"### shape of states.shape[2] : {states.shape[2]}")
 
-        logger.error(f"### shape of next_states : {np.shape(next_states)}")
+        logger.info(f"### shape of next_states : {np.shape(next_states)}")
 
     if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "DDQN" and args.type != "DDPG":
         #  creating target vector (possible best action)
@@ -1057,8 +1063,8 @@ for time_step in range(TIME_SLOTS):
             #memory.update_priorities(idx, prios.data.cpu().numpy())
 
 
-        logger.error(f"al : {al}\n")
-        logger.error(f"cl : {cl}\n")
+        logger.error(f"---------- actor loss : {al}\n")
+        logger.error(f"---------- critic loss : {cl}\n")
 
         if args.with_per:
             actor_losses.append(al)

@@ -10,10 +10,11 @@ class PerMemory(object):
     """
     p_upper = 1.
     e = .01
-    a = .6
-    a_decrement_per_sampling = .002
+    alpha = .6
+    alpha_decrement_per_sampling = .002
     beta = .4
     beta_increment_per_sampling = .001
+    recent_sampling_weight = 1.2
 
     # feature_size = state_size 이므로 2 * (NUM_CHANNELS + 1)
     def __init__(self, mem_size, feature_size, prior=False):
@@ -76,7 +77,7 @@ class PerMemory(object):
         """
         #print('PER @ _get_priority : {}'.format(np.power(error + self.e, self.a).squeeze()))
         #return np.power(error + self.e, self.a).squeeze()
-        self.a = np.max([1., self.a - self.a_decrement_per_sampling])
+        self.a = np.max([1., self.alpha - self.alpha_decrement_per_sampling])
         #print('PER @ _get_priority : {}'.format((np.abs(error) + self.e) ** self.a))
         return (np.abs(error) + self.e) ** self.a
 
@@ -112,6 +113,7 @@ class PerMemory(object):
 
                 #w[i] = (p / min_p) ** (-self.beta)
                 a += segment
+
             #self.beta = min(1., self.a + .01)
             sampling_probabilities = priorities / self.tree.total()
             is_weight = np.power(self.tree.write * sampling_probabilities, -self.beta)
@@ -148,6 +150,34 @@ class PerMemory(object):
         return batch, idxs, is_weight
         #return batch
         '''
+    def sample_ere(self, c_k):
+        segment = self.tree.total() / c_k
+        batch = []
+        idxs = []
+        a = 0
+        priorities = []
+        self.beta = np.min([1., self.beta + self.beta_increment_per_sampling])
+
+        for i in range(c_k):
+            a = segment * i
+            b = segment * (i + 1)
+            v = np.random.uniform(a, b)
+            (idx, p, data) = self.tree.get(v)
+            #print(f'@@ sample idx:{idx}')
+            priorities.append(p)
+            batch.append(data)
+            idxs.append(idx)
+
+            a += segment
+
+        prios = np.array(list(priorities)[:c_k])
+        probs = (prios* self.recent_sampling_weight) ** self.alpha
+
+        sampling_probabilities = probs / self.tree.total()
+        is_weight = np.power(self.tree.n_entries * sampling_probabilities, -self.beta)
+        is_weight /= is_weight.max()
+        return idxs, is_weight, batch
+
     def update(self, idx, tderr):
         """ Update priority for idx (PER)
         """

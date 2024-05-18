@@ -10,6 +10,7 @@ ATTEMPT_PROB = config['attempt_prob']                               # attempt pr
 BATCH_SIZE = config['batch_size']
 PRETRAIN_LEN = config['pretrain_length']
 TRAIN_FREQ = config['training_frequency']
+TO_TRAIN = config['to_train']
 STEP_SIZE = config['step_size']
 ACTOR_LR = config['actor_lr']
 CRITIC_LR = config['critic_lr']
