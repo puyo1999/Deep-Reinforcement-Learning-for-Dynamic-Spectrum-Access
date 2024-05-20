@@ -22,6 +22,7 @@ gamma: 0.99
 reward_discount: 0.03
 with_per: True
 #with_per: False
+with_ere: True
 memory_size: 1000
 #memory_size: 20000
 #batch_size: 32
@@ -29,6 +30,7 @@ batch_size: 6
 step_size: 5 #1+2+2 #length of history sequence for each datapoint in batch
 pretrain_length : 32
 training_frequency : 11
+to_train : False
 #graph_drawing: True
 graph_drawing: False
 log_level_info: False
