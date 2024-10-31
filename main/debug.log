@@ -1,0 +1,2303 @@
+spec_util:ERROR:62:spec ppo_mbr fails spec check
+Traceback (most recent call last):
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 56, in check
+    check_comp_spec(env_spec, SPEC_FORMAT['env'][0])
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 38, in check_comp_spec
+    assert isinstance(comp_spec_v, v_type), f'Component spec {ps.pick(comp_spec, spec_k)} needs to be of type: {v_type}'
+TypeError: isinstance() arg 2 must be a type or tuple of types
+spec_util:ERROR:62:spec ppo_mbr fails spec check
+Traceback (most recent call last):
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 56, in check
+    check_comp_spec(env_spec, SPEC_FORMAT['env'][0])
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 38, in check_comp_spec
+    assert isinstance(comp_spec_v, v_type), f'Component spec {ps.pick(comp_spec, spec_k)} needs to be of type: {v_type}'
+TypeError: isinstance() arg 2 must be a type or tuple of types
+spec_util:ERROR:62:spec ppo_mbr fails spec check
+Traceback (most recent call last):
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 56, in check
+    check_comp_spec(env_spec, SPEC_FORMAT['env'][0])
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 38, in check_comp_spec
+    assert isinstance(comp_spec_v, v_type), f'Component spec {ps.pick(comp_spec, spec_k)} needs to be of type: {v_type}'
+TypeError: isinstance() arg 2 must be a type or tuple of types
+spec_util:ERROR:63:spec ppo_mbr fails spec check
+Traceback (most recent call last):
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 57, in check
+    check_comp_spec(env_spec, SPEC_FORMAT['env'][0])
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 38, in check_comp_spec
+    assert isinstance(comp_spec_v, v_type), f'Component spec {ps.pick(comp_spec, spec_k)} needs to be of type: {v_type}'
+TypeError: isinstance() arg 2 must be a type or tuple of types
+spec_util:ERROR:63:spec ppo_mbr fails spec check
+Traceback (most recent call last):
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 57, in check
+    check_comp_spec(env_spec, SPEC_FORMAT['env'][0])
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 38, in check_comp_spec
+    assert isinstance(comp_spec_v, v_type), f'Component spec {ps.pick(comp_spec, spec_k)} needs to be of type: {v_type}'
+TypeError: isinstance() arg 2 must be a type or tuple of types
+spec_util:ERROR:32:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:34:comp_spec_v:A2C
+spec_util:ERROR:32:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:32:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:32:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:32:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:34:comp_spec_v:ppo_mbr
+spec_util:ERROR:32:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:4
+spec_util:ERROR:32:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:5
+spec_util:ERROR:32:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:3
+spec_util:ERROR:32:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:10
+spec_util:ERROR:32:spec_k:attempt_prob
+ spec_format_v:0.75
+spec_util:ERROR:34:comp_spec_v:0.75
+spec_util:ERROR:65:spec ppo_mbr fails spec check
+Traceback (most recent call last):
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 59, in check
+    check_comp_spec(env_spec, SPEC_FORMAT['env'][0])
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 40, in check_comp_spec
+    assert isinstance(comp_spec_v, v_type), f'Component spec {ps.pick(comp_spec, spec_k)} needs to be of type: {v_type}'
+TypeError: isinstance() arg 2 must be a type or tuple of types
+spec_util:ERROR:32:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:34:comp_spec_v:A2C
+spec_util:ERROR:32:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:32:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:32:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:32:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:34:comp_spec_v:ppo_mbr
+spec_util:ERROR:32:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:4
+spec_util:ERROR:32:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:5
+spec_util:ERROR:32:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:3
+spec_util:ERROR:32:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:10
+spec_util:ERROR:32:spec_k:attempt_prob
+ spec_format_v:0.75
+spec_util:ERROR:34:comp_spec_v:0.75
+spec_util:ERROR:65:spec ppo_mbr fails spec check
+Traceback (most recent call last):
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 59, in check
+    check_comp_spec(env_spec, SPEC_FORMAT['env'][0])
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 40, in check_comp_spec
+    assert isinstance(comp_spec_v, v_type), f'Component spec {ps.pick(comp_spec, spec_k)} needs to be of type: {v_type}'
+TypeError: isinstance() arg 2 must be a type or tuple of types
+spec_util:ERROR:32:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:34:comp_spec_v:A2C
+spec_util:ERROR:32:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:32:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:32:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:32:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:34:comp_spec_v:ppo_mbr
+spec_util:ERROR:32:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:4
+spec_util:ERROR:32:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:5
+spec_util:ERROR:32:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:3
+spec_util:ERROR:32:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:10
+spec_util:ERROR:32:spec_k:attempt_prob
+ spec_format_v:0.75
+spec_util:ERROR:34:comp_spec_v:0.75
+spec_util:ERROR:65:spec ppo_mbr fails spec check
+Traceback (most recent call last):
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 59, in check
+    check_comp_spec(env_spec, SPEC_FORMAT['env'][0])
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 40, in check_comp_spec
+    assert isinstance(comp_spec_v, v_type), f'Component spec {ps.pick(comp_spec, spec_k)} needs to be of type: {v_type}'
+TypeError: isinstance() arg 2 must be a type or tuple of types
+spec_util:ERROR:32:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:34:comp_spec_v:A2C
+spec_util:ERROR:32:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:32:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:32:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:32:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:34:comp_spec_v:ppo_mbr
+spec_util:ERROR:32:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:4
+spec_util:ERROR:32:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:5
+spec_util:ERROR:32:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:3
+spec_util:ERROR:32:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:10
+spec_util:ERROR:32:spec_k:attempt_prob
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:0.75
+spec_util:ERROR:65:spec ppo_mbr fails spec check
+Traceback (most recent call last):
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 59, in check
+    check_comp_spec(env_spec, SPEC_FORMAT['env'][0])
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 40, in check_comp_spec
+    assert isinstance(comp_spec_v, v_type), f'Component spec {ps.pick(comp_spec, spec_k)} needs to be of type: {v_type}'
+AssertionError: Component spec {'attempt_prob': 0.75} needs to be of type: <class 'int'>
+spec_util:ERROR:32:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:34:comp_spec_v:A2C
+spec_util:ERROR:32:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:32:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:32:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:32:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:34:comp_spec_v:ppo_mbr
+spec_util:ERROR:32:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:4
+spec_util:ERROR:32:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:5
+spec_util:ERROR:32:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:3
+spec_util:ERROR:32:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:10
+spec_util:ERROR:32:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:34:comp_spec_v:0.75
+spec_util:ERROR:32:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:10
+spec_util:ERROR:65:spec ppo_mbr fails spec check
+Traceback (most recent call last):
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 60, in check
+    check_comp_spec(spec['body'], SPEC_FORMAT['body'])
+KeyError: 'body'
+spec_util:ERROR:32:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:34:comp_spec_v:A2C
+spec_util:ERROR:32:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:32:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:32:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:34:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:32:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:34:comp_spec_v:ppo_mbr
+spec_util:ERROR:32:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:4
+spec_util:ERROR:32:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:5
+spec_util:ERROR:32:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:3
+spec_util:ERROR:32:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:10
+spec_util:ERROR:32:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:34:comp_spec_v:0.75
+spec_util:ERROR:32:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:34:comp_spec_v:10
+spec_util:ERROR:65:spec ppo_mbr fails spec check
+Traceback (most recent call last):
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 61, in check
+    check_comp_spec(spec['meta'], SPEC_FORMAT['meta'])
+KeyError: 'meta'
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:A2C
+spec_util:ERROR:36:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:36:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:36:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:ppo_mbr
+spec_util:ERROR:36:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:4
+spec_util:ERROR:36:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:5
+spec_util:ERROR:36:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:3
+spec_util:ERROR:36:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:38:comp_spec_v:0.75
+spec_util:ERROR:36:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:1
+spec_util:ERROR:36:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:38:comp_spec_v:2
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:A2C
+spec_util:ERROR:36:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:36:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:36:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:ppo_mbr
+spec_util:ERROR:36:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:4
+spec_util:ERROR:36:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:5
+spec_util:ERROR:36:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:3
+spec_util:ERROR:36:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:38:comp_spec_v:0.75
+spec_util:ERROR:36:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:1
+spec_util:ERROR:36:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:38:comp_spec_v:2
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:A2C
+spec_util:ERROR:36:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:36:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:36:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:ppo_mbr
+spec_util:ERROR:36:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:4
+spec_util:ERROR:36:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:5
+spec_util:ERROR:36:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:3
+spec_util:ERROR:36:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:38:comp_spec_v:0.75
+spec_util:ERROR:36:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:1
+spec_util:ERROR:36:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:38:comp_spec_v:2
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:A2C
+spec_util:ERROR:36:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:36:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:36:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:ppo_mbr
+spec_util:ERROR:36:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:4
+spec_util:ERROR:36:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:5
+spec_util:ERROR:36:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:3
+spec_util:ERROR:36:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:38:comp_spec_v:0.75
+spec_util:ERROR:36:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:1
+spec_util:ERROR:36:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:38:comp_spec_v:2
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:A2C
+spec_util:ERROR:36:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:36:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:36:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:ppo_mbr
+spec_util:ERROR:36:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:4
+spec_util:ERROR:36:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:5
+spec_util:ERROR:36:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:3
+spec_util:ERROR:36:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:38:comp_spec_v:0.75
+spec_util:ERROR:36:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:1
+spec_util:ERROR:36:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:38:comp_spec_v:2
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:A2C
+spec_util:ERROR:36:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:36:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:36:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:69:spec ppo_mbr fails spec check
+Traceback (most recent call last):
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 63, in check
+    check_comp_spec(env_spec, SPEC_FORMAT['env'][0])
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 37, in check_comp_spec
+    comp_spec_v = comp_spec[spec_k]
+TypeError: string indices must be integers
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:A2C
+spec_util:ERROR:36:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:36:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:36:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:69:spec ppo_mbr fails spec check
+Traceback (most recent call last):
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 63, in check
+    check_comp_spec(env_spec, SPEC_FORMAT['env'][0])
+  File "D:\Research Files\DRLforDSA\Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access\main\..\config\spec\spec_util.py", line 37, in check_comp_spec
+    comp_spec_v = comp_spec[spec_k]
+KeyError: 'name'
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:A2C
+spec_util:ERROR:36:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:36:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:36:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:MBR-PPO
+spec_util:ERROR:36:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:4
+spec_util:ERROR:36:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:5
+spec_util:ERROR:36:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:3
+spec_util:ERROR:36:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:38:comp_spec_v:0.75
+spec_util:ERROR:36:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:1
+spec_util:ERROR:36:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:38:comp_spec_v:2
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:A2C
+spec_util:ERROR:36:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:36:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:36:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:MBR-PPO
+spec_util:ERROR:36:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:4
+spec_util:ERROR:36:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:5
+spec_util:ERROR:36:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:3
+spec_util:ERROR:36:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:38:comp_spec_v:0.75
+spec_util:ERROR:36:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:1
+spec_util:ERROR:36:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:38:comp_spec_v:2
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:A2C
+spec_util:ERROR:36:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:36:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:36:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:38:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:36:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:38:comp_spec_v:MBR-PPO
+spec_util:ERROR:36:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:4
+spec_util:ERROR:36:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:5
+spec_util:ERROR:36:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:3
+spec_util:ERROR:36:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:38:comp_spec_v:0.75
+spec_util:ERROR:36:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:10
+spec_util:ERROR:36:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:38:comp_spec_v:1
+spec_util:ERROR:36:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:38:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:A2C
+spec_util:ERROR:37:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:37:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:37:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:39:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:37:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:39:comp_spec_v:MBR-PPO
+spec_util:ERROR:37:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:4
+spec_util:ERROR:37:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:5
+spec_util:ERROR:37:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:3
+spec_util:ERROR:37:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:39:comp_spec_v:0.75
+spec_util:ERROR:37:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:10
+spec_util:ERROR:37:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:39:comp_spec_v:1
+spec_util:ERROR:37:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:39:comp_spec_v:2
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:47:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:47:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1
+spec_util:INFO:61:spec_name : ppo_mbr
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:A2C
+spec_util:ERROR:38:spec_k:algorithm
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'ActorCritic', 'action_pdtype': 'default', 'action_policy': 'default', 'explore_var_spec': None, 'gamma': 0.99, 'lam': 0.95, 'num_step_returns': None, 'entropy_coef_spec': {'name': 'linear_decay', 'start_val': 0.01, 'end_val': 0.001, 'start_step': 100, 'end_step': 5000}, 'policy_loss_coef': 1.0, 'val_loss_coef': 0.01, 'training_frequency': 1}
+spec_util:ERROR:38:spec_k:memory
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'name': 'Memory', 'with_per': True, 'with_ere': False}
+spec_util:ERROR:38:spec_k:net
+ spec_format_v:<class 'dict'>
+spec_util:ERROR:40:comp_spec_v:{'type': 'PPO', 'actor_optim_spec': {'name': 'Adam', 'lr': 0.0001}, 'critic_optim_spec': {'name': 'Adam', 'lr': 1e-05}}
+spec_util:ERROR:38:spec_k:name
+ spec_format_v:<class 'str'>
+spec_util:ERROR:40:comp_spec_v:MBR-PPO
+spec_util:ERROR:38:spec_k:num_hdmi
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:4
+spec_util:ERROR:38:spec_k:num_dt
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:5
+spec_util:ERROR:38:spec_k:num_mf
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:3
+spec_util:ERROR:38:spec_k:num_cs
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:20
+spec_util:ERROR:38:spec_k:attempt_prob
+ spec_format_v:<class 'float'>
+spec_util:ERROR:40:comp_spec_v:0.75
+spec_util:ERROR:38:spec_k:observation_space
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:10
+spec_util:ERROR:38:spec_k:max_session
+ spec_format_v:<class 'int'>
+spec_util:ERROR:40:comp_spec_v:1
+spec_util:ERROR:38:spec_k:max_trial
+ spec_format_v:(<class 'NoneType'>, <class 'int'>)
+spec_util:ERROR:40:comp_spec_v:2
+control:INFO:45:Running RL loop for trial -1 session -1

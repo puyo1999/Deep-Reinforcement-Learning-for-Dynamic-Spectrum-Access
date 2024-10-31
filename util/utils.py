@@ -2,13 +2,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 import yaml
 import logging
+from config.setup import *
 logger = logging.getLogger(__name__)
 
-with open('./config/config.yaml') as f:
+with open('D:/Research Files/DRLforDSA/Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access/config/config.yaml') as f:
     config = yaml.safe_load(f)
 
-NUM_CHANNELS = config['num_channels']                               # Total number of channels
-NUM_USERS = config['num_users']                                 # Total number of users
+env = config["env"]
+if env == "network":
+    NUM_CHANNELS = dic_env_conf["NUM_CHANNELS"]
+elif env == "mbr":
+    NUM_CHANNELS = dic_env_conf["NUM_CS"]
+else:
+    NUM_CHANNELS = dic_env_conf['NUM_CHANNELS']                                  # Total number of channels
+
+if env == "network":
+    NUM_USERS = dic_env_conf["NUM_USERS"]
+elif env == "mbr":
+    NUM_USERS = dic_env_conf["NUM_HDMI"]
+else:
+    NUM_USERS = dic_env_conf["NUM_USERS"]
+#NUM_USERS = config['num_users']                                 # Total number of users
 
 ##############################################
 def get_states(batch):
@@ -63,15 +77,15 @@ def get_next_states(batch):
 def get_states_user(batch):
     states = []
     for user in range(NUM_USERS):
-        print("@@@ get_states_user : ", user)
+        #print(f"@@@ get_states_user - user:{user}")
         states_per_user = []
         for each in batch:
             states_per_batch = []
             #step_cnt = 0
-            print(f"@ get_states_user - each\n : {each}")
+            #print(f"@ get_states_user - each :\n{each}")
             for step_i in each:
-                print(f"@ get_states_user - step_i\n : {step_i}")
-                print(f"@ get_states_user - step_i[0][{user}]\n : {step_i[0][user]}")
+                #print(f"@ get_states_user - step_i :\n{step_i}")
+                #print(f"@ get_states_user - step_i[0][{user}]\n : {step_i[0][user]}")
                 '''
                 if step_cnt >= 1:
                     continue
@@ -87,12 +101,13 @@ def get_states_user(batch):
                         print("**********")
                     sys.exit()
                 '''
+                states_per_step = []
                 states_per_step = step_i[0][user]
                 states_per_batch.append(states_per_step)
             states_per_user.append(states_per_batch)
         states.append(states_per_user)
     #print len(states)
-    print("@ get_states_user - states\n : {}".format(states))
+    #print("@ get_states_user - states\n : {}".format(states))
     return np.array(states)
 
 def get_actions_user(batch):
@@ -100,16 +115,16 @@ def get_actions_user(batch):
     for user in range(NUM_USERS):
         actions_per_user = []
         for each in batch:
-            print(f"@ get_actions_user - each\n : {each}")
+            #print(f"@ get_actions_user - each\n : {each}")
             actions_per_batch = []
             for step_i in each:
-                print(f"@ get_actions_user - step_i\n : {step_i}")
-                print(f"@ get_actions_user - step_i[1][{user}]\n : {step_i[1][user]}")
+                #print(f"@ get_actions_user - step_i\n : {step_i}")
+                #print(f"@ get_actions_user - step_i[1][{user}]\n : {step_i[1][user]}")
                 actions_per_step = step_i[1][user]
                 actions_per_batch.append(actions_per_step)
             actions_per_user.append(actions_per_batch)
         actions.append(actions_per_user)
-    print(f"@ get_actions_user - actions\n : {actions}")
+    #print(f"@ get_actions_user - actions\n : {actions}")
     return np.array(actions)
 
 def get_rewards_user(batch):
@@ -136,8 +151,8 @@ def get_next_states_user(batch):
                 next_states_per_batch.append(next_states_per_step)
             next_states_per_user.append(next_states_per_batch)
         next_states.append(next_states_per_user)
-    print("@ get_next_states_user - states : ", next_states)
-    return np.array(next_states)
+    print(f"@ get_next_states_user - next_states :\n{next_states}")
+    return np.array(next_states, dtype=object)
 
 
 #It creates a one hot vector of a number as num with size as len
@@ -154,19 +169,23 @@ def state_generator(action, obs):
     if action is None:
         logger.info(f'no action, hence, no next_state !')
         sys.exit()
-    logger.info(f'action.size:{action.size}')
+    logger.error(f'action.size:{action.size}')
     for user_i in range(action.size):
-        logger.info(f'user_i:{user_i} action:{action[user_i]}')
-        input_vector_i = one_hot(action[user_i],NUM_CHANNELS+1)
-        channel_alloc = obs[-1] # obs 뒤에서 첫번째
+        logger.error(f'user_i:{user_i} action:{action[user_i]}')
+        input_vector_i = one_hot(action[user_i], NUM_CHANNELS+1)
+        logger.error(f'1st input_vector_i: {input_vector_i}')
+        #channel_alloc = obs[-1] # obs 뒤에서 첫번째
+        channel_alloc = obs[user_i] # 해당 사용자의 obs
         input_vector_i = np.append(input_vector_i,channel_alloc)
         input_vector_i = np.append(input_vector_i,int(obs[user_i][0]))    #ACK
         input_vector.append(input_vector_i)
 
-    logger.error(f'@ state_generator - input_vector:{input_vector}')
+    logger.error(f'@ state_generator - input_vector:{input_vector}\n'
+                 f'input_vector shape:{np.shape(input_vector)}')
     return input_vector
 
 def draw_res2(time_step, cum_collision, cum_r, loss_list, means, mean_scores, time_slots):
+    logger.error(f'@ draw_res2 - time_step:{time_step}, time_slot:{time_slots}')
     if time_step % time_slots == time_slots-1:
         plt.figure(1)
         plt.subplot(411)
@@ -238,3 +257,4 @@ def plot_rewards(rewards, time):
     # plt.plot(t1, rewards, 'r--', t2, data2, 'bs', t3, data3, 'g^')
     plt.plot(t1, rewards, 'bs')
     plt.show()
+

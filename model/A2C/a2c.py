@@ -38,6 +38,8 @@ class A2C(object):
         self.obs_dim = obs_dim
         self.eps = np.finfo(np.float32).eps.item()  # Smallest number such that 1.0 + eps != 1.0
 
+        self.GAE_LAMBDA = 0.95
+
         self.noise = OUNoise(act_dim * 2)
         self.a_opt = tf.keras.optimizers.Adam(learning_rate=actor_lr)
         self.c_opt = tf.keras.optimizers.RMSprop(learning_rate=critic_lr)
@@ -141,6 +143,19 @@ class A2C(object):
 
         return actor_loss, critic_loss
 
+    # Compute actor loss
+    def compute_actor_loss(self, states, actions, advantages):
+        # Get action probabilities from the actor network
+        action_probs = ActorNetwork(states)
+        # Compute log probabilities of the chosen actions
+        log_probs = tf.math.log(action_probs + eps)
+        # Multiply by advantages (state-dependent baseline)
+        weighted_log_probs = log_probs * advantages
+        # Sum over all actions
+        actor_loss = -tf.reduce_mean(weighted_log_probs)
+        return actor_loss
+
+
     def learn_experience(self, idxs, weights, experiences):
         print(f'@ learn_experience - shape of experiences :\n{np.shape(experiences)}')
 
@@ -212,7 +227,7 @@ class A2C(object):
 
             print(f'@ learn_ - action_prob:\n{action_prob}\ncritic:\n{critic}')
             print(f'@ learn_ - action_prob[0]:\n{action_prob[0]}')
-            action = self.get_action(action_prob[0][0])
+            action = self.get_action(action_prob)
 
             print(f'@ learn_ - action: {action}')
 
@@ -239,7 +254,8 @@ class A2C(object):
             print(f'@ learn_ - critic[0,0] :\n{critic[0,0]}')
             print(f'@ learn_ - action_prob[0][0] :\n{action_prob[0][0]}')
             # [ [prob, prob, ... ] ]형식으로 입력이 들어옴
-            a_loss = -tf.math.log(action_prob[0][0]) * np.transpose( advantage[:5][:3] )
+            #a_loss = -tf.math.log(action_prob[0][0]) * np.transpose( advantage[:5][:3] )
+            a_loss = -tf.math.log(action_prob) * np.transpose(advantage)
 
             critic = np.squeeze(critic)
             #critic = np.swapaxes(critic, 1, 2)
@@ -334,9 +350,10 @@ class A2C(object):
             print(f'## a_loss:{a_loss}\n## c_loss:{c_loss}\n## c2_loss:{c2_loss}')
             actor_loss = np.mean(a_loss)
             critic_loss = abs((c_loss + c2_loss) / 2.0)
+
             #returns = get_expected_return(rewards, gamma)
             #loss = self.compute_loss(actions, values, discnt_rewards)
-
+            loss = self.compute_actor_loss(states, actions, advantage)
         grads1 = tape1.gradient(a_loss, self.actor.trainable_variables)
         grads2 = tape2.gradient(c_loss, self.critic.trainable_variables)
         grads3 = tape3.gradient(c2_loss, self.critic2.trainable_variables)
@@ -351,3 +368,50 @@ class A2C(object):
     def load_weights(self, path):
         self.actor.load_weights(path + 'DSA_actor.h5')
         self.critic.load_weights(path + 'DSA_critic.h5')
+
+    '''
+    def make_gae(self, values, values_next, rewards, dones):
+        delta_adv, delta_tar, adv, target = 0, 0, 0, 0
+        advantages = np.zeros(np.array(values).shape)
+        targets = np.zeros(np.array(values).shape)
+        for t in reversed(range(0, len(rewards))):
+            delta_adv = rewards[t] + self.discount_rate * values_next[t] * dones[t]
+            delta_tar = rewards[t] + self.discount_rate * values + next[t] * dones[t]
+            adv = delta_adv + self.smooth_rate * self.discount_rate * dones[t] * adv
+            target = delta_tar + self.smoth_rate * self.disount_rate * dones[t] * target
+        advantages[t] = adv
+        targets[t] = target
+
+        return advantages, targets
+    '''
+    def make_gae(self):
+        """Generates GAE type rewards and pushes them into memory object
+        #GAE algorithm:
+            #delta = r + gamma * V(s') * mask - V(s)  |aka advantage
+            #gae = delta + gamma * lambda * mask * gae |moving average smoothing
+            #return(s,a) = gae + V(s)  |add value of state back to it.
+        """
+        gae = 0
+        mask = 0
+        print(f'## make_gae - cnt_samples: {self.memory.cnt_samples}')
+        for i in reversed(range(self.memory.cnt_samples)):
+            mask = 0 if self.memory.batch_done[i] else 1
+            v = self.get_v(self.memory.batch_s[i])
+            delta = self.memory.batch_r[i] + self.gamma * self.get_v(self.memory.batch_s_[i]) * mask - v
+            gae = delta + self.gamma * self.GAE_LAMBDA * mask * gae
+            self.memory.batch_gae_r.append(gae+v)
+        #print(f'## make_gae - batch_gae_r: {self.memory.batch_gae_r}')
+        self.memory.batch_gae_r.reverse()
+        #self.memory.GAE_CALCULATED_Q = True
+
+    def get_v(self, state):
+        """Returns the value of the state.
+        Basically, just a forward pass though the critic networtk
+        """
+        #print(f'@ get_v - state :\n{state}\n obs_dim: {self.obs_dim}\n'
+        #     f'shape of state: {np.shape(state)}')
+        s = np.reshape(state,(-1, self.obs_dim))
+        #print(f'@ get_v - s :\n{s}')
+        v = self.critic.predict_on_batch(s)
+        #print(f'@ get_v - v :\n{v}')
+        return v

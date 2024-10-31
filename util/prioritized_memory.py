@@ -35,6 +35,9 @@ class PerMemory(object):
             self.mem = np.zeros(mem_size, self.data_len, dtype=np.float32)
             self.mem_ptr = 0
 
+        self.batch_gae_r = []
+        self.GAE_CALCULATED_Q = False
+
     def store(self, transition):
         if self.prior:
             p = self.tree.max_p

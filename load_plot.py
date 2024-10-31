@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 
 
 #time_slots = 1000
-time_slots = 500
-#time_slots = 100
+#time_slots = 500
+time_slots = 100
 
 a2c_score = np.load('a2c_scores.npy')
 drqn_score = np.load('drqn_scores.npy')

@@ -2,10 +2,14 @@ import keras.src.losses
 import tensorflow as tf
 tf.executing_eagerly()
 
+from config.setup import *
+
 from env.multi_user_network_env import env_network
+from env.mbr_detection_env import mbr_env
 from keras.losses import huber
 from util.memory_buffer import Memory
 from util.prioritized_memory import PerMemory
+from util.ppo_memory import PPOMemory
 from util.parser import Parser
 from util.utils import get_states_user, get_actions_user, get_rewards_user, get_next_states_user
 from util.utils import state_generator
@@ -16,6 +20,10 @@ from model.DDPG.ddpg import DDPG
 from model.drqn import QNetwork
 from model.dqn import DQNetwork
 from model.ddqn import DDQN
+from model.PPO.ppo import PPOAgent
+
+from model.base import Algorithm
+
 import numpy as np
 import random
 import sys
@@ -25,8 +33,11 @@ import tensorflow.compat.v1 as tf
 
 import yaml
 
-import logging
-logger = logging.getLogger(__name__)
+from py_lab.lib import logger
+from py_lab.experiment import control
+from py_lab.experiment.control import Session
+from config.spec import spec_util
+from util import path_util
 
 with open('./config/config.yaml') as f:
     config = yaml.safe_load(f)
@@ -34,12 +45,38 @@ with open('./config/config.yaml') as f:
 args = None
 args = Parser.parse_args(args)
 
+args.env = config['env']
+
+
+load_spec = path_util.read('file/ppo_mbr/ppo_mbr_spec.json')
+print(f'## load_spec : ***** {load_spec} *****')
+
+NUM_HDMI = dic_env_conf["NUM_HDMI"]
+NUM_DT = dic_env_conf["NUM_DT"]
+NUM_MF = dic_env_conf["NUM_MF"]
+NUM_CS = dic_env_conf["NUM_CS"]
+#NUM_CS = load_spec['env'][0]['num_cs']
+print(f'NUM_CS : {NUM_CS}')
+
 #TIME_SLOTS = 100000                            # number of time-slots to run simulation
 #TIME_SLOTS = 1000
 #TIME_SLOTS = args.time_slot
 TIME_SLOTS = config['time_slots']
-NUM_CHANNELS = config['num_channels']                               # Total number of channels
-NUM_USERS = config['num_users']                                 # Total number of users
+
+
+if args.env == "network":
+    NUM_CHANNELS = dic_env_conf["NUM_CHANNELS"]
+elif args.env == "mbr":
+    NUM_CHANNELS = dic_env_conf["NUM_CS"]
+else:
+    NUM_CHANNELS = config['num_channels']                       # Total number of channels
+
+if args.env == "network":
+    NUM_USERS = dic_env_conf["NUM_USERS"]
+elif args.env == "mbr":
+    NUM_USERS = dic_env_conf["NUM_HDMI"]
+#NUM_USERS = config['num_users']                                 # Total number of users
+
 ATTEMPT_PROB = config['attempt_prob']                               # attempt probability of ALOHA based  models
 BATCH_SIZE = config['batch_size']
 PRETRAIN_LEN = config['pretrain_length']
@@ -65,34 +102,9 @@ explore_stop = .01                      # final exploration rate
 decay_rate = config['decay_rate']                      # rate of exponential decay of exploration
 #gamma = .99                             # discount  factor
 
+from py_lab.lib import logger
+logger = logger.get_logger(__name__)
 
-args.log_level_info = config['log_level_info']
-
-if args.log_level_info:
-    logger.setLevel(logging.DEBUG) # 모든 레벨의 로그를 Handler들에게 전달해야 합니다.
-else:
-    logger.setLevel(logging.WARNING) # WARNING 레벨 이상의 로그를 Handler들에게 전달해야 합니다.
-
-#formatter = logging.Formatter('%(asctime)s:%(module)s:%(levelname)s:%(message)s', '%Y-%m-%d %H:%M:%S')
-formatter = logging.Formatter('%(module)s:%(levelname)s:%(lineno)d:%(message)s')
-
-# INFO 레벨 이상의 로그를 콘솔에 출력하는 Handler
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
-
-# DEBUG 레벨 이상의 로그를 `debug.log`에 출력하는 Handler
-file_debug_handler = logging.FileHandler('debug.log')
-file_debug_handler.setLevel(logging.DEBUG)
-file_debug_handler.setFormatter(formatter)
-logger.addHandler(file_debug_handler)
-
-# ERROR 레벨 이상의 로그를 `error.log`에 출력하는 Handler
-file_error_handler = logging.FileHandler('error.log')
-file_error_handler.setLevel(logging.ERROR)
-file_error_handler.setFormatter(formatter)
-logger.addHandler(file_error_handler)
 
 logger.info('########## config.yaml start ##########')
 logger.info(config)
@@ -102,6 +114,8 @@ logger.info('########## config.yaml end ##########')
 args.gamma = config['gamma']
 args.reward_discount = config['reward_discount']
 args.type = config['type']              # DL algorithm
+#args.type = load_spec['agent'][0]['net']['type']
+print(f'args.type : {args.type}')
 args.with_per = config['with_per']
 args.with_ere = config['with_ere']
 args.graph_drawing = config['graph_drawing']
@@ -148,8 +162,11 @@ logger.info(f"+++ gamma : ", gamma)
 
 step_size = STEP_SIZE
 #step_size = 1 + 2 + 2                   #length of history sequence for each datapoint  in batch
-state_size = 2 * (NUM_CHANNELS + 1)     #length of input (2 * k + 2)   :k = NUM_CHANNELS
-action_size = NUM_CHANNELS+1            #length of output  (k+1)
+if args.env == "mbr":
+    state_size = 2 * (NUM_CHANNELS + 1)     #length of input (2 * k + 2)   :k = NUM_CHANNELS
+else:
+    state_size = 2 * (NUM_CHANNELS + 1)     #length of input (2 * k + 2)   :k = NUM_CHANNELS
+action_size = NUM_CHANNELS + 1            #length of output  (k+1)
 alpha = 0                               #co-operative fairness constant
 beta = 1                                #Annealing constant for Monte - Carlo
 
@@ -157,27 +174,45 @@ beta = 1                                #Annealing constant for Monte - Carlo
 tf.reset_default_graph()
 sess = tf.Session()
 
-# initializing the environment
-env = env_network(NUM_USERS,NUM_CHANNELS,ATTEMPT_PROB)
+session_instance = Session(load_spec)
 
+# initializing the environment
+if args.env == "network":
+    env = env_network(NUM_USERS,NUM_CHANNELS,ATTEMPT_PROB)
+elif args.env == "mbr":
+    env = mbr_env(NUM_HDMI, NUM_DT, NUM_MF, NUM_CS, ATTEMPT_PROB)
+    #env = session_instance.get_agent_env()
+else:
+    env = env_network(NUM_USERS,NUM_CHANNELS,ATTEMPT_PROB)
+
+logger.error(f'##### ENV setup #####\n')
 # to sample random actions for each user
 action = env.sample()
-logger.info(f'##### action:{action}')
+logger.error(f'### action:{action}')
+
+# mbr action 은 6개 코드셋 중에서 1개 골라서 hdmi1, 2, 3, 4 에 적용
 #
+
 obs = env.step(action)
-state = state_generator(action,obs)
+logger.error(f'### obs :\n{obs}\n')
+
+state = state_generator(action, obs)
 reward = [i[1] for i in obs[:NUM_USERS]]
-logger.info(f'##### Before init Deep Q Network #####\n')
-logger.info(f'##### action :\n{action}\n')
-logger.info(f'##### obs :\n{obs}\n')
-logger.info(f'##### state :\n{state}\n')
-logger.info(f'##### reward :\n{reward}\n')
+logger.error(f'### Before init Deep Q Network #####\n')
+
+logger.error(f'### state :\n{state}\n')
+logger.error(f'### reward :\n{reward}\n')
 
 #this is experience replay buffer(deque) from which each batch will be sampled and fed to the neural network for training
 if args.with_per:
     #memory = PerMemory(mem_size=args.memory_size, feature_size=NUM_USERS*2, prior=True)
     memory = PerMemory(mem_size=args.memory_size, feature_size=2 * (NUM_CHANNELS + 1), prior=True)
 else:
+    '''
+    if args.type == "PPO":
+        memory = PPOMemory()
+    else:
+    '''
     memory = Memory(max_size=args.memory_size)
 
 #initializing deep Q network model
@@ -189,8 +224,14 @@ elif args.type == "DRQN":
     mainQN = QNetwork(name='DRQN',hidden_size=hidden_size,learning_rate=learning_rate,step_size=step_size,state_size=state_size,action_size=action_size, memory=memory)
 elif args.type == "A2C":
     logger.info(f"##### A2C #####")
-    #a2c = A2C(env=env, sess=sess, act_dim=action_size, obs_dim=NUM_USERS*2, actor_lr=actor_lr, critic_lr=critic_lr, memory=memory)
-    a2c = A2C(env=env, sess=sess, act_dim=action_size, obs_dim=state_size, memory=memory, actor_lr=actor_lr, critic_lr=critic_lr, prior=args.with_per)
+    #a2c = A2C(env=env, sess=sess, act_dim=action_size, obs_dim=NUM_USERS * 2, actor_lr=actor_lr, critic_lr=critic_lr, memory=memory)
+    if args.env == "network":
+        a2c = A2C(env=env, sess=sess, act_dim=action_size, obs_dim=state_size, memory=memory, actor_lr=actor_lr, critic_lr=critic_lr, prior=args.with_per)
+    elif args.env == "mbr":
+        a2c = A2C(env=env, sess=sess, act_dim=action_size, obs_dim=NUM_HDMI, actor_lr=actor_lr, critic_lr=critic_lr, memory=memory, prior=args.with_per)
+elif args.type == "PPO":                                                                                                 
+    #ppo = PPOAgent(env=env, memory=memory, action_n=action_size, state_dim=state_size, training_batch_size=batch_size)
+    ppo = PPOAgent(env=env, sess=sess, memory=memory, action_n=action_size, state_dim=NUM_HDMI, training_batch_size=batch_size)
 elif args.type == "A2C_ver2":
     logger.info(f"##### A2C_ver2 #####")
     a2c = A2C_ver2(name='A2C_ver2')
@@ -201,35 +242,71 @@ elif args.type == "DDPG":
     #mainQN = DDPG(name= 'main', env=env, obs_dim=env.action_space.shape, act_dim=env.action_space.shape, memory=memory, steps=10000)
     mainQN = DDPG(name='DDPG', env=env, obs_dim=NUM_USERS*2, act_dim=action_size, memory=memory, steps=10000)
     #mainQN = DDPG(name='main', env=env, obs_dim=NUM_USERS, act_dim=action_size, memory=memory, steps=10000)
+
+
 replay_memory = deque(maxlen=100)
 
 #this is our input buffer which will be used for  predicting next Q-values
-if args.type == "A2C" or args.type == "A2C_ver2":
-    history_input = deque(maxlen=action_size)
+if args.type == "A2C" or args.type == "A2C_ver2" or args.type == "PPO":
+    #history_input = deque(maxlen=action_size)
+    history_input = deque(maxlen=NUM_HDMI)
 else:
     history_input = deque(maxlen=step_size)
 
+### TODO :
+# 불확실성 추정 함수
+'''
+def predict_with_uncertainty(f, x, n_iter=100):
+    result = np.zeros((n_iter,) + x.shape)
+    for i in range(n_iter):
+        result[i] = f(x, training=True)
+    prediction = result.mean(axis=0)
+    uncertainty = result.std(axis=0)
+    return prediction, uncertainty
+'''
+###
+def compute_importance(state, reward, gamma=0.99):
+    # 바로 다음 리워드를 감가율만으로 예측?
+    cur_tot_len = len(replay_memory)
+    logger.error(f'cur_tot_len : {cur_tot_len}')
+
+    # 세번째 값들만 추출
+    reward_values = [t[2] for t in replay_memory]
+    logger.error(f'reward_values : {reward_values}')
+    logger.error(f'sum(reward_values[0]) : {sum(reward_values[0])}')
+    logger.error(f'len(reward_values[0]) : {len(reward_values[0])}')
+    # 평균 계산
+    avg_reward = sum(reward_values[0]) / len(reward_values[0])
+
+    print(f'avg_reward : {avg_reward}')  # Output: 3.0
+
+    q_value = avg_reward * gamma
+    next_q_value = np.max(avg_reward)
+    td_target = avg_reward + gamma * next_q_value
+    td_error = abs(td_target - q_value)
+    return td_error
 
 step = 0
 start_train = False
+
+##############################################
+############### pretrain loop ################
 ##############################################
 for ii in range(pretrain_length*step_size*5):
     done = False
     action = env.sample()
     obs = env.step(action)      # obs is a list of tuple with [[(ACK,REW) for each user] ,CHANNEL_RESIDUAL_CAPACITY_VECTOR]
-    next_state = state_generator(action,obs)
+    next_state = state_generator(action, obs)
     reward = [i[1] for i in obs[:NUM_USERS]]
 
     logger.info(f'@@@@@ Pretrain step: {step} @@@@@')
-    logger.info(f'@@@@@@@@@@')
 
     logger.info(f"@ shape of state : {np.shape(state)}")
 
-    logger.info(f'state : {state}\n')
+    logger.error(f'state : {state}\n')
     logger.info(f'action : {action}\n')
     logger.info(f'reward : {reward}\n')
-    logger.info(f'next_state : {next_state}\n')
-    logger.info(f'@@@@@@@@@@')
+    logger.error(f'next_state : {next_state}\n')
 
     if args.with_per:
         #memory.add(td_error, (state, action, reward, next_state))
@@ -243,23 +320,45 @@ for ii in range(pretrain_length*step_size*5):
             memory.add(transition, 1.0)
         else:
             mainQN.store_transition(state, action, reward, next_state)
-        #memory.store((state, action, reward, next_state))
     #elif args.with_ere:
         #a2c.add()
     else:
-        memory.add((state, action, reward, next_state))
+        if args.type == "PPO":
+            # TODO:: reward 에 가중치 곱해보는데, 동일한 코드셋, 채널을 선택한 사용자를 분모로 넣어서,
+            # TODO:: 그 에 비례해서 discount factor 계산해보자
+            memory.add((state, action, reward, next_state))
+            memory.store_each(state, action, reward, next_state, False)
+            #ppo.store_transition(state, action, reward, next_state)
+            if not ppo.memory.GAE_CALCULATED_Q:
+                ppo.make_gae()
+        elif args.type == "A2C":
+            memory.add((state, action, reward, next_state))
+            memory.store_each(state, action, reward, next_state, False)
+            if not memory.GAE_CALCULATED_Q:
+                a2c.make_gae()
 
-    #replay_memory.append((state, np.argmax(action),reward, next_state))
+        else:
+            memory.add((state, action, reward, next_state))
+            #memory.store_each(state, action, reward, next_state, False)
+            #a2c.make_gae()
+
+    #replay_memory.append((state, np.argmax(action), reward, next_state))
     replay_memory.append((state, action, reward, next_state))
+
+    compute_importance(state, reward, 0.99)
 
     state = next_state
     history_input.append(state)
-    logger.info(f'@@ Pretrain step:{step} after store_transition')
+    logger.error(f'@@ Pretrain step:{step} after store_transition')
 
     if step >= args.memory_size:
         if not start_train:
             start_train = True
-            logger.info(f'@@ Now start_train:{start_train}')
+            if args.type == "A2C":
+                a2c.memory.GAE_CALCULATED_Q = True
+            elif args.type == "PPO":
+                ppo.memory.GAE_CALCULATED_Q = True
+            logger.error(f'@@ Now start_train:{start_train}')
             break
         #if args.type == 'A2C':
             #actor.learn(batch, batch_size, feature_size=NUM_USERS*2)
@@ -267,8 +366,21 @@ for ii in range(pretrain_length*step_size*5):
 
 interval = 1       # debug interval
 
+################################
+### TODO :
+# After above pretraining, importance calculation method is applied
+#
+#replay_memory.append()
+#for ii in range(replay_memory.len()):
+
+#def compute_importance(state, action, reward, next_state):
+###
+
+
+################################
+
 # saver object to save the checkpoints of the DQN to disk
-if args.type != "A2C" and args.type != "A2C_ver2":
+if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "P2Pl;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;":
     saver = tf.train.Saver()
 else:
     saver = tf.train.Checkpoint()
@@ -368,6 +480,7 @@ def train_a2c(replay_memory, actor, critic):
     # Training Actor and Critic - state_input [3, 6],
     #actor.train([X, delta], advantages)
     logger.info(f'shape of X:{np.shape(X)}\n shape of delta:{np.shape(delta)}\n action:{np.shape(action)}\n shape of y:{np.shape(y)}\n')
+
     actor.model.fit([X, delta], action, batch_size=batch_size, verbose=0)
     critic.model.fit(X, y, batch_size=batch_size, verbose=0)
 
@@ -502,8 +615,8 @@ def train_advantage_actor_critic(replay_memory, actor, critic):
         idx, w, transition = memory.sample(batch_size)
 
     X = np.array(X)
-    y = np.array(y)
     delta = np.array(delta)
+    y = np.array(y)
     A = np.array(A)
 
     y = np.expand_dims(y, axis=2)
@@ -629,9 +742,12 @@ for time_step in range(TIME_SLOTS):
         #initializing action vector
 
         # Taking optimal action (Exploitation)
-        if args.type == "A2C" or args.type == "A2C_ver2" or args.type == "DDPG":
+        if args.type == "A2C" or args.type == "A2C_ver2" or args.type == "DDPG" or args.type == "PPO":
             #action = np.zeros([NUM_USERS], dtype=np.int32)
-            action = np.zeros([NUM_USERS], dtype=object)
+            if args.env == "network":
+                action = np.zeros([NUM_USERS], dtype=object)
+            elif args.env == "mbr":
+                action = np.zeros([NUM_HDMI], dtype=object)
 
         else:
             #action = np.zeros((NUM_USERS,6),)
@@ -640,25 +756,26 @@ for time_step in range(TIME_SLOTS):
 
         logger.info(f'@@@ check state: {state}\n')
         #converting input history into numpy array
-        state_vector = np.array(history_input)
+        state_vector = np.array(history_input, dtype=object)
 
-        logger.info(f"@@@ Converted @@@\n history_input :\n{history_input}\n --> state_vector :\n{state_vector}\n")
-        logger.info(f"/////////////// each_user iter starts ///////////////")
+        logger.error(f"@@@ Converted @@@\n history_input :\n{history_input}\n --> state_vector :\n{state_vector}\n")
+        logger.error(f"/////////////// each_user iter starts ///////////////")
 
         for each_user in range(NUM_USERS):
 
             if args.type == "A2C" or args.type == "DDPG":
-                logger.info(f'*** state_vector[{each_user}] :\n {state_vector[:,each_user]}')
+                logger.error(f'*** state_vector[{each_user}] :\n {state_vector[:,each_user]}')
                 #logger.info(f'*** state[uid{}] :\n {}'.format(each_user, state[each_user]))
 
                 #state[each_user] = np.resize(state[each_user], [1, action_size, state_size])
                 #state[each_user] = np.resize(state[each_user], [1, state_size])
 
-                tempP = np.zeros((3, 6), dtype=np.float32)
+                #tempP = np.zeros((21,4), dtype=np.float32)
+                #tempP = np.zeros((3, 6), dtype=np.float32)
                 tempP = np.array(state_vector[:,each_user])
-                tempP = np.array(tempP)
+                tempP = np.array(tempP).astype(np.float32)
                 #tempP = tempP[np.newaxis, :]
-                logger.info(f'*** tempP :\n{tempP}')
+                logger.error(f'*** tempP :\n{tempP}')
                 logger.info(f'*** state[{each_user}] :\n{state[each_user]}')
 
                 #probs = a2c.actor.policy.predict(tempP)[:,each_user]
@@ -666,17 +783,40 @@ for time_step in range(TIME_SLOTS):
                 #probs = a2c.actor.predict(tempP)[:,each_user]
                 #action = a2c.actor.predict(np.expand_dims(state[each_user], axis=0))[0]
 
-                prob = a2c.actor.predict(np.expand_dims(tempP[each_user], axis=0))
-                logger.info(f'*** predicted prob[{each_user}] : {prob}')
+                logger.error(f'*** tempP[{each_user}] :\n{tempP[each_user]}')
+                prob = a2c.actor.predict(np.expand_dims(tempP[each_user][:4], axis=0))
+                #prob = a2c.actor.predict(tempP[each_user])
+                logger.error(f'*** predicted prob[{each_user}] : {prob}')
 
                 #prob1 = (1-alpha)*np.exp(beta*probs)
                 #prob = prob1/np.sum(np.exp(beta*probs)) + alpha/(NUM_CHANNELS+1)
+
+            elif args.type == "PPO":
+
+                #tempP = np.array(state_vector[:, each_user])
+                #tempP = np.array(tempP).astype(np.float32)
+                logger.error(f'--> iter each_user : {each_user}')
+                tempP = np.array(state_vector[:, each_user])
+                tempP = np.array(tempP).astype(np.float32)
+                logger.error(f'*** tempP :\n{tempP}') # (6, 9)
+                logger.error(f'*** tempP[{each_user}] : {tempP[each_user]}')
+                logger.error(f'*** state[{each_user}] : {state[each_user]}')
+                '''
+                extracted = tempP[:, :4]
+                extracted = np.expand_dims(extracted, axis=0)
+                logger.error(f'*** extracted :\n{extracted}') # (6, 4)
+                '''
+                tempP = np.expand_dims(tempP, axis=0)
+
+                #prob = ppo.model_actor.predict(tempP)
+                action[each_user] = ppo.choose_action_(tempP)
+                #logger.error(f'*** predicted prob[{each_user}] :\n{prob}')
 
             elif args.type == "A2C_ver2":
                 logger.info(f'state[{each_user}] :\n{state[each_user]}')
 
                 policy = a2c.actor_model(tf.convert_to_tensor(state[each_user][None, :], dtype=tf.float32))
-                '''
+                '''choose_action_
                 tempP = np.zeros((3, 6), dtype=np.float32)
                 tempP = np.array(state_vector[:,each_user])
                 tempP = np.array(tempP)
@@ -734,6 +874,12 @@ for time_step in range(TIME_SLOTS):
                 action[each_user] = np.argmax(prob)
                 logger.info(f'##### argmax action[{each_user}]: {action[each_user]}\n')
 
+            elif args.type == "PPO":
+                logger.error(f'##### ppo state[{each_user}]: {state[each_user]}\n')
+                #action[each_user] = ppo.choose_action_(state[each_user])
+                #action[each_user] = np.argmax(prob[0][each_user])
+                logger.error(f'##### ppo chosen action[{each_user}]: {action[each_user]}\n')
+
             elif args.type == "A2C_ver2":
                 categorized_policy = tf.random.categorical(policy, 1)
                 logger.info(f'after categorical : categorized_policy[{categorized_policy}]\n shape of categorized_policy: {np.shape(categorized_policy)}')
@@ -764,32 +910,36 @@ for time_step in range(TIME_SLOTS):
 
             if time_step % interval == 0:
                 logger.info(f'EachUser:{each_user} Debugging state_vector:\n{state_vector[:,each_user]}')
-                if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "DDPG":
+                if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "DDPG" and args.type != "PPO":
                     logger.info(f'Qs:{Qs}')
                     logger.info(f'prob:{prob}, sum of beta*Qs:{np.sum(np.exp(beta*Qs))}')
                     logger.info(f'End')
 
-    logger.info(f'@@ action : {action}\n shape of action: {np.shape(action)}')
+    logger.error(f'@@ action : {action}\n shape of action: {np.shape(action)}')
 
     # taking action as predicted from the q values and receiving the observation from the environment
     #if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "DDPG":
         #state = state_generator(action, obs)
-    state = state_generator(action, obs)
 
-    logger.info(f"@@ action :\n{action}")
+
+
+    state = state_generator(action, obs)
+    logger.error(f"@@ after generator - state : {state}\n")
+
+    logger.error(f"@@ action :\n{action}")
 
     #logger.info(f'@@ argmax(action) :\n{np.argmax(action)}')
 
     obs = env.step(action)           # obs is a list of tuple with [(ACK,REW) for each user ,(CHANNEL_RESIDUAL_CAPACITY_VECTOR)]
 
-    #logger.error(f"@@ obs{obs}\nshape of obs :{np.shape(obs)}")
+    #logger.error(f"@@ obs{obs}\nshape of obs :choose_action_{np.shape(obs)}")
     logger.info(f"@@ obs{obs}\n")
 
     logger.info(f"@@ len(obs) :\n{len(obs)}")
 
     # Generate next state from action and observation 
-    next_state = state_generator(action,obs)
-    #logger.info(f"@@ next_state :\n{}".format(next_state))
+    next_state = state_generator(action, obs)
+    logger.error(f"@@ after generator - next_state : {next_state}\n")
 
     # reward for all users given by environment
     reward = [i[1] for i in obs[:NUM_USERS]]
@@ -832,7 +982,7 @@ for time_step in range(TIME_SLOTS):
     logger.info(f'$$$$ until time:{time_step} means:{cum_r[-1] / (time_step + 1)}')
 
     all_means.append(cum_r[-1] / (time_step + 1))
-    logger.info(f'$$$$ until time:{time_step} all_means:\n{all_means}')
+    logger.error(f'$$$$ until time:{time_step} all_means:\n{all_means}')
 
 
     # add new experiences into the memory buffer as (state, action , reward , next_state) for training
@@ -845,21 +995,38 @@ for time_step in range(TIME_SLOTS):
         #memory.add(td_error, (state, action, reward, next_state))
 
         #memory.store((state, action, reward, next_state))
-        logger.info(f'## Before store_transition - state:{state} action:{action}')
+        logger.error(f'## Before store_transition - state:{state} action:{action}')
         if args.type == "A2C":
             a2c.actor.store_transition(state, action, reward, next_state)
             #replay_memory.append((state, action, reward, next_state))
         elif args.type == "A2C_ver2":
+            #transition = np.hstack(
+                #[list(state[0]), list(state[1]), list(state[2]), list(np.r_[action, reward]), list(next_state[0]), list(next_state[1]), list(next_state[2])])
+
             transition = np.hstack(
-                [list(state[0]), list(state[1]), list(state[2]), list(np.r_[action, reward]), list(next_state[0]), list(next_state[1]), list(next_state[2])])
+                [(state[0]), (state[1]), (state[2]), (np.r_[action, reward]), (next_state[0]), (next_state[1]), (next_state[2])])
 
             #memory.store(transition)
             memory.add(transition, 1.0)
 
         elif args.type != "DRQN":
             mainQN.store_transition(state, action, reward, next_state)
-    else:
-        memory.add((state, action, reward, next_state))
+    else:   #
+        if args.type == "PPO":
+            memory.add((state, action, reward, next_state))
+            memory.store_each(state, action, reward, next_state, False)
+            #ppo.store_transition(state, action, reward, next_state)
+            if not memory.GAE_CALCULATED_Q:
+                ppo.make_gae()
+        elif args.type == "A2C":
+            memory.add((state, action, reward, next_state))
+            memory.store_each(state, action, reward, next_state, False)
+            if not memory.GAE_CALCULATED_Q:
+                a2c.make_gae()
+        else:
+            memory.add((state, action, reward, next_state))
+
+
 
     state = next_state
     #add new experience to generate input-history sequence for next state
@@ -879,9 +1046,13 @@ for time_step in range(TIME_SLOTS):
             idx, is_weights, batch = memory.sample(batch_size)
         batch = np.array(batch)
     else:
-        batch = memory.sample(batch_size, step_size)
+        if args.type == "PPO" or args.type == "A2C":
+            #batch, gae_r = memory.sample(batch_size, step_size)
+            batch = memory.get_batch(batch_size, step_size)
+        else:
+            batch = memory.sample(batch_size, step_size)
 
-    logger.info(f'///// batch:\n{batch}\n')
+    logger.error(f'///// batch:\n{batch}\n')
 
     if args.with_per:
         #next_states = np.vstack(batch[3])
@@ -896,8 +1067,8 @@ for time_step in range(TIME_SLOTS):
         #idx, is_weights, tmpBatch = memory.sample(5)
         idx, is_weights, tmpBatch = memory.sample(batch_size)
         tmpBatch = np.array(tmpBatch)
-        logger.info(f'@@ PER - tmpBatch :\n{tmpBatch}\n')
         logger.info(f'@@ PER - tmpBatch :\n{np.shape(tmpBatch)}\n')
+        logger.info(f'@@ PER - tmpBatch :\n{tmpBatch}\n')
 
         states = tmpBatch[:, :(NUM_CHANNELS+1)*2]
         states = states[np.newaxis, :]
@@ -913,14 +1084,15 @@ for time_step in range(TIME_SLOTS):
         #next_states = tmpBatch[:, (NUM_USERS*2)*6:(NUM_USERS * 2)*7]
         next_states = tmpBatch[:, :(NUM_CHANNELS*2)+2]
         next_states = next_states[np.newaxis, :]
-        logger.info(f'@@ PER - after sampling  memory.update with next_states :\n{next_states}\n')
+        logger.error(f'@@ PER - after sampling  memory.update with next_states :\n{next_states}\n')
 
         # (1,5,6)
 
     else:
         #   matrix of rank 4
         #   shape [NUM_USERS,batch_size,step_size,state_size]
-        logger.info(f"@@ after sampling - batch\n : {batch}")
+        # (3,2,5)
+        logger.error(f"@@ after sampling - batch :\n{batch}\n")
         states = get_states_user(batch)
 
         #   matrix of rank 3
@@ -943,7 +1115,8 @@ for time_step in range(TIME_SLOTS):
         logger.info(f"## shape of states.shape[1] : {states.shape[1]}")
         logger.info(f"## shape of states.shape[2] : {states.shape[2]}")
         logger.info(f"## shape of states.shape[3] : {states.shape[3]}")
-        if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "DDQN":
+        if args.type != "A2C" and args.type != "A2C_ver2"\
+                and args.type != "DDQN" and args.type != "PPO":
             states = np.reshape(states,[-1,states.shape[2],states.shape[3]])
             actions = np.reshape(actions,[-1,actions.shape[2]])
             rewards = np.reshape(rewards,[-1,rewards.shape[2]])
@@ -963,9 +1136,13 @@ for time_step in range(TIME_SLOTS):
 
         logger.info(f"### shape of next_states : {np.shape(next_states)}")
 
-    if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "DDQN" and args.type != "DDPG":
+    if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "DDQN"\
+            and args.type != "DDPG" and args.type != "PPO":
         #  creating target vector (possible best action)
-        target_Qs = sess.run(mainQN.output,feed_dict={mainQN.inputs_:next_states})
+        logger.error(f'@@@ output:{mainQN.output}')
+        logger.error(f'@@@ inputs_:{mainQN.inputs_}')
+        logger.error(f'@@@ next_states:{next_states}')
+        target_Qs = sess.run(mainQN.output, feed_dict={mainQN.inputs_:next_states})
 
         logger.info(f'@@@ DRQN - target_Qs :\n{target_Qs}')
         rewards = np.mean(rewards, axis=1)
@@ -991,6 +1168,7 @@ for time_step in range(TIME_SLOTS):
 
         loss_list.append(loss)
 
+
     elif args.type == "A2C":
         logger.info(f'compare replay_memory len:{len(replay_memory)} with MINIMUM_REPLAY_MEMORY:{MINIMUM_REPLAY_MEMORY}')
         if len(replay_memory) < MINIMUM_REPLAY_MEMORY:
@@ -1000,7 +1178,7 @@ for time_step in range(TIME_SLOTS):
         #train_a2c(replay_memory, actor, critic)
 
         # rewards (5,3)
-        logger.info(f'@@@ shape(rewards):{np.shape(rewards)}\nrewards.ndim:{rewards.ndim}\nrewards:\n{rewards}')
+        logger.error(f'@@@ shape(rewards):{np.shape(rewards)}\nrewards.ndim:{rewards.ndim}\nrewards:\n{rewards}')
         #logger.info(f'@@@ values.ndim:{values.ndim} values:{values}')
 
         rewards = np.sum(rewards, axis=1)
@@ -1026,12 +1204,17 @@ for time_step in range(TIME_SLOTS):
 
         state_batch, action_batch, next_state_batch, reward_batch = preprocess2(s_queue, a_queue, n_s_queue, r_queue)
 
-        logger.info('##### after preprocess2 #####\n')
+        logger.error('##### after preprocess2 #####\n')
         logger.error(f'@@ state_batch :\n{state_batch}\n@@@ action_batch :\n{action_batch}\n@@@ reward_batch :\n{reward_batch}\n@@@ next_state_batch :\n{next_state_batch}')
         logger.info(f'@@ shape(action_batch):{np.shape(action_batch)}\n')
+        logger.error(f'@@ shape(state_batch):{np.shape(state_batch)}\n')
+
+        #a2c.make_gae()
 
         #al, cl = a2c.learn(state_batch, action_batch, reward_batch)
-        al, cl, TD_errors = a2c.learn_(states, actions, next_states, rewards)
+        #al, cl, TD_errors = a2c.learn_(states, actions, next_states, rewards)
+        al, cl, TD_errors = a2c.learn_(np.reshape(state_batch, [24,4]), action_batch, np.reshape(next_state_batch, [24,4]), reward_batch)
+        #al, cl, TD_errors = a2c.learn_(state_batch, action_batch, next_state_batch, reward_batch)
 
 
         '''
@@ -1086,10 +1269,54 @@ for time_step in range(TIME_SLOTS):
             #actor.learn(batch, batch_size, feature_size=NUM_USERS*2)
         '''
 
+
+    elif args.type == "PPO":
+        #ppo.train_network(step_size)
+        #logger.error(f'---------- total_loss : {total_loss}')
+        #loss_list.append(total_loss)
+
+        minibatch = random.sample(replay_memory, batch_size)
+        for index, sample in enumerate(minibatch):
+            cur_state, action, reward, next_state = sample
+
+        # actions (5,3)
+        logger.info(f'@@@ shape(actions):{np.shape(actions)}\nactions.ndim:{actions.ndim}\nactions:\n{actions}')
+        actions = np.sum(actions, axis=1)
+
+        logger.error(f'@ minibatch -\nshape(cur_state):{np.shape(cur_state)}\ncur_state:\n{cur_state}')
+        logger.error(f'shape(action):{np.shape(action)}\naction:\n{action}')
+        logger.error(f'shape(next_state):{np.shape(next_state)}\nnext_state:\n{next_state}')
+        logger.error(f'shape(reward):{np.shape(reward)}\nreward:\n{reward}')
+        '''
+        preprocess1(cur_state, action, next_state, reward, 1, s_queue, a_queue, n_s_queue, r_queue)
+        logger.error('##### after preprocess1 #####\n')
+        logger.error(f'@@ s_queue :\n{s_queue}')
+
+        state_batch, action_batch, next_state_batch, reward_batch = preprocess2(s_queue, a_queue, n_s_queue, r_queue)
+
+        logger.error('##### after preprocess2 #####\n')
+        logger.error(f'@@ state_batch :\n{state_batch}\n@@@ action_batch :\n{action_batch}\n@@@ reward_batch :\n{reward_batch}\n@@@ next_state_batch :\n{next_state_batch}')
+        logger.info(f'@@ shape(action_batch):{np.shape(action_batch)}\n')
+        logger.error(f'@@ shape(state_batch):{np.shape(state_batch)}\n')
+
+        #np.reshape(state_batch, [24, 4]), action_batch, np.reshape(next_state_batch, [24, 4]), reward_batch
+        #total_loss = ppo.learn_(np.reshape(state_batch, [9, 4]), action_batch, reward_batch, np.reshape(next_state_batch, [9, 4]))
+        #total_loss = ppo.learn_(state_batch, action_batch, reward_batch, next_state_batch)
+        total_loss = ppo.train_ppo_with_GT(state_batch, action_batch, reward_batch, next_state_batch)
+        '''
+
+        #ppo.train_network(cur_state, action, reward, next_state)
+
+
+        total_loss = ppo.train_ppo_with_GT(cur_state, action, reward, next_state)
+        logger.error(f'@ total_loss : {total_loss}')
+        loss_list.append(total_loss)
+
     elif args.type == "A2C_ver2":
         total_loss = a2c.learn(states, actions, rewards, next_states, False)
         logger.info(f'---------- total_loss : {total_loss}')
         loss_list.append(total_loss)
+
 
     elif args.type == "DDQN":
         #train_ddqn(replay_memory, batch_size)
@@ -1103,7 +1330,7 @@ for time_step in range(TIME_SLOTS):
         logger.info(f"### No need to do sess.run in other model ###")
         logger.info(f)
 
-    logger.info(f'$$$$ until time:{time_step} loss_list:{loss_list}')
+    logger.error(f'$$$$ until time:{time_step} loss_list:{loss_list}')
 
     if args.type == "A2C":
         # some book keeping
@@ -1117,6 +1344,11 @@ for time_step in range(TIME_SLOTS):
             a2c.actor.save_weights("./save_weights/DSA_actor.h5")
             a2c.critic.save_weights("./save_weights/DSA_critic.h5")
 
+        max_reward = max(max_reward, episode_reward)
+        logger.info(f'@ After book keeping episode_reward:{episode_reward} max_reward:{max_reward}\n')
+    elif args.type == "PPO":
+        ppo.model_actor.save_weights("./save_weights/mbr_ppo_actor.h5")
+        ppo.model_critic.save_weights("./save_weights/mbr_ppo_critic.h5")
         max_reward = max(max_reward, episode_reward)
         logger.info(f'@ After book keeping episode_reward:{episode_reward} max_reward:{max_reward}\n')
 
@@ -1250,6 +1482,14 @@ elif args.type == "A2C_ver2":
     np.save("a2c_v2_scores", a2c_v2_scores)
     draw_res2(time_step, cum_collision, cum_r, loss_list, means, a2c_v2_scores, TIME_SLOTS)
     saver.save(sess,'checkpoints/actor-critic-ver2-user.ckpt')
+elif args.type == "PPO":
+    ppo_scores = []
+    ppo_scores = np.mean(all_means, axis=0)
+    np.save("ppo_scores", ppo_scores)
+    np.save("ppo_means", means)
+    np.save("ppo_losses", loss_list)
+    draw_res2(time_step, cum_collision, cum_r, loss_list, means, ppo_scores, TIME_SLOTS)
+    #saver.save(sess,'checkpoints/ppo-user.ckpt')
 
 logger.info(f'%%%%%%%%%% npy saving & plot END %%%%%%%%%%\n')
 

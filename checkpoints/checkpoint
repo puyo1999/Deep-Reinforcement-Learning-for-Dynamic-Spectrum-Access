@@ -1,2 +1,2 @@
-model_checkpoint_path: "drqn-user.ckpt"
-all_model_checkpoint_paths: "drqn-user.ckpt"
+model_checkpoint_path: "ppo-user.ckpt"
+all_model_checkpoint_paths: "ppo-user.ckpt"

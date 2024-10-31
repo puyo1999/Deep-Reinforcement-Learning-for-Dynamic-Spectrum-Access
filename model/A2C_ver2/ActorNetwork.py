@@ -34,3 +34,15 @@ class ActorNetwork(Model):
         logits = self.logits(layer_a2)
         return logits
 
+
+    def store_transition(self, s, a, r, s_):
+        print('a2c @shape of s:{} a:{}'.format(np.shape(s), np.shape(a)))
+        print('a2c @StoreTransition - s:{} a:{} r:{} s_:{}'.format(s, a, r, s_))
+        transition = np.hstack(
+            [(s[0]), (s[1]), (s[2]), (np.r_[a, r]), (s_[0]), (s_[1]), (s_[2])])
+        print('StoreTransition - transition:{}'.format(transition))
+        # self.memory.store(transition)
+
+        # error = 1010
+        error = 1007
+        self.memory.add(transition, error=error)

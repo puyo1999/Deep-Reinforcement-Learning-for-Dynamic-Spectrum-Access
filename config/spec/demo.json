@@ -1,0 +1,81 @@
+{
+  "ppo_mbr": {
+    "agent": [
+      {
+        "name": "A2C",
+        "algorithm": {
+          "name": "ActorCritic",
+          "action_pdtype": "default",
+          "action_policy": "default",
+          "explore_var_spec": null,
+          "gamma": 0.99,
+          "lam": 0.95,
+          "num_step_returns": null,
+          "entropy_coef_spec": {
+            "name": "linear_decay",
+            "start_val": 0.01,
+            "end_val": 0.001,
+            "start_step": 100,
+            "end_step": 5000
+          },
+          "policy_loss_coef": 1.0,
+          "val_loss_coef": 0.01,
+          "training_frequency": 1
+        },
+        "memory": {
+          "name" : "Memory",
+          "with_per": true,
+          "with_ere": false
+        },
+        "net": {
+          "type": "PPO",
+          "actor_optim_spec": {
+            "name": "Adam",
+            "lr": 1e-4
+          },
+          "critic_optim_spec": {
+            "name": "Adam",
+            "lr": 1e-5
+          }
+        }
+      }],
+      "env": [{
+        "name": "MBR-PPO",
+        "num_hdmi": 4,
+        "num_dt" : 5,
+        "num_mf" : 3,
+        "num_cs" : 5,
+        "attempt_prob" : 0.75,
+        "observation_space" : 10
+      }],
+      "meta": {
+        "distributed": false,
+        "eval_frequency": 500,
+        "log_frequency": 500,
+        "max_session": 1,
+        "max_trial": 2,
+        "rigorous_eval": 0,
+        "experiment": 0,
+        "trial": 0,
+        "session": 0,
+        "cuda_offset": 0,
+        "resume": false,
+        "experiment_ts": "2024_09_",
+        "prepath": "data/ppo_mbr_24_09/ppo_mbr_t0_s0",
+        "git_sha": "9102ff923d7a3e9c579edc18c6547cce94a7b77a",
+        "random_seed": 1725042120,
+        "graph_prepath": "data/dqn_cartpole_2024_08_31_032200/graph/dqn_cartpole_t0_s0",
+        "info_prepath": "data/dqn_cartpole_2024_08_31_032200/info/dqn_cartpole_t0_s0",
+        "log_prepath": "data/dqn_cartpole_2024_08_31_032200/log/dqn_cartpole_t0_s0",
+        "model_prepath": "data/dqn_cartpole_2024_08_31_032200/model/dqn_cartpole_t0_s0"
+      },
+      "search": {
+        "agent": [{
+          "algorithm": {
+            "gamma__grid_search": [0.5, 0.7, 0.90, 0.95, 0.99]
+          }
+        }
+      ]
+    }
+  }
+}

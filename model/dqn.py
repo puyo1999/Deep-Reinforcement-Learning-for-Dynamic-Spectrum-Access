@@ -5,6 +5,8 @@ from keras.layers import LayerNormalization
 import keras.layers as kl
 import keras.src.layers.rnn as kslr
 
+from model.base import Algorithm
+
 import numpy as np
 
 class DQNetwork:
@@ -72,3 +74,13 @@ class DQNetwork:
 
             self.loss = tf.reduce_mean(tf.square(self.targetQs_ - self.Q))
             self.opt = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
+
+    def store_transition(self, s, a, r, s_):
+        print('DRQN @StoreTransition - shape of s:{} a:{}\n'.format(np.shape(s), np.shape(a)))
+        print('DRQN @StoreTransition - s:{}\n a:{}\n r:{}\n s_:{}\n'.format(s, a, r, s_))
+        transition = np.hstack(
+            [list(s[0]), list(s[1]), list(s[2]), list(np.r_[a, r]), list(s_[0]), list(s_[1]), list(s_[2])])
+        print('DRQN @StoreTransition - transition:{}\n'.format(transition))
+        # self.memory.store(transition)
+        print('DRQN @StoreTransition - error:{}\n'.format(self.error))
+        self.memory.add(transition, self.error)

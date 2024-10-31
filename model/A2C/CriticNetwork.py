@@ -40,7 +40,8 @@ class CriticNetwork(keras.Model):
 		self.state_input, self.output_, self.model = self.create_model()
 		#self.model = self.create_model2()
 
-		self.build(input_shape=[self.action_dim, observation_dim])
+		#self.build(input_shape=[self.action_dim, self.observation_dim])
+		self.build(input_shape=[None, observation_dim])
 		self.summary()
 
 	def call(self, inputs, training=None, mask=None):
@@ -59,7 +60,8 @@ class CriticNetwork(keras.Model):
 		return v
 
 	def create_model(self):
-		state_input = Input(shape=(self.action_dim, self.observation_dim))
+		state_input = Input(shape=[self.action_dim, self.observation_dim])
+		#state_input = Input(shape=[self.observation_dim, self.action_dim])
 		#state_input = Input(shape=(self.state_dim,))
 		#state_input = Input(shape=(1,))
 
@@ -82,7 +84,7 @@ class CriticNetwork(keras.Model):
 			print('Critic Loss - {}'.format(K.sum(-log_lik * state_input)))
 			return K.sum(-log_lik * state_input)
 
-		model = Model(inputs=state_input, outputs=output)
+		model = Model(inputs=[state_input], outputs=[output])
 		model.compile(loss=keras.losses.MeanAbsoluteError(), optimizer=Adam(learning_rate=self.lr), run_eagerly=True)
 		#return output, d1, d2, d3, d4, v, model
 		return state_input, output, model

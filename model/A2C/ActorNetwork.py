@@ -30,6 +30,7 @@ from config.setup import TO_TRAIN
 
 class ActorNetwork(keras.Model):
 	# action : 3, observation : 6
+	# action : 21, observation : 4
 	def __init__(self, sess, action_dim, observation_dim, lr, memory):
 		super(ActorNetwork, self).__init__()
 		self.lr = lr
@@ -83,6 +84,7 @@ class ActorNetwork(keras.Model):
 		'''
 
 	def call(self, inputs, training=None, mask=None):
+		print(f'@ call - inputs:\n{inputs}')
 		x = self.state_h1(inputs)
 		x = self.state_h2(x)
 
@@ -129,8 +131,8 @@ class ActorNetwork(keras.Model):
 
 	def create_model(self):
 		# state_input [3, 6]
-		# state_input [17, 34]
-		state_input = Input(shape=(self.action_dim, self.observation_dim))
+		print(f'@ create_model : action_dim:{self.action_dim}, obs_dim:{self.observation_dim}')
+		state_input = Input(shape=[self.action_dim, self.observation_dim])
 		delta = Input(shape=[self.action_dim])
 		#delta = Input(shape=[1])
 		#d1 = Dense(24, activation='relu', kernel_initializer='he_uniform')
@@ -148,8 +150,10 @@ class ActorNetwork(keras.Model):
 			print('Actor Loss - {}'.format(K.sum(-log_lik * delta)))
 			return K.sum(-log_lik * delta)
 
+
 		policy = Model(inputs=[state_input], outputs=[output_layer])
-		model = Model(inputs=[state_input, delta], outputs=[output_layer])
+		#model = Model(inputs=[state_input, delta], outputs=[output_layer])
+		model = Model(inputs=[state_input], outputs=[output_layer])
 		adam = Adam(self.lr)
 
 		#model.compile(loss='categorical_crossentropy', optimizer='adam')
@@ -243,6 +247,8 @@ class ActorNetwork(keras.Model):
 		return loss
 		'''
 
+
+
 	def learn(self, batch, batch_size, feature_size):
 		if self.prior:
 			idx, w, transition = self.memory.sample(batch_size)
@@ -257,6 +263,7 @@ class ActorNetwork(keras.Model):
 			#errors = (q_preds - q_targets).abs().cpu().numpy()
 			#print('##### Before memory.update() p:\n{}\n'.format(p))
 			self.memory.update(idx, 0.001)
+
 
 	'''
 	def train(self, X, y):

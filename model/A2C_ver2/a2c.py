@@ -10,8 +10,8 @@ from model.A2C_ver2.ActorNetwork import ActorNetwork
 from model.A2C_ver2.CriticNetwork import CriticNetwork
 from keras import optimizers, losses
 
-class A2C_ver2:
-    def __init__(self):
+class A2C_ver2(object):
+    def __init__(self, name):
         # hyper parameters
         self.lr = 0.001
         self.lr2 = 0.005

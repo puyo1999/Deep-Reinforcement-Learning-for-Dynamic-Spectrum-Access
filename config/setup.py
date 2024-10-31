@@ -1,10 +1,12 @@
 import yaml
 
-with open('./config/config.yaml') as f:
+with open('D:/Research Files/DRLforDSA/Deep-Reinforcement-Learning-for-Dynamic-Spectrum-Access/config/config.yaml') as f:
     config = yaml.safe_load(f)
 
 TIME_SLOTS = config['time_slots']
 NUM_CHANNELS = config['num_channels']                               # Total number of channels
+NUM_CS = config['num_cs']                                       # Total number of codesets
+NUM_HDMI = config['num_hdmi']
 NUM_USERS = config['num_users']                                 # Total number of users
 ATTEMPT_PROB = config['attempt_prob']                               # attempt probability of ALOHA based  models
 BATCH_SIZE = config['batch_size']
@@ -33,3 +35,12 @@ REWARD_DISCOUNT = config['reward_discount']
 TYPE = config['type']              # DL algorithm
 WITH_PER = config['with_per']
 GRAPH_DRAWING = config['graph_drawing']
+
+dic_env_conf = {
+    "NUM_CS": 5,
+    "NUM_CHANNELS": NUM_CHANNELS,
+    "NUM_HDMI": NUM_HDMI,
+    "NUM_USERS": NUM_USERS,
+    "NUM_DT": 6, # device type : STB, OTT, BD, Game
+    "NUM_MF": 10, # manufacturer
+}
