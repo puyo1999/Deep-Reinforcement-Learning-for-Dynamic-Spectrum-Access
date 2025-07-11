@@ -1,5 +1,5 @@
 import tensorflow.compat.v1 as tf
-tf.disable_v2_behavior()
+#tf.disable_v2_behavior()
 
 from keras.layers import LayerNormalization
 import keras.layers as kl

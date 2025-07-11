@@ -2,6 +2,8 @@ import numpy as np
 import random
 import sys
 import os
+from py_lab.lib import logger
+logger = logger.get_logger(__name__)
 
 """
 TIME_SLOTS = 1000
@@ -60,7 +62,7 @@ class env_network:
             
             self.users_observation[i] = channel_alloc_frequency[self.users_action[i]]
             print('@@@@@@@@@@ step - observation[{}] : {}'.format(i, self.users_observation[i]))
-            if self.users_action[i] == 0:   #accessing no channel
+            if self.users_action[i] == 0:   # accessing no channel
                 self.users_observation[i] = 0
             if self.users_observation[i] == 1:
                 print('@@@@@@@@@@ step - reward : 1 !!!')

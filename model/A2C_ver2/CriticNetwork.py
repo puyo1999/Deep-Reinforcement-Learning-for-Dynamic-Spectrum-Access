@@ -13,8 +13,10 @@ from keras.models import Model
 import tensorflow.compat.v1 as tf
 
 #tf.disable_v2_behavior()
+'''
 from tensorflow.python.framework.ops import enable_eager_execution
 enable_eager_execution()
+'''
 
 class CriticNetwork(Model):
     def __init__(self):

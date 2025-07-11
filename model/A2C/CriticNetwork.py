@@ -3,21 +3,13 @@ CriticNetwork.py
 """
 import keras.losses
 import tensorflow as tf
-from tensorflow import keras
-from keras.layers import Dense, Input
-import keras.backend as K
-import tensorflow.keras.backend as K
+tf.compat.v1.enable_eager_execution()
 
+from tensorflow.python.keras import backend as K
+
+from keras.layers import Dense, Input, Add, Multiply
 from keras.models import Model
-from keras.layers import Add, Multiply
-from keras.optimizers.legacy import Adam
-from tensorflow.keras import losses
-
-import tensorflow.compat.v1 as tf
-
-#tf.disable_v2_behavior()
-from tensorflow.python.framework.ops import enable_eager_execution
-enable_eager_execution()
+from keras.optimizers import Adam
 
 NUM_USERS = 3		# Total number of users
 
@@ -26,7 +18,7 @@ class CriticNetwork(keras.Model):
 		super(CriticNetwork, self).__init__()
 		self.action_dim, self.observation_dim = action_dim, observation_dim
 		self.lr = lr
-		tf.keras.backend.set_session(sess)
+		K.set_session(sess)
 
 		#self.value_size = NUM_USERS
 		self.value_size = 1
@@ -85,7 +77,8 @@ class CriticNetwork(keras.Model):
 			return K.sum(-log_lik * state_input)
 
 		model = Model(inputs=[state_input], outputs=[output])
-		model.compile(loss=keras.losses.MeanAbsoluteError(), optimizer=Adam(learning_rate=self.lr), run_eagerly=True)
+		#model.compile(loss=keras.losses.MeanAbsoluteError(), optimizer='Adam', run_eagerly=False)
+		model.compile(loss=keras.losses.MeanAbsoluteError(), optimizer='Adam')
 		#return output, d1, d2, d3, d4, v, model
 		return state_input, output, model
 
@@ -95,14 +88,14 @@ class CriticNetwork(keras.Model):
 		state_h2 = Dense(48)(state_h1)
 		
 		action_input = Input(shape=(self.action_dim,))
-		action_h1    = Dense(48)(action_input)
+		action_h1 = Dense(48)(action_input)
 		
 		merged = Add()([state_h2, action_h1])
 		merged_h1 = Dense(24, activation='relu')(merged)
 		output = Dense(1, activation='relu')(merged_h1)
-		model  = Model(inputs=[state_input, action_input], outputs=output)
+		model = Model(inputs=[state_input, action_input], outputs=output)
 		
-		adam  = Adam(learning_rate=0.001)
-		model.compile(loss="mse", optimizer=adam)
+		adam = Adam(learning_rate=0.001)
+		model.compile(loss="mse", optimizer='Adam')
 		return model		
 

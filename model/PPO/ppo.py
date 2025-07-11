@@ -1,4 +1,4 @@
-#import tensorflow.compat.v1 as tf
+import tensorflow.compat.v1 as tf
 #tf.disable_v2_behavior()
 
 import tensorflow as tf
@@ -16,12 +16,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 LOSS_CLIPPING = 0.1
-
-from tensorflow.python.framework.ops import enable_eager_execution
-enable_eager_execution()
+huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 
 import tensorflow.compat.v1 as tf
-
 
 class PPOAgent(Algorithm):
 #class PPOAgent(object):
@@ -40,6 +37,7 @@ class PPOAgent(Algorithm):
         self.learning_rate_critic = 0.0005
         self.epochs_cnt = 5
 
+        self.eps = np.finfo(np.float32).eps.item()
         self.discount_rate = 0.98
         self.smooth_rate = 0.95
         self.episode_num = 500
@@ -51,7 +49,7 @@ class PPOAgent(Algorithm):
         self.GAE_LAMBDA = 0.95
         self.CLIPPING_LOSS_RATIO = 0.1
         self.ENTROPY_LOSS_RATIO = 0.001
-        self.TARGET_UPDATE_ALPHA = 0.9
+        #self.TARGET_UPDATE_ALPHA = 0.9
 
         self.model_actor = self.build_model_actor()
         self.model_critic = self.build_model_critic()
@@ -68,6 +66,7 @@ class PPOAgent(Algorithm):
         self.old_prediction = tf.placeholder(dtype=tf.float32, shape=[None, 6], name='old_prediction_input')
 
         self.memory = memory
+        self.ema_rewards = 0
 
 
     '''class MyModel(keras.Model):
@@ -118,7 +117,7 @@ class PPOAgent(Algorithm):
         return model
 
     def get_action_prob(self, inputs, training=None, mask=None):
-        print(f'@ get_action_prob - inputs:\n{inputs}')
+        logger.info(f'@ get_action_prob - inputs:\n{inputs}')
         dense = Dense(self.node_num, activation='relu', name='dense1')(inputs)
         dense = Dense(self.node_num, activation='relu', name='dense2')(dense)
         policy = Dense(self.action_n, activation='softmax', name='actor_output_layer')(dense)
@@ -202,13 +201,34 @@ class PPOAgent(Algorithm):
 
     def get_action_(self, state):
         policy = self.model_actor.predict(state, batch_size=1).flatten()
+        policy = policy[:6]
+        logger.error(f'policy:\n{policy}')
+        logger.error(f'policy shape : {policy.shape}')
         return np.random.choice(self.action_n, 1, p=policy)[0]
+
+    def variable_discount_rewards(self, rewards, discount_factors):
+        discounted_rewards = np.zeros_like(rewards, dtype=np.float32)
+        cumulative_reward = 0.0
+        for t in reversed(range(len(rewards))):
+            cumulative_reward = rewards[t] + discount_factors[t] * cumulative_reward
+            discounted_rewards[t] = cumulative_reward
+        return discounted_rewards
+
+    def new_discount_rewards(self, rewards, codeset):
+        discounted_rewards = np.zeros_like(rewards)
+        running_add = 0
+        gamma_ratio = 1
+        for i in reversed(range(len(rewards))):
+            running_add = rewards[i] + running_add * self.GAMMA * (gamma_ratio / len(codeset))
+            discounted_rewards[i] = running_add
+
+        return discounted_rewards
 
     def discount_rewards(self, rewards):
         discounted_rewards = np.zeros_like(rewards)
         running_add = 0
         for t in reversed(range(len(rewards))):
-            running_add = running_add * self.gamma + rewards[t]
+            running_add = running_add * self.GAMMA + rewards[t]
             discounted_rewards[t] = running_add
         return discounted_rewards
 
@@ -240,7 +260,7 @@ class PPOAgent(Algorithm):
         surrogate = -tf.minimum(ratio * gaes, clipped_ratio * gaes)
         return tf.reduce_mean(surrogate)
 
-    def ppo_loss_with_GT(self, old_probs, states, actions, advantages, values, next_values, returns):
+    def ppo_loss_with_GT(self, old_probs, states, actions, advantages, values, returns, rewards):
      action_masks = tf.one_hot(actions, self.action_n)
      probs = tf.nn.softmax(self.model_actor(states))
 
@@ -248,7 +268,7 @@ class PPOAgent(Algorithm):
      if tf.size(action_masks) == tf.size(probs):
          action_masks = tf.reshape(action_masks, probs.shape)
      else:
-         print("The number of elements in action_masks and probs do not match.")
+         logger.info("The number of elements in action_masks and probs do not match.")
 
 
      # One-hot encode actions
@@ -279,7 +299,7 @@ class PPOAgent(Algorithm):
      if old_chosen_probs.shape[0] < max_len:
          old_chosen_probs = tf.tile(old_chosen_probs, [max_len // old_chosen_probs.shape[0] + 1])[:max_len]
 
-     # Print new shapes
+     # logger.info new shapes
      logger.error(f"New chosen_probs shape: {chosen_probs.shape}")
      logger.error(f"New old_chosen_probs shape: {old_chosen_probs.shape}")
 
@@ -293,7 +313,9 @@ class PPOAgent(Algorithm):
      logger.error(f"surrogate2: {surrogate2}")
      policy_loss = -tf.reduce_mean(tf.minimum(surrogate1, surrogate2))
 
-     value_loss = tf.reduce_mean(tf.square(values - returns))
+     #value_loss = tf.reduce_mean(tf.square(values - returns))
+
+     value_loss = tf.reduce_mean(tf.square(rewards - values))
 
      entropy_loss = -tf.reduce_mean(tf.reduce_sum(probs * tf.math.log(probs + 1e-10), axis=1))
 
@@ -339,16 +361,43 @@ class PPOAgent(Algorithm):
 
         # Calculate the ratio of the new and old predictions
         ratio = predictions[0] / old_predictions[0]
-        logger.info(f'@@ ppo_loss_new - ratio :\n{ratio}\n')
+        logger.error(f'@@ ppo_loss_new - ratio :\n{ratio}\n')
         clipped = KB.clip(ratio, 1 - LOSS_CLIPPING, 1 + LOSS_CLIPPING)
-        logger.info(f'@@ ppo_loss_new - clipped :\n{clipped}\n')
+        logger.error(f'@@ ppo_loss_new - clipped :\n{clipped}\n')
 
         # Calculate the PPO loss using the ratio and advantages
         loss = KB.minimum(ratio * advantages, clipped * advantages)
         loss = -tf.reduce_mean(loss)
 
-        logger.info(f'@@ ppo_loss_new - loss :\n{loss}\n')
+        logger.error(f'@@ ppo_loss_new - loss :\n{loss}\n')
         return loss
+
+    def gae(self, rewards, values, episode_ends, gamma, lam):
+        """Compute generalized advantage estimate.
+            rewards: a list of rewards at each step.
+            values: the value estimate of the state at each step.
+            episode_ends: an array of the same shape as rewards, with a 1 if the
+                episode ended at that step and a 0 otherwise.
+            gamma: the discount factor.
+            lam: the GAE lambda parameter.
+        """
+        # Invert episode_ends to have 0 if the episode ended and 1 otherwise
+        episode_ends = (episode_ends * -1) + 1
+
+        N = rewards.shape[0]
+        T = rewards.shape[1]
+        gae_step = np.zeros((N, ))
+        advantages = np.zeros((N, T))
+        for t in reversed(range(T - 1)):
+            # First compute delta, which is the one-step TD error
+            delta = rewards[:, t] + gamma * values[:, t + 1] * episode_ends[:, t] - values[:, t]
+            # Then compute the current step's GAE by discounting the previous step
+            # of GAE, resetting it to zero if the episode ended, and adding this
+            # step's delta
+            gae_step = delta + gamma * lam * episode_ends[:, t] * gae_step
+            # And store it
+            advantages[:, t] = gae_step
+        return advantages
 
     def make_gae(self):
         gae = 0
@@ -429,6 +478,19 @@ class PPOAgent(Algorithm):
         self.memory.store((s,a,r,s_))
         self.memory.store_each(s, a, r, s_, False)
 
+    def store_transition_per(self, s, a, r, s_):
+        logger.info('ppo @shape of s:{} a:{}'.format(np.shape(s), np.shape(a)))
+        logger.info('ppo @StoreTransition - s:{} a:{} r:{} s_:{}'.format(s, a, r, s_))
+        transition = np.hstack(
+            [(s[0]), (s[1]), (s[2]), (np.r_[a, r]), (s_[0]), (s_[1]), (s_[2])])
+        logger.info('StoreTransition - transition:{}'.format(transition))
+        # self.memory.store(transition)
+
+        # error = 1010
+        error = 1007
+        self.memory.add(transition, error=error)
+
+    # self.memory.add2(transition)
     def get_v(self, state):
         """Returns the value of the state.
         Basically, just a forward pass though the critic networtk
@@ -451,81 +513,148 @@ class PPOAgent(Algorithm):
         #state = np.expand_dims(state, axis=0)
         return self.model_actor_old.predict_on_batch(state)
 
+    def calculate_ema(self, reward):
+        self.ema_rewards = self.TARGET_UPDATE_ALPHA * reward + (1 - self.TARGET_UPDATE_ALPHA) * self.ema_rewards
+        return self.ema_rewards
+
     def learn_(self, states, actions, next_states, discnt_rewards):
         with tf.GradientTape() as tape1, tf.GradientTape() as tape2:
-            action_prob = self.model_actor(states, training=True)
+            states = np.expand_dims(states, axis=0)
+            action_p = self.model_actor(states, training=True)
+            action_prob = self.model_actor.predict(states)
             critic = self.model_critic(states, training=True)
 
-            print(f'@ learn_ - action_prob:\n{action_prob}\ncritic:\n{critic}')
-            print(f'@ learn_ - action_prob[0]:\n{action_prob[0]}')
-            action = self.get_action_(action_prob)
+            logger.info(f'@ learn_ - actions:\n {actions}')
+            logger.info(f'@ learn_ - action_prob:\n {action_prob}\n critic:\n{critic}')
+            logger.info(f'@ learn_ - action_prob[0]:\n {action_prob[0]}')
+            action = self.get_action_(states)
 
-            print(f'@ learn_ - action: {action}')
+            logger.info(f'@ learn_ - action: {action}')
 
             # rewards 를 discounted factor 로 다시 계산.
             returns = []
             discounted_sum = 0
             for r in discnt_rewards[::-1]:
-                discounted_sum = r + self.discount_factor * discounted_sum
+                discounted_sum = r + self.discount_rate * discounted_sum
                 returns.insert(0, discounted_sum)
             # Normalize
             returns = np.array(returns)
             returns = (returns - np.mean(returns)) / (np.std(returns) + self.eps)
             returns = returns.tolist()
 
-            next_critic = self.model_critic(next_states, training=True)
-            print(f'@ learn_ - next_critic:\n{next_critic}\ndiscnt_rewards:\n{discnt_rewards}')
-            print(f'@ learn_ - returns[0] :\n{returns[0]}')
-            advantage = returns[0] - critic[0,0]
 
-            print(f'@ learn_ - advantage :\n{advantage}')
-            print(f'@ learn_ - critic[0,0] :\n{critic[0,0]}')
-            print(f'@ learn_ - action_prob[0][0] :\n{action_prob[0][0]}')
+            # EMA 보상 계산
+            ema_rewards = [self.calculate_ema(reward) for reward in returns]
+            ema_rewards = tf.convert_to_tensor(ema_rewards, dtype=tf.float32)
+            logger.error(f'@ learn_ - ema_rewards:\n{ema_rewards}\n')
+
+            next_states = np.expand_dims(next_states, axis=0)
+            next_critic = self.model_critic(next_states, training=True)
+            logger.info(f'@ learn_ - next_critic:\n{next_critic}\n discnt_rewards:\n{discnt_rewards}')
+            logger.info(f'@ learn_ - returns[0] :\n{returns[0]}')
+            advantage = returns[0] - critic[0,0]
+            array_ = '''
+            clipped_action_prob = tf.clip_by_value(action_prob, 1 - self.CLIPPING_LOSS_RATIO, 1 + self.CLIPPING_LOSS_RATIO)
+            logger.error(f'@ learn_ - clipped_action_prob:\n{clipped_action_prob}\n')
+
+            min_advantage = tf.minimum(action_prob * advantage, clipped_action_prob * advantage)
+            logger.error(f'@ learn_ - min_advantage:\n{min_advantage}\n')
+            loss = -tf.reduce_mean(min_advantage)
+            loss_array = self.sess.run(loss)
+            logger.error(f'@ learn_ - loss_array:\n{loss_array}\n')
+            
+            #ema_loss = -tf.reduce_mean(
+                #tf.minimum(action_prob * advantage, tf.clip_by_value(action_prob, 1 - self.CLIPPING_LOSS_RATIO, 1 + self.CLIPPING_LOSS_RATIO) * advantage) * ema_rewards)
+
+            #logger.error(f'@ learn_ - ema_loss : {ema_loss}')
+            
+            init = tf.global_variables_initializer()
+
+            if not isinstance(loss, tf.Tensor):
+                raise TypeError(f"Expected loss to be a tensor, but got {type(loss)}")
+
+            grads1 = tape1.gradient(loss, self.model_actor.trainable_variables)
+            for grad, var in zip(grads1, self.model_actor.trainable_variables):
+                logger.error(f"Variable: {var.name}, Gradient: {grad}")
+            #self.optimizer.apply_gradients(zip(grads1, self.model_actor.trainable_variables))
+
+        return loss_array
+            '''
+            logger.info(f'@ learn_ - advantage :\n{advantage}')
+            logger.info(f'@ learn_ - critic[0,0] :\n{critic[0,0]}')
+            logger.info(f'@ learn_ - action_prob[0][0] :\n{action_prob[0][0]}')
             # [ [prob, prob, ... ] ]형식으로 입력이 들어옴
             #a_loss = -tf.math.log(action_prob[0][0]) * np.transpose( advantage[:5][:3] )
-            a_loss = -tf.math.log(action_prob) * np.transpose(advantage)
+            a_loss = -tf.math.log(action_prob) * tf.transpose(advantage)
 
-            critic = np.squeeze(critic)
-            critic = np.mean(critic)
-            print(f'@ learn_ - critic:\n{critic}\n')
+            critic = tf.squeeze(critic)
+            critic = tf.reduce_mean(critic)
+            logger.info(f'@ learn_ - critic:\n{critic}\n')
 
             c_loss = huber_loss(critic, discnt_rewards)
-            print(f'actor loss :\n{a_loss}')
-            print(f'critic loss :\n{c_loss}')
+            logger.error(f'actor loss :\n{a_loss}')
+            logger.error(f'critic loss :\n{c_loss}')
+
+            entropy_loss = -tf.reduce_mean(tf.reduce_sum(action_prob * tf.math.log(action_prob + 1e-10), axis=1))
+
+            # Assuming you are using TensorFlow 1.x
+
+            total_loss = tf.reduce_mean(tf.reduce_sum(a_loss + 0.5 * c_loss - 0.01 * entropy_loss))
+            total_loss_array = self.sess.run(total_loss)
 
             #Compute the Q value estimate of the target network
-            Q_target = self.critic_target(next_states, self.actor_target(next_states))
-            Q_target = np.squeeze(Q_target)
+
+            Q_target = self.model_critic(next_states, self.model_actor(next_states))
+            Q_target = tf.squeeze(Q_target)
             #Q_target = np.swapaxes(Q_target, 1, 2)
-            Q_target = np.mean(Q_target)
+            Q_target = tf.reduce_mean(Q_target)
 
             #Compute Y
-            Y = discnt_rewards + (self.gamma * Q_target)
+            Y = discnt_rewards + (self.GAMMA * Q_target)
             #Compute Q value estimate of critic
-            Q = self.critic(states, action)
+            Q = self.model_critic(states, action)
 
-            Q = np.squeeze(Q)
+            Q = tf.squeeze(Q)
             #Q = np.swapaxes(Q, 1, 2)
-            Q = np.mean(Q)
+            Q = tf.reduce_mean(Q)
 
             #Calculate TD errors
             TD_errors = (Y - Q)
+            # TD error 값을 스칼라 값으로 변환
+            td_error_scalar_mean = tf.reduce_mean(TD_errors)
+            td_error_scalar_sum = tf.reduce_sum(TD_errors)
 
-            print(f'@ learn_ - TD_errors:\n{TD_errors}')
+            TD_errors_array = self.sess.run(td_error_scalar_mean)
+            logger.error(f'@ learn_ - TD_errors_array: {TD_errors_array}')
 
             # Backpropagation
-            grads1 = tape1.gradient(a_loss, self.actor.trainable_variables)
-            #grads2 = tape2.gradient(c_loss, self.critic.trainable_variables)
+            grads1 = tape1.gradient(a_loss, self.model_actor.trainable_variables)
+            #grads2 = tape2.gradient(c_loss, self.model_critic.trainable_variables)
 
-            trainable_vars = self.critic.trainable_variables
+            trainable_vars = self.model_critic.trainable_variables
             grads2 = tape2.gradient(c_loss, trainable_vars)
 
-        self.a_opt.apply_gradients(zip(grads1, self.actor.trainable_variables))
-        #self.c_opt.apply_gradients(zip(grads2, self.critic.trainable_variables))
+            init = tf.global_variables_initializer()
 
-        return a_loss, c_loss, TD_errors
+            #self.a_opt.apply_gradients(zip(grads1, self.model_actor.trainable_variables))
+            #self.c_opt.apply_gradients(zip(grads2, self.model_critic.trainable_variables))
 
-    ## TODO:: GradientTape 에서 loss 계산해서 저장하기
+            # logger.info gradients
+            for grad, var in zip(grads1, self.model_actor.trainable_variables):
+                if grad is not None:
+                    logger.info(f"Variable: {var.name}, Gradient: {grad}")
+                    self.optimizer.apply_gradients(zip(grads1, self.model_actor.trainable_variables))
+                else:
+                    logger.info(f"Variable: {var.name} has no gradient.")
+
+            # Calculate gradients
+
+        #return a_loss, c_loss, TD_errors
+        #return total_loss_array
+        return TD_errors_array
+
+    ### TODO::1 GradientTape 에서 loss 계산해서 저장하기
+    ### TODO::2 gamma ( discount_rate) 적용해서 discount_rewards 적용하기
 
     def train_ppo_with_GT(self, states, actions, rewards, next_states):
         action_probs, old_action_probs = [], []
@@ -602,7 +731,6 @@ class PPOAgent(Algorithm):
                 logger.error("Error: The tensor cannot be reshaped to the target shape [100].")
                 returns = advantages
 
-            logger.error(f'### np.shape(returns) : {np.shape(returns)}')  #(100, 3, 4)
             '''
             mean_returns = [
                 sum(sum(inner_list) for inner_list in outer_list) / (len(outer_list) * len(outer_list[0])) for
@@ -612,7 +740,15 @@ class PPOAgent(Algorithm):
 
             #probs = tf.nn.softmax(self.model_actor(states))
 
-            loss, total_loss = self.ppo_loss_with_GT(old_action_probs, states, actions, advantages, values, returns, rewards)
+            logger.error(f'before calc discounted rewards - states: {states}')
+            discounted_rewards = self.new_discount_rewards(rewards, [0, 1, 2, 2])
+
+            logger.error(f'### values shape : {np.shape(values)}')
+            logger.error(f'### returns shape : {np.shape(returns)}')
+
+            #loss, total_loss = self.ppo_loss_with_GT(old_action_probs, states, actions, advantages, values, returns, rewards)
+            loss, total_loss = self.ppo_loss_with_GT(old_action_probs, states, actions, advantages, values, returns, discounted_rewards)
+
             #loss = self.ppo_loss(advantages, old_action_probs)
             #loss = self.ppo_loss_with_GT(old_action_probs, action_probs, values, old_values, next_values, actions, rewards)
             logger.error(f'after ppo_loss_with_GT ***** total_loss : {total_loss} *****')
@@ -624,12 +760,9 @@ class PPOAgent(Algorithm):
 
             batch_a_final = np.zeros(shape=(1,))
             batch_a_final[:] = 1
-
-
-
-            print("States shape:", states.shape)
-            print("Advantages shape:", advantages.shape)
-            print("Batch old prediction shape:", batch_old_prediction.shape)
+            logger.info("States shape:", states.shape)
+            logger.info("Advantages shape:", advantages.shape)
+            logger.info("Batch old prediction shape:", batch_old_prediction.shape)
 
             '''feed_dict = {
                 self.advantage_input: advantages,
@@ -712,7 +845,7 @@ class PPOAgent(Algorithm):
 
         batch_a_final = np.zeros(shape=(len(batch_a), self.n_actions))
         batch_a_final[:, batch_a.flatten()] = 1
-        # print(batch_s.shape, batch_advantage.shape, batch_old_prediction.shape, batch_a_final.shape)
+        # logger.info(batch_s.shape, batch_advantage.shape, batch_old_prediction.shape, batch_a_final.shape)
         self.model_actor.fit(x=[batch_s, batch_advantage, batch_old_prediction], y=batch_a_final, verbose=0)
         self.model_critic.fit(x=batch_s, y=batch_discounted_r, epochs=2, verbose=0)
         self.memory.clear()

@@ -4,17 +4,15 @@ ActorNetwork.py
 __author__ = "py81.kim@gmail.com"
 __credits__ = "https://github.com/puyo1999"
 
-import keras.losses
+import keras
 import tensorflow as tf
-import tensorflow
+tf.compat.v1.enable_eager_execution()
 
-from tensorflow import keras
 from keras.layers import Dense, Flatten, Input
-#import keras.backend as K
-import tensorflow.keras.backend as K
-
 from keras.models import Model
-from keras.optimizers.legacy import Adam
+from keras.optimizers import Adam
+
+from tensorflow.python.keras import backend as K
 
 import torch
 import torch.nn.functional as F
@@ -23,7 +21,6 @@ from torch.distributions import Normal
 import numpy as np
 
 import tensorflow_probability as tfp
-import tensorflow.compat.v1 as tf
 
 from config.setup import TRAIN_FREQ
 from config.setup import TO_TRAIN
@@ -31,6 +28,7 @@ from config.setup import TO_TRAIN
 class ActorNetwork(keras.Model):
 	# action : 3, observation : 6
 	# action : 21, observation : 4
+	# mbr case - action_dim : 6, observation_dim : 4
 	def __init__(self, sess, action_dim, observation_dim, lr, memory):
 		super(ActorNetwork, self).__init__()
 		self.lr = lr
@@ -48,7 +46,7 @@ class ActorNetwork(keras.Model):
 		#self.state_input = tf.placeholder(tf.float32, shape=[None, observation_dim], name='inputs_')
 
 		# setting the our created session as default session
-		tf.keras.backend.set_session(sess)
+		K.set_session(sess)
 
 		self.sess = sess
 		#self.state_input, self.a, self.output, self.model, self.policy = self.create_model()
@@ -98,7 +96,7 @@ class ActorNetwork(keras.Model):
 		return super(ActorNetwork, self).predict(state)
 	'''
 
-	# return super(Actor,self).predict(np.expand_dims(state, axis=0))
+	#return super(Actor,self).predict(np.expand_dims(state, axis=0))
 	def forward(self, state):
 		x = self.state_h1(state)
 		x = self.state_h2(x)
@@ -145,10 +143,10 @@ class ActorNetwork(keras.Model):
 		output_layer = Dense(self.action_dim, activation='softmax', kernel_initializer='he_uniform')(state_h2)
 
 		def custom_loss(y_true, y_pred):
-			out = K.clip(y_pred, 1e-8, 1 - 1e-8)
-			log_lik = y_true * K.log(out)
-			print('Actor Loss - {}'.format(K.sum(-log_lik * delta)))
-			return K.sum(-log_lik * delta)
+			out = tf.keras.backend.clip(y_pred, 1e-8, 1 - 1e-8)
+			log_lik = y_true * tf.keras.backend.log(out)
+			print('Actor Loss - {}'.format(tf.keras.backend.sum(-log_lik * delta)))
+			return tf.keras.backend.sum(-log_lik * delta)
 
 
 		policy = Model(inputs=[state_input], outputs=[output_layer])
@@ -158,7 +156,8 @@ class ActorNetwork(keras.Model):
 
 		#model.compile(loss='categorical_crossentropy', optimizer='adam')
 		#model.compile(loss=keras.losses.CategoricalCrossentropy(), optimizer=adam)
-		model.compile(loss=custom_loss, optimizer=adam, run_eagerly=True)
+		#model.compile(loss=custom_loss, optimizer='Adam', run_eagerly=True)
+		model.compile(loss=custom_loss, optimizer='Adam')
 
 		#return state_input, a, output_layer, model, policy
 		return state_input, output_layer, model
@@ -171,10 +170,14 @@ class ActorNetwork(keras.Model):
 		print('StoreTransition - transition:{}'.format(transition))
 		#self.memory.store(transition)
 
+		# TODO:: 이 디폴트 td_error 값도 config 로 입력받을 수 있게 하자
+		# TODO:: 그리고, 이 값의 의미를 정확히 이해하고 논문에 작성
 		#error = 1010
+		'''
 		error = 1007
 		self.memory.add(transition, error=error)
-		#self.memory.add2(transition)
+		'''
+		self.memory.add2(transition)
 
 		#self.step_cnt += 1
 

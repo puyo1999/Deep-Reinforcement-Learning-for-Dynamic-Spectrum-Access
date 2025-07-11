@@ -5,9 +5,18 @@ with open('D:/Research Files/DRLforDSA/Deep-Reinforcement-Learning-for-Dynamic-S
 
 TIME_SLOTS = config['time_slots']
 NUM_CHANNELS = config['num_channels']                               # Total number of channels
+NUM_DT = config['num_dt']
+NUM_MF = config['num_mf']
 NUM_CS = config['num_cs']                                       # Total number of codesets
+
 NUM_HDMI = config['num_hdmi']
 NUM_USERS = config['num_users']                                 # Total number of users
+
+env = config['env']
+if env == "mbr":
+    NUM_CHANNELS = NUM_CS
+    NUM_USERS = NUM_HDMI
+
 ATTEMPT_PROB = config['attempt_prob']                               # attempt probability of ALOHA based  models
 BATCH_SIZE = config['batch_size']
 PRETRAIN_LEN = config['pretrain_length']
@@ -21,6 +30,7 @@ MINIMUM_REPLAY_MEMORY = 32
 
 MEMORY_SIZE = config['memory_size']
 
+action_size = NUM_CHANNELS + 1
 batch_size = BATCH_SIZE                         # Num of batches to train at each time_slot
 pretrain_length = PRETRAIN_LEN            # this is done to fill the deque up to batch size before training
 hidden_size = 128                       # Number of hidden neurons
@@ -36,11 +46,14 @@ TYPE = config['type']              # DL algorithm
 WITH_PER = config['with_per']
 GRAPH_DRAWING = config['graph_drawing']
 
+gamma = GAMMA
+with_per = WITH_PER
+
 dic_env_conf = {
     "NUM_CS": 5,
     "NUM_CHANNELS": NUM_CHANNELS,
     "NUM_HDMI": NUM_HDMI,
     "NUM_USERS": NUM_USERS,
-    "NUM_DT": 6, # device type : STB, OTT, BD, Game
+    "NUM_DT": 6, # device type : STB, OTT, BD, Game, HTS, PC
     "NUM_MF": 10, # manufacturer
 }

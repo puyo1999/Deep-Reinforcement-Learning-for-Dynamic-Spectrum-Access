@@ -1,32 +1,38 @@
 #env : network
 env : mbr
+#time_slots: 10000
 #time_slots: 5000
 #time_slots: 3000
-time_slots: 1000
+#time_slots: 1000
 #time_slots: 500
-#time_slots: 50
+time_slots: 400
+#time_slots: 200
+#time_slots: 100
 num_channels: 2
 #num_channels: 16
 num_users: 3
+num_dt: 5
+num_mf: 8
 num_cs: 5
 num_hdmi: 4
 #attempt_prob : 1
-attempt_prob : 0.75
+attempt_prob : 0.6
 #type: "DQN"
 #type: "DDQN"
 #type: "DRQN"
 #type: "DDPG"
-#type: "A2C"
+type: "A2C"
 #type: "A2C_ver2"
 #type: "A3C"
-type: "PPO"
+#type: "PPO"
 actor_lr: 0.0001
 critic_lr: 0.0005
+#critic_lr: 0.001
 decay_rate: 0.0001
 gamma: 0.99
 reward_discount: 0.03
-#with_per: True
-with_per: False
+with_per: True
+#with_per: False
 with_ere: True
 memory_size: 1000
 #memory_size: 20000
@@ -40,5 +46,5 @@ training_frequency : 11
 to_train : False
 #graph_drawing: True
 graph_drawing: False
-log_level_info: False
 #log_level_info: True
+log_level_info: False

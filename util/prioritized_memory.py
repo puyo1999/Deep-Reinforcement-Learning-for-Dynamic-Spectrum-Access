@@ -1,5 +1,7 @@
 import random
 import numpy as np
+from py_lab.lib import logger
+logger = logger.get_logger(__name__)
 
 from collections import deque
 from .sumtree import SumTree
@@ -20,11 +22,16 @@ class PerMemory(object):
     def __init__(self, mem_size, feature_size, prior=False):
         """ Initialization
         """
-        print("@ PerMemory : init - feature_size = ", feature_size)
+        logger.info("@ PerMemory : init - feature_size = ", feature_size)
         self.prior = prior
-        self.data_len = 6 * feature_size + 6
+        #self.data_len = 6 * feature_size + 6
+        # "A2C"
+        self.data_len = feature_size * 5 + 2
+        # "DDQN"
+        #self.data_len = feature_size * 6 + 8
+
         #self.data_len = feature_size
-        print("@ PerMemory : init - prior:{} data_len:{}".format(self.prior ,self.data_len))
+        logger.info("@ PerMemory : init - prior:{} data_len:{}".format(self.prior ,self.data_len))
 
         # Prioritized Experience Replay
         if prior:
@@ -41,13 +48,13 @@ class PerMemory(object):
     def store(self, transition):
         if self.prior:
             p = self.tree.max_p
-            print('PER @ store with p(max_p): {}\n'.format(p))
+            logger.info(f'PER @ store with p(max_p): {p}\n')
             if not p:
                 p = self.p_upper
-            #print("PER @ store - p:{}".format(p))
-            #print("PER @ store - transition:{}".format(transition))
+            logger.info(f"PER @ store - p:{p}")
+            logger.info(f"PER @ store - transition:\n{transition}")
             self.tree.add(p, transition)
-            #print('PER @ store - check min_p:{}\n'.format(self.tree.min_p))
+            #logger.info('PER @ store - check min_p:{}\n'.format(self.tree.min_p))
         else:
             self.mem[self.mem_ptr] = transition
             self.mem_ptr += 1
@@ -56,7 +63,7 @@ class PerMemory(object):
 
     def add2(self, transition):
         max_p = np.max(self.tree.tree[-self.tree.size])
-        print(f'PER @ add2 - max_p: {max_p}')
+        logger.info(f'PER @ add2 - max_p: {max_p}')
         if max_p == 0:
             max_p = self.p_upper
         self.tree.add(max_p,transition)
@@ -66,23 +73,23 @@ class PerMemory(object):
         """
         if self.prior:
             p = self._get_priority(error)
-            print(f'PER @ add - p: {p}, error:{error}')
+            logger.info(f'PER @ add - p: {p}, error:{error}, type of p: {type(p)}')
             self.tree.add(p, sample)
         else:
             self.mem[self.mem_ptr] = sample
             self.mem_ptr += 1
             if self.mem_ptr == self.mem_size:
                 self.mem_ptr = 0
-        #print('PER @ add - check min_p:{}\n'.format(self.tree.min_p))
+        #logger.info('PER @ add - check min_p:{}\n'.format(self.tree.min_p))
 
     def _get_priority(self, error):
         """ Compute an experience priority, as per Schaul et al.
         """
-        #print('PER @ _get_priority : {}'.format(np.power(error + self.e, self.a).squeeze()))
+        #logger.info('PER @ _get_priority : {}'.format(np.power(error + self.e, self.a).squeeze()))
         #return np.power(error + self.e, self.a).squeeze()
         self.a = np.max([1., self.alpha - self.alpha_decrement_per_sampling])
-        #print('PER @ _get_priority : {}'.format((np.abs(error) + self.e) ** self.a))
-        return (np.abs(error) + self.e) ** self.a
+        logger.error(f'PER @ _get_priority : {(abs(error) + self.e) ** self.a}')
+        return (abs(error) + self.e) ** self.a
 
 
     def sample(self, n):
@@ -90,7 +97,7 @@ class PerMemory(object):
         """
         if self.prior:
             #min_p = self.tree.min_p
-            #print('PER @ sample : check current min_p : {}'.format(min_p))
+            #logger.info('PER @ sample : check current min_p : {}'.format(min_p))
 
             segment = self.tree.total() / n
             #batch = np.zeros((n, self.data_len), dtype=np.float32)
@@ -109,7 +116,7 @@ class PerMemory(object):
                 v = np.random.uniform(a, b)
                 #idx[i], p, batch[i] = self.tree.get(v)
                 (idx, p, data) = self.tree.get(v)
-                #print(f'@@ sample idx:{idx}')
+                #logger.info(f'@@ sample idx:{idx}')
                 priorities.append(p)
                 batch.append(data)
                 idxs.append(idx)
@@ -166,7 +173,7 @@ class PerMemory(object):
             b = segment * (i + 1)
             v = np.random.uniform(a, b)
             (idx, p, data) = self.tree.get(v)
-            #print(f'@@ sample idx:{idx}')
+            #logger.info(f'@@ sample idx:{idx}')
             priorities.append(p)
             batch.append(data)
             idxs.append(idx)
@@ -180,6 +187,51 @@ class PerMemory(object):
         is_weight = np.power(self.tree.n_entries * sampling_probabilities, -self.beta)
         is_weight /= is_weight.max()
         return idxs, is_weight, batch
+
+    def get_prioritized_indexes(self, batch_size):
+        '''3. TD Error에 따른 확률로 index 추출'''
+
+        # TD Error의 총 절댓값 합 계산
+        sum_absolute_td_error = np.sum(np.absolute(self.memory))
+        sum_absolute_td_error += TD_ERROR_EPSILON * len(self.memory)  # 각 transition마다 충분히 작은 epsiolon을 더함
+
+        # [0, sum_absolute_td_error] 구간의 batch_size개 만큼 난수 생성
+        rand_list = np.random.uniform(0, sum_absolute_td_error, batch_size)
+        rand_list = np.sort(rand_list)  # batch_size개의 생성한 난수를 오름차순으로 정렬
+
+        # 위에서 만든 난수로 index 결정
+        indexes = []
+        idx = 0
+        tmp_sum_absolute_td_error = 0
+        for rand_num in rand_list:  # 제일 작은 난수부터 꺼내기
+            # 각 memory의 td-error 값을 더해가면서, 몇번째 index
+            while tmp_sum_absolute_td_error < rand_num:
+                tmp_sum_absolute_td_error += (
+                        abs(self.memory[idx]) + TD_ERROR_EPSILON)
+                idx += 1
+
+            # TD_ERROR_EPSILON을 더한 영향으로 index가 실제 개수를 초과했을 경우를 보정
+            if idx >= len(self.memory):
+                idx = len(self.memory) - 1
+            indexes.append(idx)
+
+        return indexes
+
+
+    def importance_sampling(self, x, pi):
+        b = np.array([0.2, 0.2, 0.6]) # 확률 분포 변경, 두 확률 분포를 비슷하게 mbr codeset 기반의 새로운 확률 분포 생성
+
+        n = self.batch_size
+        samples = []
+
+        for _ in range(n):
+            idx = np.arange(len(b))
+            i = np.random.choice(idx, p=b)
+            s = x[i]
+            rho = pi[i]/b[i]
+            samples.append(s*rho)
+
+        return samples
 
     def update(self, idx, tderr):
         """ Update priority for idx (PER)
@@ -204,7 +256,7 @@ class PerMemory(object):
             for idx, prio in zip(batch_indices, batch_priorities):
                 priorities = self._get_priority(abs(prio))
 
-                print(f'PER @ update_priorities - idx: {idx} priorities : {priorities}')
+                logger.info(f'PER @ update_priorities - idx: {idx} priorities : {priorities}')
 
                 self.tree.update(idx, priorities)
 

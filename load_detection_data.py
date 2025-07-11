@@ -110,11 +110,11 @@ brand2 = list(map(float,brand2))
 brand3 = list(map(float,brand3))
 brand4 = list(map(float,brand4))
 
-Brand = ['Apple','XBOX','Mar','','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+Brand = ['Apple','XBOX','Mar','April','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 plt.figure()
-plt.plot(np.arange(6),brand1, label='AppleTV4')
-plt.plot(np.arange(6),brand2, label='AppleTV5')
+plt.plot(np.arange(6),brand1, 'cs--', label='AppleTV4')
+plt.plot(np.arange(6),brand2, 'rx:', label='AppleTV5')
 
 plt.legend()
 plt.xlabel('count',size=18)

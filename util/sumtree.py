@@ -1,7 +1,13 @@
 import numpy as np
+import tensorflow as tf
+tf.compat.v1.enable_eager_execution()
+
+import sys
+sys.setrecursionlimit(10**7)
 
 """ Original Code by @jaara: https://github.com/jaara/AI-blog/blob/master/SumTree.py
 """
+
 
 class SumTree:
     write = 0

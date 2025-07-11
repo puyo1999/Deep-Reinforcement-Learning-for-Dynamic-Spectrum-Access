@@ -1,6 +1,8 @@
 import numpy as np
 from collections import deque
 
+PPO_TD_ERROR_EPSILON = 0.0001
+
 class PPOMemory(object):
     """class Memory:
 

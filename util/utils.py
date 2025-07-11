@@ -171,57 +171,121 @@ def state_generator(action, obs):
         sys.exit()
     logger.error(f'action.size:{action.size}')
     for user_i in range(action.size):
-        logger.error(f'user_i:{user_i} action:{action[user_i]}')
-        input_vector_i = one_hot(action[user_i], NUM_CHANNELS+1)
+        logger.error(f'user_i:[{user_i}] action : {action[user_i]}')
+        input_vector_i = one_hot(action[user_i], NUM_CHANNELS+1) # mbr - 6 개
         logger.error(f'1st input_vector_i: {input_vector_i}')
         #channel_alloc = obs[-1] # obs 뒤에서 첫번째
         channel_alloc = obs[user_i] # 해당 사용자의 obs
         input_vector_i = np.append(input_vector_i,channel_alloc)
         input_vector_i = np.append(input_vector_i,int(obs[user_i][0]))    #ACK
+
+        '''
+        if env == "mbr":
+            input_vector_i = np.append(input_vector_i,channel_alloc)    #
+            input_vector_i = np.append(input_vector_i,int(obs[user_i][0]))    #
+        '''
+
         input_vector.append(input_vector_i)
 
     logger.error(f'@ state_generator - input_vector:{input_vector}\n'
                  f'input_vector shape:{np.shape(input_vector)}')
     return input_vector
-
-def draw_res2(time_step, cum_collision, cum_r, loss_list, means, mean_scores, time_slots):
-    logger.error(f'@ draw_res2 - time_step:{time_step}, time_slot:{time_slots}')
+def draw_res(time_step, cum_collision, cum_r, loss_list, time_slots):
+    logger.error(f'@ time_step - time_step:{time_step}, time_slot:{time_slots}')
     if time_step % time_slots == time_slots-1:
         plt.figure(1)
-        plt.subplot(411)
-        # plt.plot(np.arange(1000),total_rewards,"r+")
-        # plt.xlabel('Time Slots')
-        # plt.ylabel('total rewards')
-        # plt.title('total rewards given per time_step')
-        # plt.show()
+        plt.subplot(311)
         plt.plot(np.arange(time_slots+1), cum_collision, "r-")
         plt.xlabel('Time Slot')
         plt.ylabel('cumulative collision')
 
-        plt.subplot(412)
+        plt.subplot(312)
         plt.plot(np.arange(time_slots+1), cum_r, "b-")
         plt.xlabel('Time Slot')
         plt.ylabel('Cumulative reward of all users')
 
-        plt.subplot(413)
-        plt.plot(np.arange(len(means)), means, "c-")
-        plt.xlabel('Time Slot')
-        plt.ylabel('cumulative reward Means')
 
-        plt.subplot(414)
+        plt.subplot(313)
         plt.plot(np.arange(len(loss_list)), loss_list, "g-")
         plt.xlabel('Time Slot')
         plt.ylabel('Loss')
 
         plt.show()
 
-        total_rewards = []
-        cum_r = [0]
-        cum_collision = [0]
-        #saver.save(sess, 'checkpoints/dqn_multi-user.ckpt')
-        #print(time_step, loss, sum(reward), Qs)
+'''
+x = np.arange(0, 2, 0.2)
+'''
+fontdict = {
+    'fontsize': 16,
+    'fontweight': 'normal',
+    'color': 'black',
+    'family': 'Arial',
+    'style': 'normal'
+}
+def draw_res2(time_step, cum_collision, cum_r, loss_list, means, mean_scores, time_slots):
+    logger.error(f'@ draw_res2 - time_step:{time_step}, time_slot:{time_slots}')
+    #if time_step % time_slots == time_slots-1:
+    plt.figure(1)
+    plt.subplot(411)
+    # plt.plot(np.arange(1000),total_rewards,"r+")
+    # plt.xlabel('Time Slots')
+    # plt.ylabel('total rewards')
+    # plt.title('total rewards given per time_step')
+    # plt.show()
+    plt.plot(np.arange(time_step+2), cum_collision, color='r', marker='v', markersize=5, markevery=10)
+    #plt.xlabel('Time Slot')
+    plt.ylabel('Cumulative Collision')
 
-    # print ("*************************************************")
+    plt.subplot(412)
+    plt.plot(np.arange(len(cum_r)), cum_r, color='b', marker='D', markersize=5, markevery=10)
+    #plt.xlabel('Time Slot')
+    plt.ylabel('Cumulative Reward')
+
+    plt.subplot(413)
+    #plt.plot(np.arange(len(means)), means, "c.-", markevery=5)
+    plt.plot(np.arange(len(mean_scores)), mean_scores, color='m', marker='o', markersize=5, markevery=10)
+    #plt.xlabel('Time Slot')
+    plt.ylabel('Mean Reward')
+
+    plt.subplot(414)
+    plt.grid(True, linestyle='--')
+    plt.plot(np.arange(len(loss_list)), loss_list, color='g', marker='h', markersize=5, markevery=10)
+    plt.xlabel('Time Slot', fontdict=fontdict)
+    plt.ylabel('Loss')
+
+    #plt.tight_layout()
+    plt.grid(True, linestyle='--')
+    plt.subplots_adjust(hspace=0.1, wspace=0.5)
+    plt.show()
+
+    #total_rewards = []
+    #cum_r = [0]
+    #cum_collision = [0]
+    #saver.save(sess, 'checkpoints/dqn_multi-user.ckpt')
+    #print(time_step, loss, sum(reward), Qs)
+
+    print ("*************************************************")
+
+def draw_res3(time_step, cum_collision, cum_r, loss_list, time_slots):
+    logger.error(f'@ draw_res3 - time_step:{time_step}, time_slot:{time_slots}')
+    if time_step % time_slots == time_slots-1:
+        plt.figure(1)
+        plt.subplot(311)
+        plt.plot(np.arange(time_slots+1), cum_collision, "r-")
+        plt.xlabel('Time Slot')
+        plt.ylabel('cumulative collision')
+
+        plt.subplot(312)
+        plt.plot(np.arange(time_slots+1), cum_r, "b-")
+        plt.xlabel('Time Slot')
+        plt.ylabel('Cumulative reward of all users')
+
+        plt.subplot(313)
+        plt.plot(np.arange(len(loss_list)), loss_list, "g-")
+        plt.xlabel('Time Slot')
+        plt.ylabel('Loss')
+
+        plt.show()
 
 def draw_multi_algorithm(data1, data2, data3, data4):
     plt.xlabel('Time Slot')
@@ -254,7 +318,10 @@ def plot_rewards(rewards, time):
     t1 = np.arange(0, time+1, 1)
 
     # red dashes, blue squares and green triangles
-    # plt.plot(t1, rewards, 'r--', t2, data2, 'bs', t3, data3, 'g^')
-    plt.plot(t1, rewards, 'bs')
+    #plt.plot(t1, rewards, 'bs')
+    plt.plot(t1, rewards, "r.-", markevery=5)
+    plt.xlabel('Time Slot')
+    plt.ylabel('Cumulative reward of trained model')
+
     plt.show()
 
