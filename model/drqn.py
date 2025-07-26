@@ -2,17 +2,21 @@
 import tensorflow.compat.v1 as tf
 #tf.disable_v2_behavior()
 
+import keras
 from keras.layers import LayerNormalization
 import keras.layers as kl
 import keras.src.layers.rnn as kslr
 import numpy as np
+
+import logging
+logger = logging.getLogger(__name__)
 
 class QNetwork:
     '''def __init__(self, learning_rate=0.01, state_size=4,
                  action_size=2, hidden_size=10, step_size=1 ,
                  name='QNetwork'):
     '''
-    def __init__(self, hidden_size, learning_rate, step_size, state_size, action_size, memory, name='QNetwork'):
+    def __init__(self, hidden_size, learning_rate, step_size, state_size, action_size, memory, name='DRQN'):
         with tf.variable_scope(name):
             self.inputs_ = tf.placeholder(tf.float32, [None, step_size, state_size], name='inputs_')
             self.actions_ = tf.placeholder(tf.int32, [None], name='actions')

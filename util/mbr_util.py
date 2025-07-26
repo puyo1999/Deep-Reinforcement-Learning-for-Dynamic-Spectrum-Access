@@ -19,5 +19,5 @@ def state_generator(action, obs):
         input_vector_i = np.append(input_vector_i,int(obs[user_i][0]))    #ACK
         input_vector.append(input_vector_i)
 
-    logger.error(f'@ state_generator - input_vector:{input_vector}')
+    logger.info(f'@ state_generator - input_vector:{input_vector}')
     return input_vector

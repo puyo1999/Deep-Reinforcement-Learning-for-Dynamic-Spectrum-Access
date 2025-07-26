@@ -1,5 +1,7 @@
 import numpy as np
 from collections import deque
+import logging
+logger = logging.getLogger(__name__)
 
 class Memory():
     def __init__(self, max_size=1000):
@@ -16,24 +18,24 @@ class Memory():
         self.buffer.append(experience)
 
     def sample(self, batch_size, step_size):
-        print(f'@ sample -\n batch_size:{batch_size}\n step_size:{step_size}, len(self.buffer): {len(self.buffer) }\n')
+        logger.info(f'@ sample -\n batch_size:{batch_size}\n step_size:{step_size}, len(self.buffer): {len(self.buffer) }\n')
 
         idx = np.random.choice(np.arange(len(self.buffer) - step_size),
                                size=batch_size, replace=False)
 
         res = []
         gae_r = []
-        print(f'@ sample - idx:{idx}')
+        logger.info(f'@ sample - idx:{idx}')
 
         for i in idx:
             temp_buffer = []
             for j in range(step_size):
                 temp_buffer.append(self.buffer[i + j])
             res.append(temp_buffer)
-            print(f'@ sample loop - i:{i}')
-            print(f'@@ batch_gae_r len - {len(self.batch_gae_r)}')
+            logger.info(f'@ sample loop - i:{i}')
+            logger.info(f'@@ batch_gae_r len - {len(self.batch_gae_r)}')
             gae_r.append(self.batch_gae_r[i])
-        print(f'@ sample - res:{res}')
+        logger.info(f'@ sample - res:{res}')
         return res, gae_r
 
     def get_batch_each(self, batch_size):
@@ -49,7 +51,7 @@ class Memory():
         #return s,a,r,gae_r,s_,d
 
     def get_batch(self, batch_size, step_size):
-        print(f'## get_batch ##\nbatch_size:{batch_size}, step_size:{step_size}')
+        logger.info(f'## get_batch ##\nbatch_size:{batch_size}, step_size:{step_size}')
         batches = []
         idx = np.random.choice(np.arange(len(self.buffer) - step_size),
                                size=batch_size, replace=False)
@@ -60,7 +62,7 @@ class Memory():
                 s,a,r,gae_r,s_,d = [],[],[],[],[],[]
 
                 if j >= len(self.batch_gae_r):
-                    print(f"Index {j} is out of range for batch_gae_r with length {len(self.batch_gae_r)}")
+                    logger.info(f"Index {j} is out of range for batch_gae_r with length {len(self.batch_gae_r)}")
                     continue
 
                 s.append(self.batch_s[j])
@@ -75,7 +77,7 @@ class Memory():
                 tmp_batch.append(self.buffer[i+j])
 
             batches.append(tmp_batch)
-        print(f'@ get_batch - batches:{batches}')
+        logger.info(f'@ get_batch - batches:{batches}')
         return batches
 
     def get_length(self):
@@ -93,7 +95,7 @@ class Memory():
         self.batch_s_.append(s_)
         self.batch_done.append(done)
 
-        print(f'@ store - s_ : {s_}')
+        logger.info(f'@ store - s_ : {s_}')
 
     @property
     def cnt_samples(self):

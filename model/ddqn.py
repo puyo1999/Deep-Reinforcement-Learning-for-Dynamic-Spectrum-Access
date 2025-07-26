@@ -153,12 +153,12 @@ class DDQN:
         loss = self.mse_loss(predictions, targets)
         #loss.backward()
         #self.optimizer.step()
-        logger.error(f'@ learn_loss : {loss}')
+        logger.info(f'@ learn_loss : {loss}')
         return loss
 
     def my_mse_loss(self, y, y_pred):
-        logger.error(f'@ my_mse_loss - y.mean : {np.mean(y, axis=1)}')
-        logger.error(f'@ my_mse_loss - y_pred.mean : {np.mean(y_pred, axis=1)}')
+        logger.info(f'@ my_mse_loss - y.mean : {np.mean(y, axis=1)}')
+        logger.info(f'@ my_mse_loss - y_pred.mean : {np.mean(y_pred, axis=1)}')
         mse = np.mean(np.square(y - y_pred))
         rmse = np.sqrt(mse)
         #return (np.mean(y, axis=1)-np.mean(y_pred, axis=1))**2
@@ -167,13 +167,13 @@ class DDQN:
     def mse_loss(self, y_true, y_pred):
         #err = y_true - y_pred
         a = K.ones_like(y_true)  # use Keras instead so they are all symbolic
-        logger.error(f'@ mse_loss - a : {a}')
+        logger.info(f'@ mse_loss - a : {a}')
 
         y_true = tf.cast(y_true, tf.float32)
 
         loss = K.mean(K.square(y_pred - y_true)) + a
         #loss = tf.math.reduce_mean(tf.math.square(err))
-        logger.error(f'@ mse_loss - loss : {loss}')
+        logger.info(f'@ mse_loss - loss : {loss}')
         return loss
 
     def _copy_model(self):
@@ -185,7 +185,7 @@ class DDQN:
         #logger.info('StoreTransition - s:{} a:{} r:{} s_:{}'.format(s,a,r,s_))
         #transition = np.hstack([list(s[0]), list(s[1]), list(s[2]), list(np.r_[a, r]), list(s_[0]), list(s_[1]), list(s_[2])])
         transition = np.hstack([list(s[0]), list(s[1]), list(s[2]), list(s[3]), list(np.r_[a, r]), list(s_[0]), list(s_[1]), list(s_[2]), list(s_[3])])
-        logger.error(f'@@ StoreTransition - transition:{transition}')
+        logger.info(f'@@ StoreTransition - transition:{transition}')
         #self.memory.store(transition)
         error = 1007
         self.memory.add(transition, error=error)
@@ -196,23 +196,23 @@ class DDQN:
         self.q_target_model.set_weights(self.q_eval_model.get_weights())
 
     def choose_action(self, observation):
-        logger.error(f"@ ddqn / choose_action - step_cnt : {self.step_cnt}")
+        logger.info(f"@ ddqn / choose_action - step_cnt : {self.step_cnt}")
         temp_epsilon = 0.5 * ( 1/self.step_cnt )
-        logger.error(f"@ ddqn / choose_action - temp_epsilon : {temp_epsilon}")
+        logger.info(f"@ ddqn / choose_action - temp_epsilon : {temp_epsilon}")
         observation = np.array(observation)
-        logger.error(f"@ ddqn / choose_action - obs array : {observation}")
+        logger.info(f"@ ddqn / choose_action - obs array : {observation}")
         observation = tf.one_hot(observation, 6)
-        logger.error(f"!!! after one_hot obs : {observation}")
+        logger.info(f"!!! after one_hot obs : {observation}")
         #if np.random.random() > self.epsilon:
         if np.random.uniform(0,1) > temp_epsilon:
             #state = torch.tensor([observation],dtype=torch.float).to(self.q_eval_model.device)
             actions = self.q_eval_model.predict([observation, np.ones((1,1))], steps=1)
-            logger.error(f'@ ddqn / choose_action - actions : {actions}')
+            logger.info(f'@ ddqn / choose_action - actions : {actions}')
             action = np.argmax(actions).item()
         else:
             action = np.random.choice(self.actions)
 
-        logger.error(f'@ ddqn / choose_action - action:{action}')
+        logger.info(f'@ ddqn / choose_action - action:{action}')
         return action
 
     def actor(self, observation):
@@ -240,9 +240,9 @@ class DDQN:
         if self.learning_cnt % self.replace_target_iter == 0:
             self._copy_model()
             if self.verbose:
-                logger.error('Copy model')
-        logger.error(f'cur_state : {cur_state}')
-        logger.error(f'next_state : {next_state}')
+                logger.info('Copy model')
+        logger.info(f'cur_state : {cur_state}')
+        logger.info(f'next_state : {next_state}')
 
         cur_state = np.array(cur_state)
         next_state = np.array(next_state)
@@ -257,26 +257,26 @@ class DDQN:
         next_state = np.resize(next_state, [1, 6])
         index = self.q_eval_model.predict([cur_state, adjusted_input]).argmax(axis=1)
         # Predict the index
-        logger.error(f'eval predict - index:{index}')
+        logger.info(f'eval predict - index:{index}')
 
         max_q = self.q_target_model.predict([next_state, adjusted_input]).argmax(axis=1)
-        logger.error(f'target predict - max_q:{max_q}')
+        logger.info(f'target predict - max_q:{max_q}')
         q_predict = self.q_eval_model.predict([cur_state, adjusted_input])
 
         q_target = np.copy(q_predict)
         #q_target = np.array(q_target)
         q_target[0][action] = discnt_rewards + self.gamma * max_q
-        logger.error(f"q_predict.shape : {q_predict.shape}")
-        logger.error(f"q_target.shape : {q_target.shape}")
+        logger.info(f"q_predict.shape : {q_predict.shape}")
+        logger.info(f"q_target.shape : {q_target.shape}")
 
         report = self.q_eval_model.fit([cur_state, adjusted_input], q_target, epochs=1, verbose=0)
         rmse = np.sqrt(report.history["loss"])
-        logger.error(f'report history loss : {report.history["loss"]}, rmse : {rmse}')
+        logger.info(f'report history loss : {report.history["loss"]}, rmse : {rmse}')
         return rmse
 
 
         #loss = self.my_mse_loss(q_predict, q_target)
-        #logger.error(f'mse_loss : {loss}')
+        #logger.info(f'mse_loss : {loss}')
         #return loss
 
 
@@ -350,8 +350,8 @@ class DDQN:
             #s_ = tf.one_hot(s_, self.feature_size)
             #logger.info("after reshape s_: ", np.shape(s_))
 
-            logger.error(f'cur_state : {cur_state}')
-            logger.error(f'next_state : {next_state}')
+            logger.info(f'cur_state : {cur_state}')
+            logger.info(f'next_state : {next_state}')
 
             cur_state = np.array(cur_state)
             next_state = np.array(next_state)
@@ -375,13 +375,13 @@ class DDQN:
             #index = self.q_eval_model.predict([s_, np.ones((self.batch_size*3, 1))]).argmax(axis=1)
             index = self.q_eval_model.predict([cur_state, adjusted_input]).argmax(axis=1)
             # Predict the index
-            logger.error(f'eval predict - index:{index}')
+            logger.info(f'eval predict - index:{index}')
 
 
             #max_q = self.q_target_model.predict([s_, np.ones((self.batch_size*3, 1))])[range(self.batch_size*3), index]
             max_q = self.q_target_model.predict([next_state, adjusted_input]).argmax(axis=1)
             #max_q = np.max(index[0])
-            logger.error(f'target predict - max_q:{max_q}')
+            logger.info(f'target predict - max_q:{max_q}')
 
             s = np.tile(s, (3, 1))
             #q_predict = self.q_eval_model.predict([s, np.ones((self.batch_size*3, 1))])
@@ -397,10 +397,10 @@ class DDQN:
 
         #max_q = np.reshape(max_q,[32,3])
         #max_q = max_q.reshape(3, -1).mean(axis=0)
-        logger.error(f'## max_q : {max_q}\n')
+        logger.info(f'## max_q : {max_q}\n')
         #logger.info("q_predict : ", q_predict)
         q_target = np.copy(q_predict)
-        logger.error(f"## q_target : {q_target}\n")
+        logger.info(f"## q_target : {q_target}\n")
         #q_target = np.tile(q_target, (3,1))
         #q_target[range(self.batch_size*3), s.astype(np.int32)] = r + self.gamma * max_q
         #q_target[range(self.batch_size), transition[:, self.feature_size].astype(np.int32)] = r + self.gamma * max_q
@@ -417,7 +417,7 @@ class DDQN:
 
         #q_target[batch_index, :] = r[:6].reshape(-1, 1) + self.gamma * max_q.reshape(-1, 1)
         #q_target[batch_index] = r[:6].reshape(-1, 1) + self.gamma * max_q.reshape(-1, 1)
-        logger.error(f'{np.shape(cur_state)} {np.shape(adjusted_input)}, {np.shape(q_target)}')
+        logger.info(f'{np.shape(cur_state)} {np.shape(adjusted_input)}, {np.shape(q_target)}')
         report = self.q_eval_model.fit([cur_state, adjusted_input], q_target, epochs=1, verbose=0)
 
         if self.prior:
@@ -451,22 +451,22 @@ class DDQN:
             # Adjust the shape of target if needed
             #q_target = np.tile(q_target, (6, 1))  # Adjust the shape to (6, 1)
 
-            logger.error(f'q_pred shape: {np.shape(q_pred)}')
-            logger.error(f'q_target shape: {np.shape(q_target)}')
+            logger.info(f'q_pred shape: {np.shape(q_pred)}')
+            logger.info(f'q_target shape: {np.shape(q_target)}')
 
             # Calculate the target values correctly
 
             #if q_target.shape[0] > 0 and action < q_target.shape[1]:
             q_target[0][action] = reward + self.gamma * max_q
-            logger.error(f"target_Q_values : {q_target}")
+            logger.info(f"target_Q_values : {q_target}")
             #else:
-                #logger.error("배열 크기 이상")
+                #logger.info("배열 크기 이상")
 
             #report = self.q_eval_model.fit([s, w], q_target, verbose=0)
             report = self.q_eval_model.fit([cur_state, adjusted_input], q_target, epochs=1, verbose=0)
             #loss = self.q_eval_model.evaluate([cur_state, adjusted_input], q_target)
             loss = self.my_mse_loss(q_pred, q_target)
-            logger.error(f'my_mse_loss : {loss}')
+            logger.info(f'my_mse_loss : {loss}')
         else:
             report = self.q_eval_model.fit(s, q_target, verbose=0)
 
@@ -480,9 +480,9 @@ class DDQN:
         self.learning_cnt += 1
 
 
-        logger.error(f'ddqn, learn - learning_cnt : {self.learning_cnt}')
-        logger.error(f'ddqn, learn - report history loss : {report.history["loss"]}')
-        logger.error(f'ddqn, learn - loss : {loss}')
+        logger.info(f'ddqn, learn - learning_cnt : {self.learning_cnt}')
+        logger.info(f'ddqn, learn - report history loss : {report.history["loss"]}')
+        logger.info(f'ddqn, learn - loss : {loss}')
         return loss
 
     def append_sample(self, state, action, reward, next_state, done):

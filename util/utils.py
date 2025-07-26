@@ -169,11 +169,11 @@ def state_generator(action, obs):
     if action is None:
         logger.info(f'no action, hence, no next_state !')
         sys.exit()
-    logger.error(f'action.size:{action.size}')
+    logger.info(f'action.size:{action.size}')
     for user_i in range(action.size):
-        logger.error(f'user_i:[{user_i}] action : {action[user_i]}')
+        logger.info(f'user_i:[{user_i}] action : {action[user_i]}')
         input_vector_i = one_hot(action[user_i], NUM_CHANNELS+1) # mbr - 6 개
-        logger.error(f'1st input_vector_i: {input_vector_i}')
+        logger.info(f'1st input_vector_i: {input_vector_i}')
         #channel_alloc = obs[-1] # obs 뒤에서 첫번째
         channel_alloc = obs[user_i] # 해당 사용자의 obs
         input_vector_i = np.append(input_vector_i,channel_alloc)
@@ -187,11 +187,11 @@ def state_generator(action, obs):
 
         input_vector.append(input_vector_i)
 
-    logger.error(f'@ state_generator - input_vector:{input_vector}\n'
+    logger.info(f'@ state_generator - input_vector:{input_vector}\n'
                  f'input_vector shape:{np.shape(input_vector)}')
     return input_vector
 def draw_res(time_step, cum_collision, cum_r, loss_list, time_slots):
-    logger.error(f'@ time_step - time_step:{time_step}, time_slot:{time_slots}')
+    logger.info(f'@ time_step - time_step:{time_step}, time_slot:{time_slots}')
     if time_step % time_slots == time_slots-1:
         plt.figure(1)
         plt.subplot(311)
@@ -223,7 +223,7 @@ fontdict = {
     'style': 'normal'
 }
 def draw_res2(time_step, cum_collision, cum_r, loss_list, means, mean_scores, time_slots):
-    logger.error(f'@ draw_res2 - time_step:{time_step}, time_slot:{time_slots}')
+    logger.info(f'@ draw_res2 - time_step:{time_step}, time_slot:{time_slots}')
     #if time_step % time_slots == time_slots-1:
     plt.figure(1)
     plt.subplot(411)
@@ -267,7 +267,7 @@ def draw_res2(time_step, cum_collision, cum_r, loss_list, means, mean_scores, ti
     print ("*************************************************")
 
 def draw_res3(time_step, cum_collision, cum_r, loss_list, time_slots):
-    logger.error(f'@ draw_res3 - time_step:{time_step}, time_slot:{time_slots}')
+    logger.info(f'@ draw_res3 - time_step:{time_step}, time_slot:{time_slots}')
     if time_step % time_slots == time_slots-1:
         plt.figure(1)
         plt.subplot(311)
@@ -286,6 +286,44 @@ def draw_res3(time_step, cum_collision, cum_r, loss_list, time_slots):
         plt.ylabel('Loss')
 
         plt.show()
+def draw_losses(time, loss1, loss2):
+    t1 = np.arange(0., time, 1)
+
+    fig = plt.figure(figsize=(15, 10))  ## 캔버스 생성
+    fig.set_facecolor('white')  ## 캔버스 색상 설정
+
+    al = fig.add_subplot(211)  ## 그림 뼈대(프레임) 생성, 2x1 matrix 의 1행
+    plt.ylabel('Actor loss')
+
+    cl = fig.add_subplot(212)  # 2x1 matrix 의 2행
+    plt.xlabel('Time Slot')
+    plt.ylabel('Critic loss')
+
+    plt.title('Actor vs Critic Loss Over Time', fontsize=16, fontweight='bold')
+    # actor loss
+    al.plot(
+        t1, loss1,
+        'rv-',  # 빨간색 삼각형 마커
+        markersize=3,
+        markevery=10,
+        linewidth=1,
+        label='actor loss'
+    )
+
+    # critic loss
+    cl.plot(
+        t1, loss2,
+        'bD-',  # 파란색 다이아몬드 마커
+        markersize=3,
+        markevery=10,
+        linewidth=1,
+        label='critic loss'
+    )
+
+    plt.legend(loc="upper left")
+    plt.grid(alpha=0.3)
+
+    plt.show()
 
 def draw_multi_algorithm(data1, data2, data3, data4):
     plt.xlabel('Time Slot')

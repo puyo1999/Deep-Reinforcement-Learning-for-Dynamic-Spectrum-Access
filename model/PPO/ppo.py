@@ -20,8 +20,8 @@ huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 
 import tensorflow.compat.v1 as tf
 
-class PPOAgent(Algorithm):
-#class PPOAgent(object):
+class PPO(Algorithm):
+#class PPO(object):
     def __init__(self, env, sess, memory, action_n, state_dim, training_batch_size):
         #self.env = gym.make('CartPole-v1')
         self.env = env
@@ -99,7 +99,7 @@ class PPOAgent(Algorithm):
         dense = Dense(self.node_num, activation='relu', name='dense1')(state)
         dense = Dense(self.node_num, activation='relu', name='dense2')(dense)
         policy = Dense(self.action_n, activation='softmax', name='actor_output_layer')(dense)
-        logger.error(f'@ build_model_actor - policy :{policy}')
+        logger.info(f'@ build_model_actor - policy :{policy}')
 
         '''
         def ppo_loss(y_true, y_pred):
@@ -121,12 +121,12 @@ class PPOAgent(Algorithm):
         dense = Dense(self.node_num, activation='relu', name='dense1')(inputs)
         dense = Dense(self.node_num, activation='relu', name='dense2')(dense)
         policy = Dense(self.action_n, activation='softmax', name='actor_output_layer')(dense)
-        logger.error(f'policy : {policy}')
+        logger.info(f'policy : {policy}')
         return policy
 
     def build_model_critic(self):
 
-        #state = Input(shape=(self.state_dim), name='state_input')
+        #state = Input(shape=[self.action_n, self.state_dim], name='state_input')
         state = Input(shape=[self.state_dim, self.action_n + 2 + 1], name='state_input')
 
         #state = Input(shape=(1,), name='state_input')
@@ -174,37 +174,49 @@ class PPOAgent(Algorithm):
 
     def choose_action_(self, state):
         assert isinstance(state, np.ndarray), "state must be numpy.ndarry"
-        logger.error(f'@ choose_action_ : state:\n{state}')
+        logger.info(f'choose_action_ - state:\n{state}')
         #state = np.reshape(state, [-1, self.dic_agent_conf["STATE_DIM"][0]])
         #state = np.expand_dims(state, axis=0)
         state = state.reshape((1, 4, 9))
-        logger.error(f'@ after reshape state:\n{state}')
+        logger.critical(f'choose_action_ - after reshape state:\n{state}')
 
-        prob = self.model_actor.predict_on_batch([state, self.dummy_advantage, self.dummy_old_prediction]).flatten()
-        logger.error(f'before prob:\n{prob}')
-        logger.error(f'before prob shape : {prob.shape}')
+        #prob = self.model_actor.predict_on_batch([state, self.dummy_advantage, self.dummy_old_prediction]).flatten()
+        prob = self.model_actor.predict_on_batch(state)
+        logger.critical(f'before prob:\n{prob}')
         prob = prob[:6]
-        logger.error(f'after prob:\n{prob}')
-        logger.error(f'after prob shape : {prob.shape}')
+        logger.critical(f'after prob:\n{prob}')
+        logger.info(f'after prob shape : {prob.shape}')
         action = np.random.choice(self.action_n, p=prob)
+
         return action
 
     def choose_action(self, state):
-        logger.error(f'state:\n{state}')
+        logger.info(f'state:\n{state}')
         probs = self.model_actor.predict(state)[0]
-        logger.error(f'probs:\n{probs}')
+        logger.info(f'probs:\n{probs}')
         probs = probs[0][:6]
         probs = np.ravel(probs)
-        logger.error(f'probs shape : {probs.shape}')
+        logger.info(f'probs shape : {probs.shape}')
         action = np.random.choice(self.action_n, p=probs)
         return action
 
     def get_action_(self, state):
-        policy = self.model_actor.predict(state, batch_size=1).flatten()
+        #policy = self.model_actor.predict(state, batch_size=1).flatten()
+        #policy = self.model_actor.predict_on_batch(state)
+
+        # (1) 모델을 레이어처럼 호출해서 Tensor 얻기
+        policy_tensor = self.model_actor(state)  # tf.Tensor, shape=(1, A)
+
+        # (2) sess.run → ndarray로 반환
+        policy = self.sess.run(policy_tensor)  # ndarray, shape=(1, A)
+        policy = policy.flatten()
         policy = policy[:6]
-        logger.error(f'policy:\n{policy}')
-        logger.error(f'policy shape : {policy.shape}')
-        return np.random.choice(self.action_n, 1, p=policy)[0]
+        # 배치 차원 제거 → (4, 6)
+        #policy = policy.squeeze(0)
+
+        logger.critical(f'policy:\n{policy}')
+        logger.critical(f'policy shape : {policy.shape}')
+        return np.random.choice(self.action_n, 1, p=policy)
 
     def variable_discount_rewards(self, rewards, discount_factors):
         discounted_rewards = np.zeros_like(rewards, dtype=np.float32)
@@ -300,17 +312,17 @@ class PPOAgent(Algorithm):
          old_chosen_probs = tf.tile(old_chosen_probs, [max_len // old_chosen_probs.shape[0] + 1])[:max_len]
 
      # logger.info new shapes
-     logger.error(f"New chosen_probs shape: {chosen_probs.shape}")
-     logger.error(f"New old_chosen_probs shape: {old_chosen_probs.shape}")
+     logger.info(f"New chosen_probs shape: {chosen_probs.shape}")
+     logger.info(f"New old_chosen_probs shape: {old_chosen_probs.shape}")
 
      ratio = chosen_probs / (old_chosen_probs + 1e-10)
      clipped_ratio = tf.clip_by_value(ratio, 1.0 - self.CLIPPING_LOSS_RATIO, 1.0 + self.CLIPPING_LOSS_RATIO)
-     logger.error(f"clipped_ratio: {clipped_ratio}")
+     logger.info(f"clipped_ratio: {clipped_ratio}")
 
      surrogate1 = ratio * advantages
      surrogate2 = clipped_ratio * advantages
-     logger.error(f"surrogate1: {surrogate1}")
-     logger.error(f"surrogate2: {surrogate2}")
+     logger.info(f"surrogate1: {surrogate1}")
+     logger.info(f"surrogate2: {surrogate2}")
      policy_loss = -tf.reduce_mean(tf.minimum(surrogate1, surrogate2))
 
      #value_loss = tf.reduce_mean(tf.square(values - returns))
@@ -325,13 +337,13 @@ class PPOAgent(Algorithm):
      total_loss_array = self.sess.run(total_loss)
 
      # Log the array
-     #logger.error(f'*********** total_loss : {total_loss_array} **********')
+     #logger.info(f'*********** total_loss : {total_loss_array} **********')
 
      #total_loss = policy_loss + 0.5 * value_loss - 0.01 * entropy_loss
      #total_loss = tf.reduce_mean(tf.reduce_sum( policy_loss + 0.5 * value_loss - 0.01 * entropy_loss))
 
-     logger.error(f'*********** total_loss : {total_loss} **********')
-     #logger.error(f'*********** total_loss_array : {total_loss_array} **********')
+     logger.info(f'*********** total_loss : {total_loss} **********')
+     #logger.info(f'*********** total_loss_array : {total_loss_array} **********')
      return total_loss, total_loss_array
 
     #@tf.function
@@ -350,7 +362,7 @@ class PPOAgent(Algorithm):
             surrogate2 = clip_ratio * advantage
             entropy_loss = (prob * K.backend.log(prob+1e-10))
             ppo_loss = -K.backend.mean(K.backend.minimum(surrogate1, surrogate2)+self.ENTROPY_LOSS_RATIO * entropy_loss)
-            logger.error(f'@ ppo_loss - ppo_loss:\n{ppo_loss}')
+            logger.info(f'@ ppo_loss - ppo_loss:\n{ppo_loss}')
             return ppo_loss
         return loss
 
@@ -361,15 +373,15 @@ class PPOAgent(Algorithm):
 
         # Calculate the ratio of the new and old predictions
         ratio = predictions[0] / old_predictions[0]
-        logger.error(f'@@ ppo_loss_new - ratio :\n{ratio}\n')
+        logger.info(f'@@ ppo_loss_new - ratio :\n{ratio}\n')
         clipped = KB.clip(ratio, 1 - LOSS_CLIPPING, 1 + LOSS_CLIPPING)
-        logger.error(f'@@ ppo_loss_new - clipped :\n{clipped}\n')
+        logger.info(f'@@ ppo_loss_new - clipped :\n{clipped}\n')
 
         # Calculate the PPO loss using the ratio and advantages
         loss = KB.minimum(ratio * advantages, clipped * advantages)
         loss = -tf.reduce_mean(loss)
 
-        logger.error(f'@@ ppo_loss_new - loss :\n{loss}\n')
+        logger.info(f'@@ ppo_loss_new - loss :\n{loss}\n')
         return loss
 
     def gae(self, rewards, values, episode_ends, gamma, lam):
@@ -403,7 +415,7 @@ class PPOAgent(Algorithm):
         gae = 0
         mask = 0
         gae_cumulated = []
-        logger.error(f'@@ make_gae - memory.cnt_samples:{self.memory.cnt_samples}')
+        logger.info(f'@@ make_gae - memory.cnt_samples:{self.memory.cnt_samples}')
 
         for i in reversed(range(self.memory.cnt_samples)):
             if i >= 100:
@@ -411,28 +423,28 @@ class PPOAgent(Algorithm):
             logger.info(f'@@ make_gae - idx:{i}')
             #mask = 0 if self.memory.batch_done[i] else 1 # mask = 1-done
             mask = 1
-            logger.error(f'@@ make_gae - batch_r[{i}]:{self.memory.batch_r[i]}')
+            logger.info(f'@@ make_gae - batch_r[{i}]:{self.memory.batch_r[i]}')
             logger.info(f'@@ make_gae - batch_s[{i}]:{self.memory.batch_s[i]}')
             logger.info(f'@@ make_gae - batch_s_[{i}]:{self.memory.batch_s_[i]}')
             v = self.get_v(self.memory.batch_s[i])
             v_ = self.get_v(self.memory.batch_s_[i])
-            logger.error(f'@@ make_gae - shape of batch_r:{np.shape(self.memory.batch_r[i])}')
-            logger.error(f'@@ make_gae - shape of v_:{np.shape(v_)}')
+            logger.info(f'@@ make_gae - shape of batch_r:{np.shape(self.memory.batch_r[i])}')
+            logger.info(f'@@ make_gae - shape of v_:{np.shape(v_)}')
             if np.shape(v_) == (4,1):
                 delta = self.memory.batch_r[i] + self.GAMMA * self.get_v(self.memory.batch_s_[i]).reshape(4,) * mask - v
             else: # (1,4,1)
                 delta = self.memory.batch_r[i] + self.GAMMA * v_ * mask - v
-            logger.error(f'@@ make_gae - shape of delta:{np.shape(delta)}')
-            logger.error(f'@@ make_gae - delta :\n{delta}\n')
+            logger.info(f'@@ make_gae - shape of delta:{np.shape(delta)}')
+            logger.info(f'@@ make_gae - delta :\n{delta}\n')
             gae = delta + self.GAMMA * self.GAE_LAMBDA * mask * gae
-            logger.error(f'@@ make_gae - shape of gae:{np.shape(gae)}')
-            logger.error(f'@@ make_gae - gae :\n{gae}\n')
-            logger.error(f'@@ make_gae - shape of gae+v:{np.shape(gae+v)}')
-            logger.error(f'@@ make_gae - gae+v :\n{gae+v}\n')
+            logger.info(f'@@ make_gae - shape of gae:{np.shape(gae)}')
+            logger.info(f'@@ make_gae - gae :\n{gae}\n')
+            logger.info(f'@@ make_gae - shape of gae+v:{np.shape(gae+v)}')
+            logger.info(f'@@ make_gae - gae+v :\n{gae+v}\n')
 
             mean_gae = np.mean(gae+v, axis=(1, 2))
-            logger.error(f'@@ make_gae - shape of mean_gae:{np.shape(mean_gae)}')
-            logger.error(f'@@ make_gae - mean_gae :\n{mean_gae}\n')
+            logger.info(f'@@ make_gae - shape of mean_gae:{np.shape(mean_gae)}')
+            logger.info(f'@@ make_gae - mean_gae :\n{mean_gae}\n')
             #self.memory.batch_gae_r.append(gae + v)
             self.memory.batch_gae_r.append(mean_gae)
 
@@ -443,8 +455,8 @@ class PPOAgent(Algorithm):
         gae_cumulated = torch.tensor(gae_cumulated)
         gae_cumulated = gae_cumulated.squeeze()
         self.memory.GAE_CALCULATED_Q = True
-        logger.error(f'@@ make_gae - shape of gae_cumulated:{np.shape(gae_cumulated)}')
-        logger.error(f'@@ make_gae - gae_cumulated : {gae_cumulated}')
+        logger.info(f'@@ make_gae - shape of gae_cumulated:{np.shape(gae_cumulated)}')
+        logger.info(f'@@ make_gae - gae_cumulated : {gae_cumulated}')
         return gae_cumulated
 
     def update_target_network(self):
@@ -474,9 +486,17 @@ class PPOAgent(Algorithm):
     '''
 
     def store_transition(self, s, a, r, s_):
-        #self.memory.add((s, a, r, s_, done))
         self.memory.store((s,a,r,s_))
         self.memory.store_each(s, a, r, s_, False)
+
+
+    def store_transition_per2(self, s, a, r, s_):
+        print('ppo store_transition_per2 - shape of s:{} a:{}'.format(np.shape(s), np.shape(a)))
+        print('ppo store_transition_per2 - s:{} a:{} r:{} s_:{}'.format(s, a, r, s_))
+        transition = np.hstack(
+            [(s[0]), (s[1]), (s[2]), (np.r_[a, r]), (s_[0]), (s_[1]), (s_[2])])
+        print('ppo store_transition_per2 - transition:{}'.format(transition))
+        self.memory.add2(transition)
 
     def store_transition_per(self, s, a, r, s_):
         logger.info('ppo @shape of s:{} a:{}'.format(np.shape(s), np.shape(a)))
@@ -489,18 +509,18 @@ class PPOAgent(Algorithm):
         # error = 1010
         error = 1007
         self.memory.add(transition, error=error)
+        #self.memory.add2(transition)
 
-    # self.memory.add2(transition)
     def get_v(self, state):
         """Returns the value of the state.
         Basically, just a forward pass though the critic networtk
         """
-        logger.error(f'@ get_v - state :\n{state}') # [4,9]
+        logger.info(f'@ get_v - state :\n{state}') # [4,9]
         s = np.reshape(state,(self.state_dim, self.action_n + 3))
         s = np.expand_dims(s, axis=0)
-        logger.error(f'@ after reshape get_v - s :\n{s}')
+        logger.info(f'@ after reshape get_v - s :\n{s}')
         v = self.model_critic.predict_on_batch(s)
-        logger.error(f'@ get_v - v :\n{v}')
+        logger.info(f'@ get_v - v :\n{v}')
         return v
 
     def get_prediction(self, state):
@@ -517,23 +537,34 @@ class PPOAgent(Algorithm):
         self.ema_rewards = self.TARGET_UPDATE_ALPHA * reward + (1 - self.TARGET_UPDATE_ALPHA) * self.ema_rewards
         return self.ema_rewards
 
-    def learn_(self, states, actions, next_states, discnt_rewards):
+    def learn_(self, states, actions, discnt_rewards, next_states):
         with tf.GradientTape() as tape1, tf.GradientTape() as tape2:
             states = np.expand_dims(states, axis=0)
-            action_p = self.model_actor(states, training=True)
-            action_prob = self.model_actor.predict(states)
+            action_prob = self.model_actor(states, training=True)
+            #action_prob = self.model_actor.predict(states)
             critic = self.model_critic(states, training=True)
 
             logger.info(f'@ learn_ - actions:\n {actions}')
-            logger.info(f'@ learn_ - action_prob:\n {action_prob}\n critic:\n{critic}')
-            logger.info(f'@ learn_ - action_prob[0]:\n {action_prob[0]}')
-            action = self.get_action_(states)
+            logger.critical(f'@ learn_ - action_prob:\n {action_prob}\n critic:\n{critic}')
+            logger.critical(f'@ learn_ - action_prob[0]:\n {action_prob[0]}')
+
+            if isinstance(states, tf.Tensor):
+                # TF2 eager 모드
+                states_np = states.numpy()
+                # TF1.x 그래프 모드라면
+                #states_np = self.sess.run(states)
+            else:
+                states_np = np.asarray(states, dtype=np.float32)
+
+            #action = self.get_action_(states)
+            action = self.get_action_(states_np)
 
             logger.info(f'@ learn_ - action: {action}')
 
             # rewards 를 discounted factor 로 다시 계산.
             returns = []
             discounted_sum = 0
+
             for r in discnt_rewards[::-1]:
                 discounted_sum = r + self.discount_rate * discounted_sum
                 returns.insert(0, discounted_sum)
@@ -542,11 +573,10 @@ class PPOAgent(Algorithm):
             returns = (returns - np.mean(returns)) / (np.std(returns) + self.eps)
             returns = returns.tolist()
 
-
             # EMA 보상 계산
-            ema_rewards = [self.calculate_ema(reward) for reward in returns]
-            ema_rewards = tf.convert_to_tensor(ema_rewards, dtype=tf.float32)
-            logger.error(f'@ learn_ - ema_rewards:\n{ema_rewards}\n')
+            #ema_rewards = [self.calculate_ema(reward) for reward in returns]
+            #ema_rewards = tf.convert_to_tensor(ema_rewards, dtype=tf.float32)
+            #logger.info(f'@ learn_ - ema_rewards:\n{ema_rewards}\n')
 
             next_states = np.expand_dims(next_states, axis=0)
             next_critic = self.model_critic(next_states, training=True)
@@ -555,18 +585,18 @@ class PPOAgent(Algorithm):
             advantage = returns[0] - critic[0,0]
             array_ = '''
             clipped_action_prob = tf.clip_by_value(action_prob, 1 - self.CLIPPING_LOSS_RATIO, 1 + self.CLIPPING_LOSS_RATIO)
-            logger.error(f'@ learn_ - clipped_action_prob:\n{clipped_action_prob}\n')
+            logger.info(f'@ learn_ - clipped_action_prob:\n{clipped_action_prob}\n')
 
             min_advantage = tf.minimum(action_prob * advantage, clipped_action_prob * advantage)
-            logger.error(f'@ learn_ - min_advantage:\n{min_advantage}\n')
+            logger.info(f'@ learn_ - min_advantage:\n{min_advantage}\n')
             loss = -tf.reduce_mean(min_advantage)
             loss_array = self.sess.run(loss)
-            logger.error(f'@ learn_ - loss_array:\n{loss_array}\n')
+            logger.info(f'@ learn_ - loss_array:\n{loss_array}\n')
             
             #ema_loss = -tf.reduce_mean(
                 #tf.minimum(action_prob * advantage, tf.clip_by_value(action_prob, 1 - self.CLIPPING_LOSS_RATIO, 1 + self.CLIPPING_LOSS_RATIO) * advantage) * ema_rewards)
 
-            #logger.error(f'@ learn_ - ema_loss : {ema_loss}')
+            #logger.info(f'@ learn_ - ema_loss : {ema_loss}')
             
             init = tf.global_variables_initializer()
 
@@ -575,7 +605,7 @@ class PPOAgent(Algorithm):
 
             grads1 = tape1.gradient(loss, self.model_actor.trainable_variables)
             for grad, var in zip(grads1, self.model_actor.trainable_variables):
-                logger.error(f"Variable: {var.name}, Gradient: {grad}")
+                logger.info(f"Variable: {var.name}, Gradient: {grad}")
             #self.optimizer.apply_gradients(zip(grads1, self.model_actor.trainable_variables))
 
         return loss_array
@@ -592,8 +622,8 @@ class PPOAgent(Algorithm):
             logger.info(f'@ learn_ - critic:\n{critic}\n')
 
             c_loss = huber_loss(critic, discnt_rewards)
-            logger.error(f'actor loss :\n{a_loss}')
-            logger.error(f'critic loss :\n{c_loss}')
+            logger.info(f'actor loss :\n{a_loss}')
+            logger.info(f'critic loss :\n{c_loss}')
 
             entropy_loss = -tf.reduce_mean(tf.reduce_sum(action_prob * tf.math.log(action_prob + 1e-10), axis=1))
 
@@ -625,7 +655,7 @@ class PPOAgent(Algorithm):
             td_error_scalar_sum = tf.reduce_sum(TD_errors)
 
             TD_errors_array = self.sess.run(td_error_scalar_mean)
-            logger.error(f'@ learn_ - TD_errors_array: {TD_errors_array}')
+            logger.info(f'@ learn_ - TD_errors_array: {TD_errors_array}')
 
             # Backpropagation
             grads1 = tape1.gradient(a_loss, self.model_actor.trainable_variables)
@@ -653,41 +683,47 @@ class PPOAgent(Algorithm):
         #return total_loss_array
         return TD_errors_array
 
+    def learn(self, error):
+        print('ppo learn - saving error:{}\n'.format(self.error))
+        self.error = error
+
     ### TODO::1 GradientTape 에서 loss 계산해서 저장하기
     ### TODO::2 gamma ( discount_rate) 적용해서 discount_rewards 적용하기
 
     def train_ppo_with_GT(self, states, actions, rewards, next_states):
         action_probs, old_action_probs = [], []
-        logger.error(f'@ train_ppo_with_GT - states:\n{states}')
+        logger.info(f'@ train_ppo_with_GT - states:\n{states}')
         #states = states.reshape(-1, 4)
-        #logger.error(f'@ train_ppo_with_GT - after reshape states:\n{states}')
+        #logger.info(f'@ train_ppo_with_GT - after reshape states:\n{states}')
 
         #actors = self.model_actor(states)
-        #logger.error(f'### actors shape : {actors.shape}')
+        #logger.info(f'### actors shape : {actors.shape}')
 
         # Reshape to add an additional dimension
-        states = np.expand_dims(states, axis=0)  # Now shape is (1, 4, 9)
-        action_probs = self.model_actor.predict(states)
+        #states = np.expand_dims(states, axis=0)  # Now shape is (1, 4, 9)
+        tempP = states.reshape((1, 4, 9))
+        #action_probs = self.model_actor.predict(states)
+        action_probs = self.model_actor.predict_on_batch(tempP)
 
         #action_probs = tf.nn.softmax(self.model_actor(states))#.numpy()
-        logger.error(f'### action_probs :\n{action_probs}')
+        logger.critical(f'### action_probs :\n{action_probs}')
 
         #ex_states = np.pad(states, (0, 12 - states.shape[0]), 'constant')
         #ex_states = np.expand_dims(ex_states, axis=0)
         values = self.model_critic(states)
-        logger.error(f'### values shape : {values.shape}')
+        logger.critical(f'### values shape : {values.shape}')
 
         #old_action_probs.append(action_probs)
         old_action_probs = action_probs
 
         with tf.GradientTape(persistent=True) as tape:
-            logger.error(f'################ with GT ################\n')
+            logger.info(f'################ with GT ################\n')
             #expand_states = np.pad(states, (0, 12 - states.shape[0]), 'constant')
             #expand_states = np.expand_dims(expand_states, axis=0)  # 배치 차원 추가
 
             #values = tf.squeeze(self.model_critic(expand_states))
             #values = self.model_critic(expand_states)
-            #logger.error(f'### values shape : {values.shape}')
+            #logger.info(f'### values shape : {values.shape}')
 
             #expand_next_states = np.pad(next_states, (0, 12 - next_states.shape[0]), 'constant')
             #expand_next_states = np.expand_dims(expand_next_states, axis=0)  # 배치 차원 추가
@@ -699,7 +735,7 @@ class PPOAgent(Algorithm):
             # Add an extra dimension to next_states
             next_states = np.expand_dims(next_states, axis=0)
             next_values = self.model_critic(next_states)
-            logger.error(f'### next_values shape : {next_values.shape}')
+            logger.info(f'### next_values shape : {next_values.shape}')
 
             advantages = self.make_gae()
             advantages = advantages[:6]
@@ -707,28 +743,28 @@ class PPOAgent(Algorithm):
             advantages = tf.reshape(advantages, (-1, 1))
 
             advantages = tf.cast(advantages, tf.float32)
-            logger.error(f'### advantages shape : {np.shape(advantages)}')
+            logger.info(f'### advantages shape : {np.shape(advantages)}')
             '''
             mean_advantages = [
                 sum(sum(inner_list) for inner_list in outer_list) / (len(outer_list) * len(outer_list[0])) for
                 outer_list in advantages]
-            logger.error(f"mean_advantages shape: {np.shape(mean_advantages)}")
+            logger.info(f"mean_advantages shape: {np.shape(mean_advantages)}")
             '''
 
             #curr_P = self.model_actor(states, training=True)
             #loss = self.compute_loss(old_action_probs, curr_P, actions, advantages)
 
             # Check if the number of elements matches the target shape
-            logger.error(f'### tf.size(values): {tf.size(values)}')
+            logger.info(f'### tf.size(values): {tf.size(values)}')
 
             if tf.size(values) == 100:
-                logger.error("Non-Error: The tensor size is [100].")
+                logger.info("Non-Error: The tensor size is [100].")
                 values = tf.reshape(values, [100])
                 
                 returns = advantages + values
-                logger.error(f'### returns : {np.shape(returns)}')  #(100, 3, 4)
+                logger.info(f'### returns : {np.shape(returns)}')  #(100, 3, 4)
             else:
-                logger.error("Error: The tensor cannot be reshaped to the target shape [100].")
+                logger.info("Error: The tensor cannot be reshaped to the target shape [100].")
                 returns = advantages
 
             '''
@@ -740,18 +776,18 @@ class PPOAgent(Algorithm):
 
             #probs = tf.nn.softmax(self.model_actor(states))
 
-            logger.error(f'before calc discounted rewards - states: {states}')
+            logger.info(f'before calc discounted rewards - states: {states}')
             discounted_rewards = self.new_discount_rewards(rewards, [0, 1, 2, 2])
 
-            logger.error(f'### values shape : {np.shape(values)}')
-            logger.error(f'### returns shape : {np.shape(returns)}')
+            logger.info(f'### values shape : {np.shape(values)}')
+            logger.info(f'### returns shape : {np.shape(returns)}')
 
             #loss, total_loss = self.ppo_loss_with_GT(old_action_probs, states, actions, advantages, values, returns, rewards)
             loss, total_loss = self.ppo_loss_with_GT(old_action_probs, states, actions, advantages, values, returns, discounted_rewards)
 
             #loss = self.ppo_loss(advantages, old_action_probs)
             #loss = self.ppo_loss_with_GT(old_action_probs, action_probs, values, old_values, next_values, actions, rewards)
-            logger.error(f'after ppo_loss_with_GT ***** total_loss : {total_loss} *****')
+            logger.info(f'after ppo_loss_with_GT ***** total_loss : {total_loss} *****')
 
             batch_old_prediction = self.get_old_prediction(states)
             # advantages = tf.cast(advantages, tf.float32)
@@ -769,6 +805,7 @@ class PPOAgent(Algorithm):
                 self.old_prediction: batch_old_prediction,
                 # other placeholders
             }'''
+
         advantage_np = advantages.eval(session=self.sess)
         batch_old_prediction_np = batch_old_prediction.eval(session=self.sess)
 
@@ -799,15 +836,15 @@ class PPOAgent(Algorithm):
         batch_a_final = np.zeros(shape=(1,))
         batch_a_final[:] = 1
 
-        logger.error(f"Advantages shape: {advantages.shape}")
-        logger.error(f"Advantages dtype: {advantages.dtype}")
+        logger.info(f"Advantages shape: {advantages.shape}")
+        logger.info(f"Advantages dtype: {advantages.dtype}")
 
-        logger.error(f"batch_advantage shape: {batch_advantage.shape}")
-        logger.error(f"batch_advantage dtype: {batch_advantage.dtype}")
+        logger.info(f"batch_advantage shape: {batch_advantage.shape}")
+        logger.info(f"batch_advantage dtype: {batch_advantage.dtype}")
 
         batch_old_prediction = tf.reshape(batch_old_prediction, (-1, 6))
-        logger.error(f"batch_old_prediction shape: {batch_old_prediction.shape}")
-        logger.error(f"batch_old_prediction dtype: {batch_old_prediction.dtype}")
+        logger.info(f"batch_old_prediction shape: {batch_old_prediction.shape}")
+        logger.info(f"batch_old_prediction dtype: {batch_old_prediction.dtype}")
         '''
         feed_dict = {
             self.advantage_input: batch_advantage,
@@ -863,13 +900,13 @@ class PPOAgent(Algorithm):
         :return:
         """
 
-        #logger.error(f"@ train_network - GAE_CALCULATED_Q : {self.memory.GAE_CALCULATED_Q}")
+        #logger.info(f"@ train_network - GAE_CALCULATED_Q : {self.memory.GAE_CALCULATED_Q}")
         #if not self.memory.GAE_CALCULATED_Q:
         batch_gae_r = self.make_gae()
         batch_gae_r = batch_gae_r[:6]
         #batch_gae_r = tf.reshape(batch_gae_r, [6, 1])
         #batch_gae_r = tf.cast(batch_gae_r, tf.float32)
-        logger.error(f'### batch_gae_r shape : {np.shape(batch_gae_r)}')
+        logger.info(f'### batch_gae_r shape : {np.shape(batch_gae_r)}')
         #states,actions,rewards,gae_r,next_states,dones = self.memory.get_batch_each(self.TRAINING_BATCH_SIZE)
 
         # create np array batches for training
@@ -879,31 +916,31 @@ class PPOAgent(Algorithm):
         #batch_gae_r = np.vstack(gae_r)
         # get values of states in batch
         batch_v = self.get_v(batch_s)
-        logger.error(f'@@ train_network -\nbatch_s :\n{batch_s}\n'
+        logger.info(f'@@ train_network -\nbatch_s :\n{batch_s}\n'
               f'batch_gae_r :\n{batch_gae_r}\n'
               f'batch_v :\n{batch_v}\n')
         # calc advantages. required for actor loss.
         batch_advantage = batch_gae_r - batch_v
         batch_advantage = K.utils.normalize(batch_advantage)
         batch_advantage = torch.mean(batch_advantage, dim=0)
-        logger.error(f'@@ train_network - batch_advantage shape:\n{np.shape(batch_advantage)}')
-        logger.error(f'@@ train_network - batch_advantage :\n{batch_advantage}')
+        logger.info(f'@@ train_network - batch_advantage shape:\n{np.shape(batch_advantage)}')
+        logger.info(f'@@ train_network - batch_advantage :\n{batch_advantage}')
 
         # calc old_prediction. Required for actor loss.
         batch_old_prediction = np.zeros(shape=(len(batch_a), 1))
         batch_old_prediction = self.get_old_prediction(batch_s)
         # one-hot the actions. Actions will be the target for actor.
-        logger.error(f'@@ train_network -\nlen(batch_a) : {len(batch_a)}\nself.action_n : {self.action_n}')
+        logger.info(f'@@ train_network -\nlen(batch_a) : {len(batch_a)}\nself.action_n : {self.action_n}')
         #batch_a_final = np.zeros(shape=(len(batch_a), self.action_n))
         batch_a_final = np.zeros(shape=(1, len(batch_a)))
         #batch_a_final = np.zeros(shape=(len(batch_a), 1))
-        logger.error(f'@@ train_network -\nbatch_a :\n{batch_a}\nbatch_a.flatten() :\n{batch_a.flatten()}\n')
+        logger.info(f'@@ train_network -\nbatch_a :\n{batch_a}\nbatch_a.flatten() :\n{batch_a.flatten()}\n')
 
         #commit training
         batch_s = np.expand_dims(batch_s, axis=0)
-        logger.error(f'BEFORE fit : batch_s -\n{batch_s}\n batch_a_final -\n{batch_a_final}')
+        logger.info(f'BEFORE fit : batch_s -\n{batch_s}\n batch_a_final -\n{batch_a_final}')
         batch_advantage = np.reshape(batch_advantage, (-1, 1))
-        logger.error(f'BEFORE fit : batch_advantage -\n{batch_advantage}\n')
+        logger.info(f'BEFORE fit : batch_advantage -\n{batch_advantage}\n')
 
         batch_old_prediction = np.reshape(batch_old_prediction, (-1, 6))
 
@@ -913,7 +950,7 @@ class PPOAgent(Algorithm):
         #batch_old_prediction_np = batch_old_prediction.numpy()
         batch_old_prediction_tf = tf.convert_to_tensor(batch_old_prediction, dtype=tf.float32)
 
-        logger.error(f'BEFORE fit : batch_old_prediction_tf -\n{batch_old_prediction_tf}\n')
+        logger.info(f'BEFORE fit : batch_old_prediction_tf -\n{batch_old_prediction_tf}\n')
 
         #batch_a_final[:, batch_a.flatten()] = 1
         batch_a_final = batch_a_final[:1]
@@ -944,5 +981,5 @@ class PPOAgent(Algorithm):
         '''
 
         #loss = self.ppo_loss(batch_advantage, batch_old_prediction)
-        logger.error(f'### ppo_loss:{loss}')
+        logger.info(f'### ppo_loss:{loss}')
         return loss

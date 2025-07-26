@@ -21,10 +21,10 @@ attempt_prob : 0.6
 #type: "DDQN"
 #type: "DRQN"
 #type: "DDPG"
-type: "A2C"
+#type: "A2C"
 #type: "A2C_ver2"
 #type: "A3C"
-#type: "PPO"
+type: "PPO"
 actor_lr: 0.0001
 critic_lr: 0.0005
 #critic_lr: 0.001
@@ -34,6 +34,7 @@ reward_discount: 0.03
 with_per: True
 #with_per: False
 with_ere: True
+#with_ere: False
 memory_size: 1000
 #memory_size: 20000
 #batch_size: 32

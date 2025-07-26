@@ -35,9 +35,9 @@ SPEC_FORMAT = {
 def check_comp_spec(comp_spec, comp_spec_format):
     '''Base method to check component spec'''
     for spec_k, spec_format_v in comp_spec_format.items():
-        logger.error(f'spec_k:{spec_k}\n spec_format_v:{spec_format_v}')
+        logger.info(f'spec_k:{spec_k}\n spec_format_v:{spec_format_v}')
         comp_spec_v = comp_spec[spec_k]
-        logger.error(f'comp_spec_v:{comp_spec_v}')
+        logger.info(f'comp_spec_v:{comp_spec_v}')
         if ps.is_list(spec_format_v):
             v_set = spec_format_v
             assert comp_spec_v in v_set, f'Component spec value {ps.pick(comp_spec, spec_k)} needs to be one of {util.to_json(v_set)}'

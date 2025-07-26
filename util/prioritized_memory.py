@@ -6,6 +6,8 @@ logger = logger.get_logger(__name__)
 from collections import deque
 from .sumtree import SumTree
 
+import config.setup as cs
+
 class PerMemory(object):
     """ Memory Buffer Helper class for Experience Replay
     using a double-ended queue or a Sum Tree (for PER)
@@ -24,11 +26,12 @@ class PerMemory(object):
         """
         logger.info("@ PerMemory : init - feature_size = ", feature_size)
         self.prior = prior
-        #self.data_len = 6 * feature_size + 6
-        # "A2C"
-        self.data_len = feature_size * 5 + 2
-        # "DDQN"
-        #self.data_len = feature_size * 6 + 8
+        if cs.env == "mbr":
+            self.data_len = feature_size * 5 + 2
+        else:
+            self.data_len = 6 * feature_size + 6
+        if cs.TYPE == "DDQN":
+            self.data_len = feature_size * 6 + 8
 
         #self.data_len = feature_size
         logger.info("@ PerMemory : init - prior:{} data_len:{}".format(self.prior ,self.data_len))
@@ -47,12 +50,12 @@ class PerMemory(object):
 
     def store(self, transition):
         if self.prior:
-            p = self.tree.max_p
-            logger.info(f'PER @ store with p(max_p): {p}\n')
-            if not p:
+            p = self.tree.max_p()
+            logger.critical(f'PER store - with p(max_p): {p}\n')
+            if p == 0:
                 p = self.p_upper
-            logger.info(f"PER @ store - p:{p}")
-            logger.info(f"PER @ store - transition:\n{transition}")
+            logger.critical(f"PER store - p:{p}")
+            logger.info(f"PER store - transition:\n{transition}")
             self.tree.add(p, transition)
             #logger.info('PER @ store - check min_p:{}\n'.format(self.tree.min_p))
         else:
@@ -88,7 +91,7 @@ class PerMemory(object):
         #logger.info('PER @ _get_priority : {}'.format(np.power(error + self.e, self.a).squeeze()))
         #return np.power(error + self.e, self.a).squeeze()
         self.a = np.max([1., self.alpha - self.alpha_decrement_per_sampling])
-        logger.error(f'PER @ _get_priority : {(abs(error) + self.e) ** self.a}')
+        logger.info(f'PER @ _get_priority : {(abs(error) + self.e) ** self.a}')
         return (abs(error) + self.e) ** self.a
 
 
@@ -263,3 +266,4 @@ class PerMemory(object):
     def update_priority(self, idx, prios):
         priorities = self._get_priority(abs(prios))
         self.tree.update(idx, priorities)
+

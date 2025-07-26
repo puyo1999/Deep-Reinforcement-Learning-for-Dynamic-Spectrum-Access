@@ -83,6 +83,11 @@ class ActorNetwork(keras.Model):
 
 	def call(self, inputs, training=None, mask=None):
 		print(f'@ call - inputs:\n{inputs}')
+		# inputs가 리스트라면 합쳐서 사용
+		if isinstance(inputs, (list, tuple)):
+			x = tf.concat(inputs, axis=-1)
+		else:
+			x = inputs
 		x = self.state_h1(inputs)
 		x = self.state_h2(x)
 

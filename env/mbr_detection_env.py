@@ -45,7 +45,7 @@ class mbr_env:
 
         self.REWARD = 1
         self.DOUBLE_REWARD = 2
-        logger.error(f'@@ Mbr Env init : {self.NUM_CS}')
+        logger.info(f'@@ Mbr Env init : {self.NUM_CS}')
         self.action_space = np.arange(self.NUM_CS+1)
 
         self.hdmi_action = np.zeros([self.NUM_HDMI], np.int32)
@@ -63,11 +63,11 @@ class mbr_env:
         candidate_codeset = initialize_candidate_codeset(cec_brand, num_candidates=5)
 
         # 초기 candidate_codeset 출력
-        logger.error("초기 Candidate Codeset:")
+        logger.info("초기 Candidate Codeset:")
         for brand, codes in candidate_codeset.items():
-            logger.error(f"{brand}: {codes}")
+            logger.info(f"{brand}: {codes}")
 
-        logger.error(f'@@ Mbr Env init -\n'
+        logger.info(f'@@ Mbr Env init -\n'
               f'action_space : {self.action_space}\n'
               f'hdmi_action : {self.hdmi_action}\n'
               f'hdmi_observation:{self.hdmi_observation}\n'
@@ -75,23 +75,23 @@ class mbr_env:
               f'cec_brand_index:{self.cec_brand_index}\n') # cec_brand_index:[5 1 3 6]
 
     def reset(self):
-        logger.error(f'@@ Mbr Env reset - Do nothing now !!')
+        logger.info(f'@@ Mbr Env reset - Do nothing now !!')
         pass
 
     def sample_(self):
         x = np.random.choice(self.action_space, size=self.NUM_HDMI, replace=False)
-        logger.error(f'##### Mbr Env @@@@@ sample x:{x} from action_space:{self.action_space}')
+        logger.info(f'##### Mbr Env @@@@@ sample x:{x} from action_space:{self.action_space}')
         return x
 
     def sample(self):
         x = np.random.choice(self.action_space, size=self.NUM_HDMI)
-        logger.error(f'##### Mbr Env @@@@@ sample x:{x} from action_space:{self.action_space}')
+        logger.info(f'##### Mbr Env @@@@@ sample x:{x} from action_space:{self.action_space}')
         return x
 
     def step(self, action):
-        logger.error(f'action.size: {action.size}, NUM_HDMI: {self.NUM_HDMI}')
+        logger.info(f'action.size: {action.size}, NUM_HDMI: {self.NUM_HDMI}')
         assert (action.size) == self.NUM_HDMI, "action and user should have the same dim action.size:\n{}".format(action.size)
-        logger.error(f'@ step - action: {action}, NUM_CS: {self.NUM_CS}')
+        logger.info(f'@ step - action: {action}, NUM_CS: {self.NUM_CS}')
 
         # 이차원 배열로 생성해서 HDMI 별로 코드셋 최대 개수 주기 설정해야 함
 
@@ -100,8 +100,8 @@ class mbr_env:
         #codeset_alloc_order = [list(range(1, self.NUM_CS+1)) for _ in range(self.NUM_HDMI)]
         codeset_alloc_order = list(range(1, self.NUM_CS+1))
         time_elapsed = np.ones([self.NUM_CS+1], np.int32)
-        logger.error(f'@ step - shape of codeset_alloc_frequency: {np.shape(codeset_alloc_frequency)}')
-        logger.error(f'@ step - initial codeset_alloc_frequency:\n{codeset_alloc_frequency}')
+        logger.info(f'@ step - shape of codeset_alloc_frequency: {np.shape(codeset_alloc_frequency)}')
+        logger.info(f'@ step - initial codeset_alloc_frequency:\n{codeset_alloc_frequency}')
 
         obs = []
         reward = np.zeros([self.NUM_HDMI])
@@ -109,7 +109,7 @@ class mbr_env:
         for each in action:
 
             prob = random.uniform(0,1)
-            logger.error(f'@@ In loop step[{each}] - prob: {prob}')
+            logger.info(f'@@ In loop step[{each}] - prob: {prob}')
 
             ## TODO:: 코드셋 list 변경 시도 확률 수정해 가면서 시뮬레이션 필요
             if prob <= self.ATTEMPT_PROB:
@@ -120,21 +120,21 @@ class mbr_env:
                 #codeset_alloc_frequency[each][j] += 1
 
             time = random.randint(3, 60)
-            logger.error(f'@@ time: {time}')
+            logger.info(f'@@ time: {time}')
             time_elapsed[each] = time
 
             #map_cec_brand = list(map(int, cec_brand))
             #idx = cec_brand.index(self.cec_brand_int[each])
             #self.cec_brand_int[each] = map_cec_brand[each]
-            #logger.error(f'@@ cec_brand_index[{each}] : {self.cec_brand_index[each]}')
+            #logger.info(f'@@ cec_brand_index[{each}] : {self.cec_brand_index[each]}')
 
             j += 1
 
-        logger.error(f'@ step - codeset_alloc_order:\n{codeset_alloc_order}')
+        logger.info(f'@ step - codeset_alloc_order:\n{codeset_alloc_order}')
 
-        logger.error(f'@ step - original codeset_alloc_frequency:\n{codeset_alloc_frequency}')
-        logger.error(f'@ step - time_elapsed:\n{time_elapsed}')
-        logger.error(f'@ step - cec_brand_index:\n{self.cec_brand_index}')
+        logger.info(f'@ step - original codeset_alloc_frequency:\n{codeset_alloc_frequency}')
+        logger.info(f'@ step - time_elapsed:\n{time_elapsed}')
+        logger.info(f'@ step - cec_brand_index:\n{self.cec_brand_index}')
         '''
         @ step - original codeset_alloc_frequency:
         [3 0 0 1 0 0]
@@ -145,7 +145,7 @@ class mbr_env:
         '''
         # combination on codeset list
         #codeset_comb = list(itertools.combinations(codeset_alloc_frequency, 3))
-        #logger.error(f'@ step - codeset_comb: {codeset_comb}')
+        #logger.info(f'@ step - codeset_comb: {codeset_comb}')
 
         '''
         for i in range(1, len(codeset_alloc_frequency)):
@@ -154,57 +154,57 @@ class mbr_env:
         '''
 
         for i in range(len(action)):
-            logger.error(f'@@ In loop action range[{i}]')
+            logger.info(f'@@ In loop action range[{i}]')
             self.hdmi_observation[i] = codeset_alloc_frequency[i][self.hdmi_action[i]]
             #self.hdmi_observation[i] = codeset_alloc_frequency[self.hdmi_action[i]][i]
             self.hdmi_detection_time[i] = time_elapsed[i]
             idx = cec_brand.index(self.cec_brand_name[i]) # predefined mapping is needed
             self.cec_brand_index[i] = idx
 
-            logger.error(f'@@@ step - hdmi_action[{i}] : {self.hdmi_action[i]}')
-            logger.error(f'@@@ step - hdmi_observation[{i}] : {self.hdmi_observation[i]}')
-            logger.error(f'@@@ step - hdmi_detection_time[{i}] : {self.hdmi_detection_time[i]}')
-            logger.error(f'@@@ step - cec_brand_index[{i}] : {self.cec_brand_index[i]}')
+            logger.info(f'@@@ step - hdmi_action[{i}] : {self.hdmi_action[i]}')
+            logger.info(f'@@@ step - hdmi_observation[{i}] : {self.hdmi_observation[i]}')
+            logger.info(f'@@@ step - hdmi_detection_time[{i}] : {self.hdmi_detection_time[i]}')
+            logger.info(f'@@@ step - cec_brand_index[{i}] : {self.cec_brand_index[i]}')
             # 기기 인식에 걸린 시간을 기준으로 보너스 보상 계산
             bonus_reward = (1 / (time_elapsed[i] + 1))
             #bonus_reward = 0.21
-            logger.error(f'@@@ step - bonus_reward : {bonus_reward}')
+            logger.info(f'@@@ step - bonus_reward : {bonus_reward}')
             if self.hdmi_action[i] == 0:  # accessing no codeset
                 self.hdmi_observation[i] = 0
                 reward[i] = 0 + bonus_reward
-                logger.error(f'$ step : accessing no codeset - only bonus reward[{i}] : {reward[i]}')
+                logger.info(f'$ step : accessing no codeset - only bonus reward[{i}] : {reward[i]}')
             if self.hdmi_observation[i] == 1:
                 reward[i] = 0.1 + bonus_reward
-                logger.error(f'$ step : obs 1 - reward[{i}] : {reward[i]}')
+                logger.info(f'$ step : obs 1 - reward[{i}] : {reward[i]}')
             elif self.hdmi_observation[i] == 2:
                 reward[i] = 0.2 + bonus_reward
-                logger.error(f'$ step : obs 2 - reward[{i}] : {reward[i]}')
+                logger.info(f'$ step : obs 2 - reward[{i}] : {reward[i]}')
             elif self.hdmi_observation[i] == 3:
                 reward[i] = 0.3 + bonus_reward
-                logger.error(f'$ step : obs 3 - reward[{i}] : {reward[i]}')
+                logger.info(f'$ step : obs 3 - reward[{i}] : {reward[i]}')
             elif self.hdmi_observation[i] == 4:
                 reward[i] = 0.4 + bonus_reward
-                logger.error(f'$ step : obs 4 - reward[{i}] : {reward[i]}')
+                logger.info(f'$ step : obs 4 - reward[{i}] : {reward[i]}')
             elif self.hdmi_observation[i] == 5:
                 reward[i] = 0.5 + bonus_reward
-                logger.error(f'$ step : obs 5 - reward[{i}] : {reward[i]}')
+                logger.info(f'$ step : obs 5 - reward[{i}] : {reward[i]}')
 
             # reward = (R_max - R_min) * e... + R_min
 
             # cec brand 잘 맞았다면, 높은 보상을 주자.
 
-            logger.error(f'☆★☆★ step - cec_brand_index[{i}] : {self.cec_brand_index[i]}')
-            logger.error(f'☆★☆★ step - hdmi_observation[{i}] : {self.hdmi_observation[i]}')
+            logger.info(f'☆★☆★ step - cec_brand_index[{i}] : {self.cec_brand_index[i]}')
+            logger.info(f'☆★☆★ step - hdmi_observation[{i}] : {self.hdmi_observation[i]}')
             if self.cec_brand_index[i] == self.hdmi_observation[i]:
                 reward[i] = reward[i] * 1.2
-                logger.error(f'☆★☆★ step - 20% more reward[{i}] : {reward[i]}')
+                logger.info(f'☆★☆★ step - 20% more reward[{i}] : {reward[i]}')
 
             ## TODO:: cec_brand 와 안맞은 경우에 수동으로 codeset 순서를 변경하는 policy 필요
             else:
             # codeset_alloc_frequency
-            # logger.error(f'@ step - reordered codeset_alloc_frequency:\n{codeset_alloc_frequency}')
+            # logger.info(f'@ step - reordered codeset_alloc_frequency:\n{codeset_alloc_frequency}')
                 reward[i] = reward[i] * 0.5
-                logger.error(f'♨♨♨♨ step - half reward[{i}] : {reward[i]}')
+                logger.info(f'♨♨♨♨ step - half reward[{i}] : {reward[i]}')
 
                 self.hdmi_observation[i] = codeset_alloc_order[i]
 
@@ -222,7 +222,7 @@ class mbr_env:
 
             obs.append((self.hdmi_observation[i], reward[i]))
 
-        logger.error(f'☆★☆★ step - saved observation: {obs}')
+        logger.info(f'☆★☆★ step - saved observation: {obs}')
         return obs
 
     def close(self):

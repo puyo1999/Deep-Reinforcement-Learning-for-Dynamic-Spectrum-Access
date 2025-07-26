@@ -4,18 +4,20 @@ import matplotlib.pyplot as plt
 
 #time_slots = 1000
 #time_slots = 500
-time_slots = 100
-
-a2c_score = np.load('a2c_scores.npy')
-#a2c_score = np.load('a2c_means.npy')
+time_slots = 400
+dqn_score = np.load('dqn_scores.npy')
+ddqn_score = np.load('ddqn_scores.npy')
 drqn_score = np.load('drqn_scores.npy')
 ppo_score = np.load('ppo_scores.npy')
-ddqn_score = np.load('ddqn_scores.npy')
+a2c_score = np.load('a2c_scores.npy')
+#a2c_score = np.load('a2c_means.npy')
 
-a2c_loss = np.load('a2c_losses.npy')
+
+dqn_loss = np.load('dqn_losses.npy')
+ddqn_loss = np.load('ddqn_losses.npy')
 drqn_loss = np.load('drqn_losses.npy')
 ppo_loss = np.load('ppo_losses.npy')
-ddqn_loss = np.load('ddqn_losses.npy')
+a2c_loss = np.load('a2c_losses.npy')
 
 print(a2c_score.shape)
 print(f'a2c score : {a2c_score}')
@@ -39,14 +41,16 @@ bx = fig.add_subplot(212) # 2x1 matrix 의 2행
 plt.xlabel('Time Slot')
 plt.ylabel('Average Losses')
 
-ax.plot(np.arange(200), a2c_score, marker='v',label='A2C score', markersize=5, markevery=10) ## 선그래프 생성
-ax.plot(np.arange(time_slots+1), drqn_score, marker='D',label='DRQN score', markersize=5, markevery=10) ## 선그래프 생성
-ax.plot(np.arange(time_slots+1), ppo_score, marker='o',label='PPO score', markersize=5, markevery=10) ## 선그래프 생성
+ax.plot(np.arange(time_slots), dqn_score, marker='+',label='DQN score', markersize=5, markevery=10)
+ax.plot(np.arange(time_slots), drqn_score, marker='D',label='DRQN score', markersize=5, markevery=10)
+ax.plot(np.arange(time_slots), a2c_score, marker='v',label='A2C score', markersize=5, markevery=10) ## 선그래프 생성
+ax.plot(np.arange(101), ppo_score, marker='o',label='PPO score', markersize=5, markevery=10) ## 선그래프 생성
 ax.plot(np.arange(300), ddqn_score, marker='h',label='DDQN score', markersize=5, markevery=10) ## 선그래프 생성
 
-bx.plot(np.arange(200), a2c_loss, marker='.',label='A2C loss', markersize=3, markevery=10) ## 선그래프 생성
+bx.plot(np.arange(time_slots), dqn_loss, marker='v',label='DQN loss', markersize=3, markevery=10) ## 선그래프 생성
 bx.plot(np.arange(time_slots), drqn_loss, marker='*',label='DRQN loss', markersize=3, markevery=10) ## 선그래프 생성
-bx.plot(np.arange(time_slots), ppo_loss, marker='_',label='PPO loss', markersize=3, markevery=10) ## 선그래프 생성
+bx.plot(np.arange(time_slots), a2c_loss, marker='.',label='A2C loss', markersize=3, markevery=10) ## 선그래프 생성
+bx.plot(np.arange(100), ppo_loss, marker='_',label='PPO loss', markersize=3, markevery=10) ## 선그래프 생성
 bx.plot(np.arange(299), ddqn_loss, marker='o',label='DDQN loss', markersize=3, markevery=10) ## 선그래프 생성
 
 #ax.plot(days,b_visits,marker='o',label='B')

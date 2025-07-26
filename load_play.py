@@ -64,10 +64,10 @@ def main():
 
     init_action = env.sample()
     init_obs = env.step(init_action)
-    logger.error(f'@ load_play - init_obs :\n{init_obs}\n')
+    logger.info(f'@ load_play - init_obs :\n{init_obs}\n')
 
     init_state = state_generator(init_action, init_obs)
-    logger.error(f'@ load_play - init_state:\n{init_state}\n')
+    logger.info(f'@ load_play - init_state:\n{init_state}\n')
 
     # 모델 재학습 수행
     actor_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
@@ -88,14 +88,14 @@ def main():
 
         if np.random.rand() < 0.1:
             action = env.sample_()
-            logger.error(f'## random action:\n{action}')
+            logger.info(f'## random action:\n{action}')
         else:
             temp_state = np.array(init_state)
             temp_state = temp_state[:, 3:9]
             temp_state = temp_state.reshape(1, 6, 4)
             action_probs = actor_model.predict(temp_state)
-            logger.error(f'## action_probs:\n{action_probs}')
-            logger.error(f'## shape of action_probs:\n{np.shape(action_probs)}')
+            logger.info(f'## action_probs:\n{action_probs}')
+            logger.info(f'## shape of action_probs:\n{np.shape(action_probs)}')
 
             #action = action_probs[0][0][0:4]
             #action = np.argmax(action_probs)
@@ -104,25 +104,25 @@ def main():
 
             # 각 행에서 확률이 높은 4개의 action 인덱스 선택
             action = np.argmax(middle_action_probs, axis=-1).flatten()
-            logger.error(f'## selected best action:\n{action}\nfrom action_probs:\n')
+            logger.info(f'## selected best action:\n{action}\nfrom action_probs:\n')
 
-        logger.error(f'@ load_play - action: {action}\n')
-        logger.error(f'@ load_play - shape of action: {np.shape(action)}\n')
+        logger.info(f'@ load_play - action: {action}\n')
+        logger.info(f'@ load_play - shape of action: {np.shape(action)}\n')
 
         #state, reward, done, _ = env.step(action)
         obs = env.step(action)
-        logger.error(f'@ load_play - obs: {obs}\n')
+        logger.info(f'@ load_play - obs: {obs}\n')
 
         state = state_generator(action, obs)
 
         new_state = state_generator(action, obs)
 
         reward = [i[1] for i in obs[:NUM_USERS]]
-        logger.error(f'@ load_play - \nreward: {reward}\n')
+        logger.info(f'@ load_play - \nreward: {reward}\n')
 
         state = np.array(state)
         action = np.array(action)
-        logger.error(f'@ load_play - before reshape\nstate: {state}\naction: {action}\n')
+        logger.info(f'@ load_play - before reshape\nstate: {state}\naction: {action}\n')
 
         # 필요한 크기만 사용하여 크기 조정
         state = state[:, 3:9]  # 열 개수를 줄여 (6, 4) 형태로 변환
@@ -136,7 +136,7 @@ def main():
         #action = action.reshape(-1, 1)  # (batch_size, output_dim)
         action = action[:state.shape[0]]
 
-        logger.error(f'@ load_play - after reshape\nstate: {state}\naction: {action}\n')
+        logger.info(f'@ load_play - after reshape\nstate: {state}\naction: {action}\n')
 
         actor_model.fit(state, action, epochs=10, batch_size=4)
 
@@ -146,31 +146,31 @@ def main():
         new_state = new_state.reshape(1, 6, 4)
 
         new_action_probs = actor_model.predict(new_state)
-        logger.error(f"????? new_action_probs:\n{new_action_probs}")
+        logger.info(f"????? new_action_probs:\n{new_action_probs}")
 
         predicted_action = np.argmax(actor_model.predict(new_state), axis=-1 ).flatten()  # 모델이 예측한 행동
-        logger.error(f"????? predicted_action:\n{predicted_action}")
+        logger.info(f"????? predicted_action:\n{predicted_action}")
 
         # 선택된 행동의 확률 추출
         new_action_prob = new_action_probs[0, predicted_action]
-        logger.error(f"????? new_action_prob:\n{new_action_prob}")
+        logger.info(f"????? new_action_prob:\n{new_action_prob}")
         # 로그 확률 계산
         log_prob = tf.math.log(new_action_prob + 1e-10)  # 로그 연산의 안정성 확보
-        logger.error(f"????? log_prob:\n{log_prob}")
+        logger.info(f"????? log_prob:\n{log_prob}")
 
         actor_reward = calculate_reward(new_state[0], predicted_action)
-        logger.error(f'@ load_play - \nactor_reward: {actor_reward}\n')
+        logger.info(f'@ load_play - \nactor_reward: {actor_reward}\n')
 
         # 보상 기반의 policy gradient loss
         loss = -log_prob * actor_reward
-        logger.error(f"????? Policy Loss:\n{loss.numpy()}")
+        logger.info(f"????? Policy Loss:\n{loss.numpy()}")
 
         sum_r = np.sum(reward)
-        logger.error(f'$$$ Before appending cur_r : cum_r[-1] = {cum_r[-1]}')
+        logger.info(f'$$$ Before appending cur_r : cum_r[-1] = {cum_r[-1]}')
         cum_r.append(cum_r[-1] + sum_r)
-        logger.error(f'$$$ After appending cur_r : cum_r[-1] = {cum_r[-1]}')
+        logger.info(f'$$$ After appending cur_r : cum_r[-1] = {cum_r[-1]}')
 
-        logger.error(f"Time: {time}, cum_r: {cum_r}\n")
+        logger.info(f"Time: {time}, cum_r: {cum_r}\n")
 
         # 오차 계산을 여기선 할 필요가 없는게 이건 이미 학습한 기반으로 play 하는 코드라서,
 

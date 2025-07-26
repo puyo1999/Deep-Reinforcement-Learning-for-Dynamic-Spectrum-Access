@@ -8,6 +8,8 @@ import tensorflow as tf
 tf.executing_eagerly()
 tf.compat.v1.enable_eager_execution()
 
+tf.data.experimental.enable_debug_mode()
+
 import numpy as np
 import random
 import tensorflow_probability as tfp
@@ -21,7 +23,6 @@ import torch
 import math
 
 import logging
-
 logger = logging.getLogger(__name__)
 
 from config.setup import action_size, batch_size, gamma
@@ -87,7 +88,7 @@ class A2C(object):
 
     def get_action_(self, state):
         policy = self.actor.predict(state, batch_size=1).flatten()
-        logger.error(f'act_dim : {self.act_dim}\npolicy :{policy}\n')
+        logger.info(f'act_dim : {self.act_dim}\npolicy :{policy}\n')
         return np.random.choice(a=self.act_dim, size=3, p=policy[:6])[0]
 
     def get_action(self, action_prob):
@@ -227,24 +228,89 @@ class A2C(object):
         print(f'##### learn_experience - actor_loss:{actor_loss}\n##### critic_loss:{critic_loss}\n')
         return actor_loss, critic_loss
 
-    def learn_(self, states, actions, next_states, discnt_rewards, is_weights):
-        with tf.GradientTape() as tape1, tf.GradientTape() as tape2:
+    def compute_returns_tf(self, rewards, gamma, eps=1e-8):
+        # rewards: shape (B,), tf.float32
+        rev_rewards = tf.reverse(rewards, axis=[0])
+        discounted = tf.scan(lambda acc, r: r + gamma * acc,
+                             rev_rewards,
+                             initializer=0.0)
+        returns = tf.reverse(discounted, axis=[0])
+        mean, var = tf.nn.moments(returns, axes=[0])
+        returns = (returns - mean) / (tf.sqrt(var) + eps)
+        return returns  # tf.Tensor, shape (B,)
 
+    @tf.function
+    def train_step(self, states, actions, next_states, rewards, is_weights):
+        # 1) forward + 손실 계산을 한 tape 안에
+        with tf.GradientTape() as tape:
+            # ── Actor Forward ──
+            probs = self.actor(states, training=True)  # (B, A)
+            dist = tfp.distributions.Categorical(probs=probs)
+            logp = dist.log_prob(actions)  # (B,)
+
+            # ── Critic Forward ──
+            values = self.critic(states, training=True)
+
+            # ── Returns & Advantage (순수 TF 연산) ──
+            returns = self.compute_returns_tf(rewards, self.gamma, self.eps)  # (B,)
+            advantage = returns - tf.stop_gradient(values)  # (B,)
+
+            # ── Actor/Critic 손실 ──
+            a_loss = -tf.reduce_mean(logp * advantage * is_weights)
+            # DDPG/TD 방식이라면 huber_loss(Y, Q) 형태로 바꿔주세요
+            c_loss = tf.reduce_mean(tf.keras.losses.Huber()(returns, values) * is_weights)
+
+            total_loss = a_loss + c_loss
+            logger.critical(f'@ train_step - total loss :\n{total_loss}')
+
+
+
+        # 2) gradient 계산 & 분리
+        actor_vars = self.actor.trainable_variables
+        critic_vars = self.critic.trainable_variables
+        grads = tape.gradient(total_loss, actor_vars + critic_vars)
+        tf.print("None 여부 : \n", [g is None for g in grads])
+        grads_a = grads[:len(actor_vars)]
+        grads_c = grads[len(actor_vars):]
+
+        # 3) 업데이트
+        self.a_opt.apply_gradients(zip(grads_a, actor_vars))
+        self.c_opt.apply_gradients(zip(grads_c, critic_vars))
+
+        # Compute the Q value estimate of the target network
+        Q_target = self.critic_target(next_states, self.actor_target(next_states))
+        logger.critical(f'@ train_step - Q_target.shape : {Q_target.shape}')
+
+        # Compute Y
+        Y = rewards + (self.gamma * Q_target)
+        # Compute Q value estimate of critic
+        Q = self.critic(states, actions)
+        # Calculate TD errors
+        TD_errors = (Y - Q)
+        logger.critical(f'@ train_step - TD_errors:\n{TD_errors}')
+
+        return a_loss, c_loss, TD_errors
+
+    @tf.function
+    def learn_(self, states, actions, next_states, discnt_rewards, is_weights):
+        #with tf.GradientTape() as tape1, tf.GradientTape() as tape2:
+        with tf.GradientTape() as tape:
             action_prob = self.actor(states, training=True)
             dist = tfp.distributions.Categorical(probs=action_prob)
             critic = self.critic(states, training=True)
             values = tf.squeeze(critic, axis=1)  # shape: (4,)
 
-            logger.error(f'@ learn_ - action_prob:\n{action_prob}\ncritic:\n{critic}')
-            logger.error(f'@ learn_ - action_prob[0]:\n{action_prob[0]}')
+            logger.info(f'@ learn_ - action_prob:\n{action_prob}\ncritic:\n{critic}')
+            logger.info(f'@ learn_ - action_prob[0]:\n{action_prob[0]}')
             #action = self.get_action(action_prob)
 
             #action = self.get_action_(states)
             action = dist.sample()
-            logger.error(f'@ learn_ - action: {action}')
+            logger.info(f'@ learn_ - action: {action}')
 
             logp = dist.log_prob(action)
 
+            '''
             # rewards 를 discounted factor 로 다시 계산.
             returns = []
             discounted_sum = 0
@@ -256,6 +322,8 @@ class A2C(object):
             returns = (returns - np.mean(returns)) / (np.std(returns) + self.eps)
             #returns = returns.tolist()
             returns = tf.convert_to_tensor(returns, dtype=tf.float32)
+            '''
+            returns = self.compute_returns_tf(tf.cast(discnt_rewards, tf.float32), self.gamma)
 
             next_critic = self.critic(next_states, training=True)
             logger.info(f'@ learn_ - next_critic:\n{next_critic}\ndiscnt_rewards:\n{discnt_rewards}')
@@ -265,39 +333,43 @@ class A2C(object):
             #advantage = discnt_rewards - critic[0,0]
 
             #advantage = discnt_rewards + self.gamma * next_critic - critic
-            advantage = returns - values
-
+            #advantage = returns - values
+            advantage = returns - tf.stop_gradient(values)
             # 4) per-sample losses (모두 (B,))
             w = tf.convert_to_tensor(is_weights, tf.float32)  # (B,)
 
-            logger.error(f'@ learn_ - is_weights :\n{is_weights}')
-            logger.error(f'@ learn_ - w :\n{w}')
+            logger.info(f'@ learn_ - is_weights :\n{is_weights}')
+            logger.info(f'@ learn_ - w :\n{w}')
 
-            logger.error(f'@ learn_ - advantage :\n{advantage}')
-            logger.error(f'@ learn_ - critic[0,0] :\n{critic[0,0]}')
-            logger.error(f'@ learn_ - action_prob[0][0] :\n{action_prob[0][0]}')
+            logger.info(f'@ learn_ - advantage :\n{advantage}')
+            logger.info(f'@ learn_ - critic[0,0] :\n{critic[0,0]}')
+            logger.info(f'@ learn_ - action_prob[0][0] :\n{action_prob[0][0]}')
             # [ [prob, prob, ... ] ]형식으로 입력이 들어옴
             #a_loss = -tf.math.log(action_prob[0][0]) * np.transpose( advantage[:5][:3] )
             #a_loss = -tf.math.log(action/10)
-            a_loss = -logp * tf.stop_gradient(advantage) * w
+            #a_loss = -logp * tf.stop_gradient(advantage) * w
+            a_loss = -tf.reduce_mean(logp * advantage * is_weights)
 
             #critic = np.squeeze(critic)
-            logger.error(f'critic.shape : {critic.shape}')
+            logger.info(f'critic.shape : {critic.shape}')
             #critic = np.swapaxes(critic, 1, 2)
             #critic = np.mean(critic)
-            logger.error(f'@ learn_ - critic:\n{critic}\n')
+            logger.info(f'@ learn_ - critic:\n{critic}\n')
 
             #c_loss = huber_loss(critic, discnt_rewards)
             #c_loss = tf.cast(c_loss, tf.float64)
-            c_loss = huber_loss(values, returns) * w
+            #c_loss = huber_loss(values, returns) * w
+            c_loss = tf.reduce_mean(tf.keras.losses.Huber()(returns, values) * is_weights)
 
-            logger.error(f'actor loss :\n{a_loss}')
-            logger.error(f'critic loss :\n{c_loss}')
+            total_loss = a_loss + c_loss
+            logger.info(f'actor loss :\n{a_loss}')
+            logger.info(f'critic loss :\n{c_loss}')
+            logger.critical(f'total loss :\n{total_loss}')
 
             #Compute the Q value estimate of the target network
             Q_target = self.critic_target(next_states, self.actor_target(next_states))
             #Q_target = torch.tensor(Q_target)
-            logger.error(f'Q_target.shape : {Q_target.shape}')
+            logger.info(f'Q_target.shape : {Q_target.shape}')
             #Q_target = np.swapaxes(Q_target, 1, 2)
             #Q_target = np.mean(Q_target)
 
@@ -313,19 +385,32 @@ class A2C(object):
             #Calculate TD errors
             TD_errors = (Y - Q)
 
-            print(f'@ learn_ - TD_errors:\n{TD_errors}')
+            logger.critical(f'@ learn_ - TD_errors:\n{TD_errors}')
 
-            # Backpropagation
-            grads_a = tape1.gradient(a_loss, self.actor.trainable_variables)
+        # 2) gradient 계산 & 분리
+        actor_vars = self.actor.trainable_variables
+        critic_vars = self.critic.trainable_variables
+        grads = tape.gradient(total_loss, actor_vars + critic_vars)
 
-            trainable_vars = self.critic.trainable_variables
-            grads_c = tape2.gradient(c_loss, trainable_vars)
+        grads_a = grads[:len(actor_vars)]
+        grads_c = grads[len(actor_vars):]
 
-            self.a_opt.apply_gradients(zip(grads_a, self.actor.trainable_variables))
-            self.c_opt.apply_gradients(zip(grads_c, self.critic.trainable_variables))
+        # 3) 업데이트
+        self.a_opt.apply_gradients(zip(grads_a, actor_vars))
+        self.c_opt.apply_gradients(zip(grads_c, critic_vars))
+        '''
+        # Backpropagation
+        grads_a = tape1.gradient(a_loss, self.actor.trainable_variables)
 
+        trainable_vars = self.critic.trainable_variables
+        grads_c = tape2.gradient(c_loss, trainable_vars)
+
+        self.a_opt.apply_gradients(zip(grads_a, self.actor.trainable_variables))
+        self.c_opt.apply_gradients(zip(grads_c, self.critic.trainable_variables))
+        '''
         return a_loss, c_loss, TD_errors
 
+    @tf.function
     def learn(self, states, actions, discnt_rewards):
         discnt_rewards = tf.reshape(discnt_rewards, (len(discnt_rewards),))
 
@@ -336,7 +421,7 @@ class A2C(object):
             '''
             value = self.critic(states, training=True)
             current_policy_actions, log_probs = self.actor.sample_normal(states, reparameterize=False)
-            logger.error(f'@@ learn @@\nlog_probs:\n{log_probs}')
+            logger.info(f'@@ learn @@\nlog_probs:\n{log_probs}')
             log_probs = tf.squeeze(log_probs, 1)
             critic_value = tf.squeeze(
                 tf.math.minimum(v, v2), 1)
@@ -348,13 +433,14 @@ class A2C(object):
             print(f'p:\n{p}')
             print(f'v:\n{v}')
             print(f'v2:\n{v2}')
+            '''
             p = tf.reshape(p, (15,))
             v = tf.reshape(v, (5,))
             v2 = tf.reshape(v2, (5,))
             print(f'reshape p:\n{p}')
             print(f'reshape v:\n{v}')
             print(f'reshape v2:\n{v2}')
-
+            '''
             td1 = abs(discnt_rewards - v)
             td2 = abs(discnt_rewards - v2)
             print(f'td1:{td1}\n')
@@ -382,7 +468,7 @@ class A2C(object):
 
             #returns = get_expected_return(rewards, gamma)
             #loss = self.compute_loss(actions, values, discnt_rewards)
-            loss = self.compute_actor_loss(states, actions, advantage)
+            #loss = self.compute_actor_loss(states, actions, advantage)
         grads1 = tape1.gradient(a_loss, self.actor.trainable_variables)
         grads2 = tape2.gradient(c_loss, self.critic.trainable_variables)
         grads3 = tape3.gradient(c2_loss, self.critic2.trainable_variables)
@@ -435,7 +521,7 @@ class A2C(object):
             self.memory.batch_gae_r.append(gae+v)
         #print(f'## make_gae - batch_gae_r: {self.memory.batch_gae_r}')
         self.memory.batch_gae_r.reverse()
-        #self.memory.GAE_CALCULATED_Q = True
+        self.memory.GAE_CALCULATED_Q = True
 
     def get_v(self, state):
         """Returns the value of the state.

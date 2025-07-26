@@ -3,6 +3,8 @@ import tensorflow as tf
 tf.executing_eagerly()
 tf.config.run_functions_eagerly(True)
 
+tf.data.experimental.enable_debug_mode()
+
 ### A2C or A2C_ver2
 # Enable eager execution
 tf.compat.v1.enable_eager_execution()
@@ -26,14 +28,14 @@ from util.ppo_memory import PPOMemory
 from util.parser import Parser
 from util.utils import get_states_user, get_actions_user, get_rewards_user, get_next_states_user
 from util.utils import state_generator
-from util.utils import draw_res2, draw_multi_algorithm
+from util.utils import draw_res2, draw_multi_algorithm, draw_losses
 from model.A2C.a2c import A2C
 from model.A2C_ver2.a2c import A2C_ver2
 from model.DDPG.ddpg import DDPG
 from model.drqn import QNetwork
 from model.dqn import DQNetwork
 from model.ddqn import DDQN
-from model.PPO.ppo import PPOAgent
+from model.PPO.ppo import PPO
 
 from model.base import Algorithm
 
@@ -231,7 +233,7 @@ else:
 #initializing deep Q network model
 if args.type == "DQN":
     logger.info(f"##### init DQN #####")
-    mainQN = DQNetwork(name='DQN',hidden_size=hidden_size,learning_rate=learning_rate,step_size=step_size,state_size=state_size,action_size=action_size)
+    mainQN = DQNetwork(name='DQN',hidden_size=hidden_size,learning_rate=learning_rate,step_size=step_size,state_size=state_size,action_size=action_size, memory=memory)
 elif args.type == "DRQN":
     logger.info(f"##### init DRQN #####")
     mainQN = QNetwork(name='DRQN',hidden_size=hidden_size,learning_rate=learning_rate,step_size=step_size,state_size=state_size,action_size=action_size, memory=memory)
@@ -243,8 +245,12 @@ elif args.type == "A2C":
     elif args.env == "mbr":
         a2c = A2C(env=env, sess=sess, act_dim=action_size, obs_dim=NUM_HDMI, actor_lr=actor_lr, critic_lr=critic_lr, memory=memory, prior=args.with_per)
 elif args.type == "PPO":                                                                                                 
-    #ppo = PPOAgent(env=env, memory=memory, action_n=action_size, state_dim=state_size, training_batch_size=batch_size)
-    ppo = PPOAgent(env=env, sess=sess, memory=memory, action_n=action_size, state_dim=NUM_HDMI, training_batch_size=batch_size)
+    #ppo = PPO(env=env, memory=memory, action_n=action_size, state_dim=state_size, training_batch_size=batch_size)
+    if args.env == "network":
+        ppo = PPO(env=env, sess=sess, memory=memory, action_n=action_size, state_dim=state_size, training_batch_size=batch_size)
+    elif args.env == "mbr":
+        ppo = PPO(env=env, sess=sess, memory=memory, action_n=action_size, state_dim=NUM_HDMI, training_batch_size=batch_size)
+
 elif args.type == "A2C_ver2":
     logger.info(f"##### A2C_ver2 #####")
     a2c = A2C_ver2(name='A2C_ver2')
@@ -332,6 +338,8 @@ for ii in range(pretrain_length*step_size*5):
 
             #memory.store(transition)
             memory.add(transition, 1.0)
+        elif args.type == "PPO":
+            ppo.store_transition_per2(state, action, reward, next_state)
         else:
             mainQN.store_transition(state, action, reward, next_state)
     #elif args.with_ere:
@@ -348,8 +356,9 @@ for ii in range(pretrain_length*step_size*5):
         elif args.type == "A2C":
             memory.add((state, action, reward, next_state))
             memory.store_each(state, action, reward, next_state, False)
-            if not memory.GAE_CALCULATED_Q:
-                a2c.make_gae()
+            if args.with_per:
+                if not memory.GAE_CALCULATED_Q:
+                    a2c.make_gae()
 
         else:
             memory.add((state, action, reward, next_state))
@@ -359,9 +368,9 @@ for ii in range(pretrain_length*step_size*5):
     #replay_memory.append((state, np.argmax(action), reward, next_state))
     replay_memory.append((state, action, reward, next_state))
 
-    # TODO:: importance sampling 기법 적용 가능할지 작업 추가 해보자.
-    ## TODO:: 이걸로 네트워크 자원 할당 퍼포먼스 관련 국내 저널 한편 가능할지?
-    compute_importance(state, reward, 0.99)
+    ## TODO:: importance sampling 기법 적용 가능할지 작업 추가 해보자.
+    ## TODO:: 이걸로 네트워크 자원 할당 퍼포먼스 관련 국내 저널 한편 가능할지는 실험 필요
+    #compute_importance(state, reward, 0.99)
 
     state = next_state
     history_input.append(state)
@@ -412,8 +421,8 @@ else:
     sess = tf.Session()
 
 #initialing all the tensorflow variables
-if args.type != "A2C" and args.type != "A2C_ver2":
-    logger.info(f'sess.run(tf.global_variables_initializer()')
+if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "PPO":
+    logger.critical(f'sess.run(tf.global_variables_initializer()')
     sess.run(tf.global_variables_initializer())
 
 def train_ddpg(replay_memory, batch_size):
@@ -495,7 +504,8 @@ cum_collision = [0]
 loss_list = []
 
 #mse_loss = mse()
-actor_losses = critic_losses = []
+actor_losses = []
+critic_losses = []
 
 max_reward = 10000
 episode_reward = 0
@@ -536,7 +546,7 @@ def preprocess1(states, actions, next_states, rewards, gamma, s_queue, a_queue, 
     logger.info(f's_queue : {s_queue}')
     logger.info(f'a_queue : {a_queue}')
     logger.info(f'n_s_queue : {n_s_queue}')
-    logger.error(f'r_queue : {r_queue}')
+    logger.info(f'r_queue : {r_queue}')
 
     lock.release()
 
@@ -566,7 +576,7 @@ def preprocess2(s_queue, a_queue, n_s_queue, r_queue):
 
     lock.release()
 
-    logger.critical(f'@ preprocess2 - states : {states}\n'
+    logger.info(f'@ preprocess2 - states : {states}\n'
                     f'actions : {states}\n'
                     f'next_states : {states}\n'
                     f'dis_rewards : {dis_rewards}')
@@ -606,7 +616,7 @@ def preprocess2(s_queue, a_queue, n_s_queue, r_queue):
         reward_batch = np.zeros((4,), dtype=np.float32)
 
     #state_batch = np.concatenate(*(states,), axis=0)
-    logger.critical(f'@ preprocess2 - state_batch : {state_batch}')
+    logger.info(f'@ preprocess2 - state_batch : {state_batch}')
     #action_batch = np.concatenate(*(actions,), axis=None)
     #next_state_batch = np.concatenate(*(next_states,), axis=0)
     #reward_batch = np.concatenate(*(dis_rewards,), axis=None)
@@ -619,12 +629,15 @@ def preprocess2(s_queue, a_queue, n_s_queue, r_queue):
     if next_state_batch.size == 72 and next_state_batch.shape == (8, 9):
         flat = next_state_batch.flatten()
         next_state_batch = flat[:36].reshape(9, 4)
-        
+
     if reward_batch.size == 8 and reward_batch.shape == (8,):
         reward_batch = reward_batch[:4]
 
     return state_batch, action_batch, next_state_batch, reward_batch
 
+actor_losses = []
+critic_losses = []
+temp_step_loss_check_count = 0
 # max_reward = 0
 # for episode in range(EPISODES):
 for time_step in range(TIME_SLOTS):
@@ -709,19 +722,29 @@ for time_step in range(TIME_SLOTS):
                 logger.info(f'--> iter each_user : {each_user}')
                 tempP = np.array(state_vector[:, each_user])
                 tempP = np.array(tempP).astype(np.float32)
-                logger.info(f'*** tempP :\n{tempP}') # (6, 9)
-                logger.info(f'*** tempP[{each_user}] : {tempP[each_user]}')
-                logger.info(f'*** state[{each_user}] : {state[each_user]}')
-                '''
-                extracted = tempP[:, :4]
-                extracted = np.expand_dims(extracted, axis=0)
-                logger.info(f'*** extracted :\n{extracted}') # (6, 4)
-                '''
-                tempP = np.expand_dims(tempP, axis=0)
+                logger.critical(f'ppo tempP :\n{tempP}') # (4, 9)
+                logger.info(f'ppo tempP[{each_user}] : {tempP[each_user]}')
+                logger.info(f'ppo state[{each_user}] : {state[each_user]}')
 
+                #extracted = tempP[:, :6]
+                #extracted = np.expand_dims(extracted, axis=0)
+                #logger.critical(f'ppo extracted :\n{extracted}') # (6, 4)
+
+                #tempP = tempP.reshape((1, 4, 9))
+                #action[each_user] = ppo.choose_action_(tempP)
+                tempP = np.expand_dims(tempP, axis=0)
+                logger.critical(f'ppo tempP :\n{tempP}') # (None, 4, 9)
                 #prob = ppo.model_actor.predict(tempP)
-                action[each_user] = ppo.choose_action_(tempP)
-                #logger.info(f'*** predicted prob[{each_user}] :\n{prob}')
+                #prob = ppo.model_actor.predict(np.expand_dims(tempP[each_user][:4], axis=0))
+                #logger.critical(f'*** predicted prob[{each_user}] :\n{prob}')
+
+                # (1) 모델을 레이어처럼 호출해서 Tensor 얻기
+                prob_tensor = ppo.model_actor(tempP)  # tf.Tensor, shape=(1, A)
+
+                # (2) sess.run → ndarray로 반환
+                probs = ppo.sess.run(prob_tensor)  # ndarray, shape=(1, A)
+                #probs = probs.flatten()
+                logger.critical(f'*** predicted prob[{each_user}] :\n{probs}')
 
             elif args.type == "A2C_ver2":
                 logger.info(f'state[{each_user}] :\n{state[each_user]}')
@@ -753,10 +776,26 @@ for time_step in range(TIME_SLOTS):
                 '''
             else:
                 #feeding the input-history-sequence of (t-1) slot for each user separately
-                feed = {mainQN.inputs_:state_vector[:,each_user].reshape(1,step_size,state_size)}
+                if args.env == "network":
+                    feed = {mainQN.inputs_:state_vector[:,each_user].reshape(1,step_size,state_size)}
+                else:
+
+                    # 1) 원본 상태 벡터 배열 생성
+                    state = state_vector[:, each_user].reshape(1, step_size, -1)
+
+                    # 2) 배열 차원 확인 후 패딩 (batch=1, time=step_size, feature=F)
+                    #    feed_dict의 마지막 차원을 3개 채울 경우
+                    padded_state = np.pad(
+                        state,
+                        pad_width=((0, 0), (0, 0), (0, 3)),  # (batch, time, feature) 순서
+                        mode='constant'
+                    )
+                    # 3) 패딩된 배열을 placeholder에 매핑
+                    feed = {mainQN.inputs_: padded_state}
+
 
                 #predicting Q-values of state respectively
-                Qs = sess.run(mainQN.output,feed_dict=feed)
+                Qs = sess.run(mainQN.output, feed_dict=feed)
                 #print Qs
 
                 #   Monte-carlo sampling from Q-values  (Boltzmann distribution)
@@ -788,8 +827,9 @@ for time_step in range(TIME_SLOTS):
             elif args.type == "PPO":
                 logger.info(f'##### ppo state[{each_user}]: {state[each_user]}\n')
                 #action[each_user] = ppo.choose_action_(state[each_user])
-                #action[each_user] = np.argmax(prob[0][each_user])
-                logger.info(f'##### ppo chosen action[{each_user}]: {action[each_user]}\n')
+                probs = probs[0, each_user, :]
+                action[each_user] = np.argmax(probs)
+                logger.critical(f'##### ppo chosen action[{each_user}]: {action[each_user]}\n')
 
             elif args.type == "A2C_ver2":
                 categorized_policy = tf.random.categorical(policy, 1)
@@ -861,19 +901,20 @@ for time_step in range(TIME_SLOTS):
     logger.info(f'★☆$$ sum_r : {sum_r} $$☆★')
 
     episode_reward += sum_r
-    '''
+    logger.info(f'★☆$$ episode_reward : {episode_reward} $$☆★')
+
     if args.env == "network":
         # If NUM_CHANNELS = 2 , total possible reward = 2 , therefore collision = (2 - sum_r) or (NUM_CHANNELS - sum_r)
         collision = NUM_CHANNELS - sum_r
     elif args.env =="mbr":
         hdmi_obs = [i[0] for i in obs[:NUM_USERS]]
         logger.info(f'!! hdmi_obs : {hdmi_obs}')
-        collision = (hdmi_obs == 0)
-        #collision = int(0 in hdmi_obs)
-    '''
-    collision = NUM_CHANNELS - sum_r
+        #collision = (hdmi_obs == 0)
+        collision = int(0 in hdmi_obs)
 
-    logger.critical(f'!! collision : {collision}')
+    #collision = NUM_CHANNELS - sum_r
+
+    logger.info(f'!! collision : {collision}')
 
     # calculating cumulative collision
     cum_collision.append(cum_collision[-1] + collision)
@@ -881,9 +922,11 @@ for time_step in range(TIME_SLOTS):
     #############################
     #  for co-operative policy we will give reward-sum to each user who have contributed
     #  to play co-operatively and rest 0
+    '''
     for i in range(len(reward)):
         if reward[i] > 0:
             reward[i] = sum_r
+    '''
     #############################
 
     total_rewards.append(sum_r)
@@ -917,8 +960,7 @@ for time_step in range(TIME_SLOTS):
         td_error = 0'''
 
     if args.with_per:
-        #memory.add(td_error, (state, action, reward, next_state))
-
+        #memory.add((state, action, reward, next_state), td_error)
         #memory.store((state, action, reward, next_state))
         logger.info(f'## Before store_transition - state:{state} action:{action}')
         if args.type == "A2C":
@@ -934,9 +976,14 @@ for time_step in range(TIME_SLOTS):
             #memory.store(transition)
             memory.add(transition, 1.0)
 
-        elif args.type != "DRQN":
+        elif args.type != "DRQN" and args.type != "PPO":
             mainQN.store_transition(state, action, reward, next_state)
-    else:   #
+        else:
+            logger.critical(f'pykim - memory.add2 case')
+            transition = np.hstack(
+                [(state[0]), (state[1]), (state[2]), (np.r_[action, reward]), (next_state[0]), (next_state[1]), (next_state[2])])
+            memory.add2(transition)
+    else:   # NOT PER
         if args.type == "PPO":
             memory.add((state, action, reward, next_state))
             memory.store_each(state, action, reward, next_state, False)
@@ -950,8 +997,6 @@ for time_step in range(TIME_SLOTS):
                 a2c.make_gae()
         else:
             memory.add((state, action, reward, next_state))
-
-
 
     state = next_state
     #add new experience to generate input-history sequence for next state
@@ -1004,7 +1049,7 @@ for time_step in range(TIME_SLOTS):
         rewards = tmpBatch[:, (NUM_USERS*2)*3+3:(NUM_USERS*2)*3+6]
         logger.info(f'@@ PER - after sampling memory.update with states :\n{states}\n')
         logger.info(f'@@ PER - after sampling memory.update with actions :\n{actions}\n')
-        logger.info(f'@@ PER - after sampling  memory.update with rewards :\n{rewards}\n')
+        logger.critical(f'@@ PER - after sampling  memory.update with rewards :\n{rewards}\n')
         #next_states = tmpBatch[:, (NUM_USERS*2)*4:(NUM_USERS * 2)*5]
         #next_states = tmpBatch[:, (NUM_USERS*2)*6:(NUM_USERS * 2)*7]
         next_states = tmpBatch[:, :(NUM_CHANNELS*2)+2]
@@ -1064,31 +1109,31 @@ for time_step in range(TIME_SLOTS):
     if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "DDQN"\
             and args.type != "DDPG" and args.type != "PPO":
         #  creating target vector (possible best action)
-        logger.info(f'@@@ output:{mainQN.output}')
-        logger.info(f'@@@ inputs_:{mainQN.inputs_}')
-        logger.info(f'@@@ next_states:{next_states}')
+        logger.info(f'DQN/DRQN - output:{mainQN.output}')
+        logger.info(f'DQN/DRQN - inputs_:{mainQN.inputs_}')
+        logger.info(f'DQN/DRQN -  next_states:{next_states}')
         target_Qs = sess.run(mainQN.output, feed_dict={mainQN.inputs_:next_states})
 
-        logger.info(f'@@@ DRQN - target_Qs :\n{target_Qs}')
+        logger.info(f'DQN/DRQN - target_Qs :\n{target_Qs}')
         rewards = np.mean(rewards, axis=1)
-        logger.info(f'@@@ DRQN - rewards :\n{rewards}')
+        logger.info(f'DQN/DRQN - rewards :\n{rewards}')
 
 
-        #  Q_target =  reward + gamma * Q_next
-        logger.info(f'@@@ DRQN - np.max(target_Qs, axis=1) :\n{np.max(target_Qs, axis=1)}')
+        # Q_target =  reward + gamma * Q_next
+        logger.info(f'DQN/DRQN - np.max(target_Qs, axis=1) :\n{np.max(target_Qs, axis=1)}')
         targets = rewards + args.gamma * np.max(target_Qs, axis=1)
-        logger.info(f'@@@ DRQN - targets :\n{targets}')
+        logger.info(f'DQN/DRQN - targets :\n{targets}')
         #  calculating loss and train using Adam optimizer
         loss, _ = sess.run([mainQN.loss,mainQN.opt],
                                 feed_dict={mainQN.inputs_: states,
                                 mainQN.targetQs_: targets,
                                 mainQN.actions_: actions[:,-1]})
-        logger.info(f'@@@ DRQN - Training loss :\n{loss}')
+        logger.critical(f'DQN/DRQN - Training loss :\n{loss}')
 
         if args.with_per:
             old_val = np.max(target_Qs, axis=1)
             error = abs(old_val - targets)
-            logger.info(f'@@@ DRQN - error :\n{error}')
+            logger.info(f'DQN/DRQN - error :\n{error}')
             mainQN.learn(error)
 
         loss_list.append(loss)
@@ -1102,7 +1147,7 @@ for time_step in range(TIME_SLOTS):
         #train_a2c(replay_memory, actor, critic)
 
         # rewards (5,3)
-        logger.info(f'@@@ shape(rewards):{np.shape(rewards)}\nrewards.ndim:{rewards.ndim}\nrewards:\n{rewards}')
+        logger.info(f'A2C - shape(rewards):{np.shape(rewards)}\nrewards.ndim:{rewards.ndim}\nrewards:\n{rewards}')
         #logger.info(f'@@@ values.ndim:{values.ndim} values:{values}')
 
         rewards = np.sum(rewards, axis=1)
@@ -1113,28 +1158,28 @@ for time_step in range(TIME_SLOTS):
             cur_state, action, reward, next_state = sample
 
         # actions (5,3)
-        logger.info(f'@@@ shape(actions):{np.shape(actions)}\nactions.ndim:{actions.ndim}\nactions:\n{actions}')
+        logger.info(f'A2C - shape(actions):{np.shape(actions)}\nactions.ndim:{actions.ndim}\nactions:\n{actions}')
         actions = np.sum(actions, axis=1)
 
-        logger.info(f'@ minibatch -\nshape(cur_state):{np.shape(cur_state)}\ncur_state:\n{cur_state}')
+        logger.info(f'A2C - minibatch -\nshape(cur_state):{np.shape(cur_state)}\ncur_state:\n{cur_state}')
         logger.info(f'\nshape(action):{np.shape(action)}\naction:\n{action}')
         logger.info(f'\nshape(next_state):{np.shape(next_state)}\nnext_state:\n{next_state}')
-        logger.error(f'\nshape(reward):{np.shape(reward)}\nreward:\n{reward}')
+        logger.info(f'\nshape(reward):{np.shape(reward)}\nreward:\n{reward}')
 
         #preprocess1(states, actions, next_states, rewards, 1, s_queue, a_queue, n_s_queue, r_queue)
         preprocess1(cur_state, action, next_state, reward, 1, s_queue, a_queue, n_s_queue, r_queue)
         logger.info('##### after preprocess1 #####\n')
         logger.info(f'@@ s_queue :\n{s_queue}')
         logger.info(f'@@ a_queue :\n{a_queue}')
-        logger.error(f'@@ r_queue :\n{r_queue}')
+        logger.info(f'@@ r_queue :\n{r_queue}')
 
         state_batch, action_batch, next_state_batch, reward_batch = preprocess2(s_queue, a_queue, n_s_queue, r_queue)
 
         logger.info('##### after preprocess2 #####\n')
-        logger.error(f'@@ state_batch :\n{state_batch}\n@@@ action_batch :\n{action_batch}\n@@@ reward_batch :\n{reward_batch}\n@@@ next_state_batch :\n{next_state_batch}')
-        logger.error(f'@@ shape(action_batch):{np.shape(action_batch)}\n')
-        logger.error(f'@@ shape(state_batch):{np.shape(state_batch)}\n')
-        logger.error(f'@@ shape(reward_batch):{np.shape(reward_batch)}\n')
+        logger.info(f'A2C - state_batch :\n{state_batch}\n@@@ action_batch :\n{action_batch}\n@@@ reward_batch :\n{reward_batch}\n@@@ next_state_batch :\n{next_state_batch}')
+        logger.info(f'A2C - shape(action_batch):{np.shape(action_batch)}\n')
+        logger.info(f'A2C - shape(state_batch):{np.shape(state_batch)}\n')
+        logger.info(f'A2C - shape(reward_batch):{np.shape(reward_batch)}\n')
 
         #a2c.make_gae()
 
@@ -1149,8 +1194,19 @@ for time_step in range(TIME_SLOTS):
 
         next_state_batch = np.reshape(next_state_batch, [9, 4])
         next_state_batch = next_state_batch[:4, :]
-        is_weights = is_weights[:4]
-        al, cl, TD_errors = a2c.learn_(state_batch, action_batch, next_state_batch, reward_batch, is_weights)
+
+        if args.with_per:
+            is_weights = is_weights[:4]
+
+        temp_step_loss_check_count += 1
+
+        if args.with_per:
+            #al, cl, TD_errors = a2c.learn_(state_batch, action_batch, next_state_batch, reward_batch, is_weights)
+            al, cl, TD_errors = a2c.train_step(state_batch, action_batch, next_state_batch, reward_batch, is_weights)
+        else:
+            action_batch = action_batch[:4]
+            al, cl = a2c.learn(state_batch, action_batch, reward_batch)
+            #total_loss = a2c.learn(states, actions, rewards, next_states)
 
         al = tf.reduce_mean(al)
         cl = tf.reduce_mean(cl)
@@ -1192,10 +1248,12 @@ for time_step in range(TIME_SLOTS):
 
         if args.with_per:
             actor_losses.append(al)
+            critic_losses.append(cl)
+
         else:
             al = np.mean(al)
             actor_losses.append(al)
-        critic_losses.append(cl)
+            critic_losses.append(cl)
 
         total_loss = al + cl
         logger.info(f'---------- total_loss : {total_loss}')
@@ -1223,35 +1281,42 @@ for time_step in range(TIME_SLOTS):
         logger.info(f'@@@ shape(actions):{np.shape(actions)}\nactions.ndim:{actions.ndim}\nactions:\n{actions}')
         actions = np.sum(actions, axis=1)
 
-        logger.info(f'@ minibatch -\nshape(cur_state):{np.shape(cur_state)}\ncur_state:\n{cur_state}')
+        logger.critical(f'@ minibatch -\nshape(cur_state):{np.shape(cur_state)}\ncur_state:\n{cur_state}')
         logger.info(f'shape(action):{np.shape(action)}\naction:\n{action}')
         logger.info(f'shape(next_state):{np.shape(next_state)}\nnext_state:\n{next_state}')
         logger.info(f'shape(reward):{np.shape(reward)}\nreward:\n{reward}')
-        '''
-        preprocess1(cur_state, action, next_state, reward, 1, s_queue, a_queue, n_s_queue, r_queue)
-        logger.info('##### after preprocess1 #####\n')
-        logger.info(f'@@ s_queue :\n{s_queue}')
 
-        state_batch, action_batch, next_state_batch, reward_batch = preprocess2(s_queue, a_queue, n_s_queue, r_queue)
+        if args.with_per:
+            preprocess1(cur_state, action, next_state, reward, 1, s_queue, a_queue, n_s_queue, r_queue)
+            logger.info('##### after preprocess1 #####\n')
+            logger.info(f'@@ s_queue :\n{s_queue}')
 
-        logger.info('##### after preprocess2 #####\n')
-        logger.info(f'@@ state_batch :\n{state_batch}\n@@@ action_batch :\n{action_batch}\n@@@ reward_batch :\n{reward_batch}\n@@@ next_state_batch :\n{next_state_batch}')
-        logger.info(f'@@ shape(action_batch):{np.shape(action_batch)}\n')
-        logger.info(f'@@ shape(state_batch):{np.shape(state_batch)}\n')
+            state_batch, action_batch, next_state_batch, reward_batch = preprocess2(s_queue, a_queue, n_s_queue, r_queue)
 
-        #np.reshape(state_batch, [24, 4]), action_batch, np.reshape(next_state_batch, [24, 4]), reward_batch
-        #total_loss = ppo.learn_(np.reshape(state_batch, [9, 4]), action_batch, reward_batch, np.reshape(next_state_batch, [9, 4]))
-        #total_loss = ppo.learn_(state_batch, action_batch, reward_batch, next_state_batch)
-        total_loss = ppo.train_ppo_with_GT(state_batch, action_batch, reward_batch, next_state_batch)
-        '''
+            logger.info('##### after preprocess2 #####\n')
+            logger.critical(f'@@ state_batch :\n{state_batch}\n@@@ action_batch :\n{action_batch}\n@@@ reward_batch :\n{reward_batch}\n@@@ next_state_batch :\n{next_state_batch}')
+            logger.info(f'@@ shape(action_batch):{np.shape(action_batch)}\n')
+            logger.critical(f'@@ shape(state_batch):{np.shape(state_batch)}\n')
 
-        #ppo.train_network(cur_state, action, reward, next_state)
+            state_batch = np.reshape(state_batch, [4, 9])
+            #state_batch = state_batch[:4, :]
 
+            next_state_batch = np.reshape(next_state_batch, [4, 9])
+            #next_state_batch = next_state_batch[:4, :]
 
-        total_loss = ppo.train_ppo_with_GT(cur_state, action, reward, next_state)
-        logger.info(f'@ total_loss : {total_loss}')
+            #np.reshape(state_batch, [24, 4]), action_batch, np.reshape(next_state_batch, [24, 4]), reward_batch
+            #total_loss = ppo.learn_(np.reshape(state_batch, [9, 4]), action_batch, reward_batch, np.reshape(next_state_batch, [9, 4]))
+            #total_loss = ppo.learn_(state_batch, action_batch, reward_batch, next_state_batch)
+
+            #memory.update_priorities(idx, priorities)
+        if args.with_per:
+            total_loss = ppo.learn_(state_batch, action_batch, reward_batch, next_state_batch)
+        else:
+            total_loss = ppo.train_ppo_with_GT(state_batch, action_batch, reward_batch, next_state_batch)
+            #total_loss = ppo.train_ppo_with_GT(cur_state, action, reward, next_state)
+
+        logger.critical(f'@ total_loss : {total_loss}')
         loss_list.append(total_loss)
-
     elif args.type == "A2C_ver2":
         total_loss = a2c.learn(states, actions, rewards, next_states, False)
         logger.info(f'---------- total_loss : {total_loss}')
@@ -1383,8 +1448,10 @@ logger.info(f'%%%%%%%%%% npy saving & plot START %%%%%%%%%%\n')
 
 if args.type == "DQN":
     dqn_scores = []
-    dqn_scores = np.mean(all_means, axis=0)
+    dqn_scores = all_means
     np.save("dqn_scores", dqn_scores)
+    np.save("dqn_means", means)
+    np.save("dqn_losses", loss_list)
     draw_res2(time_step, cum_collision, cum_r, loss_list, means, dqn_scores, TIME_SLOTS)
     saver.save(sess, "checkpoints/dqn-user.ckpt")
 elif args.type == "DDQN":
@@ -1395,11 +1462,12 @@ elif args.type == "DDQN":
     saver.save(sess,'checkpoints/ddqn-user.ckpt')
 elif args.type == "DRQN":
     drqn_scores = []
-    #drqn_scores = np.mean(all_means, axis=0)
-    drqn_scores = cum_r
+    drqn_scores = all_means
+    #drqn_scores = cum_r
     np.save("drqn_scores", drqn_scores)
     np.save("drqn_means", means)
     np.save("drqn_losses", loss_list)
+
     draw_res2(time_step, cum_collision, cum_r, loss_list, means, drqn_scores, TIME_SLOTS)
     saver.save(sess,'checkpoints/drqn-user.ckpt')
 elif args.type == "DDPG":
@@ -1419,8 +1487,13 @@ elif args.type == "A2C":
     np.save("a2c_means", means)
     np.save("a2c_losses", loss_list)
 
+    np.save("actor_losses", actor_losses)
+    np.save("critic_losses", critic_losses)
+
     draw_res2(time_step, cum_collision, cum_r, loss_list, means, a2c_scores, TIME_SLOTS)
     #draw_res2(time_step, cum_collision, total_rewards, loss_list, means, a2c_scores, TIME_SLOTS)
+
+    draw_losses(time_step+1, actor_losses, critic_losses)
     #saver.save(sess,'checkpoints/actor-critic-user.ckpt')
     a2c.actor.save('saved_model/actor-critic-model.keras')
 elif args.type == "A2C_ver2":
@@ -1431,7 +1504,7 @@ elif args.type == "A2C_ver2":
     saver.save(sess,'checkpoints/actor-critic-ver2-user.ckpt')
 elif args.type == "PPO":
     ppo_scores = []
-    ppo_scores = np.mean(all_means, axis=0)
+    ppo_scores = all_means
     np.save("ppo_scores", ppo_scores)
     np.save("ppo_means", means)
     np.save("ppo_losses", loss_list)
