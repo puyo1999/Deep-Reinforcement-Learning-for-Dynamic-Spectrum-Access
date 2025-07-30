@@ -169,11 +169,11 @@ def state_generator(action, obs):
     if action is None:
         logger.info(f'no action, hence, no next_state !')
         sys.exit()
-    logger.info(f'action.size:{action.size}')
+    logger.critical(f'action.size:{action.size}')
     for user_i in range(action.size):
-        logger.info(f'user_i:[{user_i}] action : {action[user_i]}')
+        logger.critical(f'user_i:[{user_i}] action : {action[user_i]}')
         input_vector_i = one_hot(action[user_i], NUM_CHANNELS+1) # mbr - 6 개
-        logger.info(f'1st input_vector_i: {input_vector_i}')
+        logger.critical(f'1st input_vector_i: {input_vector_i}')
         #channel_alloc = obs[-1] # obs 뒤에서 첫번째
         channel_alloc = obs[user_i] # 해당 사용자의 obs
         input_vector_i = np.append(input_vector_i,channel_alloc)
@@ -187,7 +187,7 @@ def state_generator(action, obs):
 
         input_vector.append(input_vector_i)
 
-    logger.info(f'@ state_generator - input_vector:{input_vector}\n'
+    logger.critical(f'@ state_generator - input_vector:{input_vector}\n'
                  f'input_vector shape:{np.shape(input_vector)}')
     return input_vector
 def draw_res(time_step, cum_collision, cum_r, loss_list, time_slots):

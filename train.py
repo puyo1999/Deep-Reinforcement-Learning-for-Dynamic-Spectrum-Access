@@ -135,7 +135,7 @@ args.with_per = config['with_per']
 args.with_ere = config['with_ere']
 args.graph_drawing = config['graph_drawing']
 
-if args.type == "A2C" or args.type == "A2C_ver2":
+if args.type == "A2C" or args.type == "A2C_ver2" or args.type == "PPO":
     from tensorflow.python.framework.ops import enable_eager_execution
     enable_eager_execution()
 else:
@@ -178,6 +178,7 @@ logger.info(f"+++ gamma : ", gamma)
 step_size = STEP_SIZE
 #step_size = 1 + 2 + 2                   #length of history sequence for each datapoint  in batch
 if args.env == "mbr":
+    # NUM_CHANNELS = NUM_CS = 5
     state_size = 2 * (NUM_CHANNELS + 1)     #length of input (2 * k + 2)   :k = NUM_CHANNELS
 else:
     state_size = 2 * (NUM_CHANNELS + 1)     #length of input (2 * k + 2)   :k = NUM_CHANNELS
@@ -249,14 +250,20 @@ elif args.type == "PPO":
     if args.env == "network":
         ppo = PPO(env=env, sess=sess, memory=memory, action_n=action_size, state_dim=state_size, training_batch_size=batch_size)
     elif args.env == "mbr":
+        # action_size = 6, NUM_HDMI = 4
         ppo = PPO(env=env, sess=sess, memory=memory, action_n=action_size, state_dim=NUM_HDMI, training_batch_size=batch_size)
 
 elif args.type == "A2C_ver2":
     logger.info(f"##### A2C_ver2 #####")
     a2c = A2C_ver2(name='A2C_ver2')
+
 elif args.type == "DDQN":
-    logger.info(f"#### DDQN #####")
-    mainQN = DDQN(name='DDQN', feature_size=NUM_USERS*2, learning_rate=learning_rate, state_size=state_size, actions=range(action_size), action_size=action_size, step_size=step_size, prior=args.with_per, memory=memory, gamma=args.gamma)
+    if args.env == "network":
+        mainQN = DDQN(name='DDQN', sess=sess, feature_size=NUM_USERS*2, learning_rate=learning_rate, state_size=state_size, actions=range(action_size), action_size=action_size, step_size=step_size, prior=args.with_per, memory=memory, gamma=args.gamma)
+    elif args.env == "mbr":
+        # action_size = 6, NUM_HDMI = 4, NUM_USER = 3
+        mainQN = DDQN(name='DDQN', sess=sess, feature_size=NUM_USERS*2, learning_rate=learning_rate, state_size=NUM_HDMI, actions=range(action_size), action_size=action_size, step_size=step_size, prior=args.with_per, memory=memory, gamma=args.gamma)
+
 elif args.type == "DDPG":
     #mainQN = DDPG(name= 'main', env=env, obs_dim=env.action_space.shape, act_dim=env.action_space.shape, memory=memory, steps=10000)
     mainQN = DDPG(name='DDPG', env=env, obs_dim=NUM_USERS*2, act_dim=action_size, memory=memory, steps=10000)
@@ -392,7 +399,8 @@ for ii in range(pretrain_length*step_size*5):
 interval = 1       # debug interval
 
 ################################
-### TODO :
+## TODO:: compute_importance 적용을 해서 replay memory 에 저장할 수 있을까?
+
 # After above pretraining, importance calculation method is applied
 #
 #replay_memory.append()
@@ -415,16 +423,18 @@ config = tf.ConfigProto()
 config.gpu_options.per_process_gpu_memory_fraction = 0.7
 
 #initializing the session
-if args.type != "A2C" and args.type != "A2C_ver2":
+
+if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "PPO" and args.type != "DDQN":
     sess = tf.Session(config=config)
 else:
     sess = tf.Session()
 
 #initialing all the tensorflow variables
-if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "PPO":
+if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "PPO" and args.type != "DDQN":
     logger.critical(f'sess.run(tf.global_variables_initializer()')
     sess.run(tf.global_variables_initializer())
 
+############################### train_ddpg ###############################
 def train_ddpg(replay_memory, batch_size):
     global_steps = 0
     epochs = 0
@@ -452,7 +462,9 @@ def train_ddpg(replay_memory, batch_size):
     mainQN.soft_target_update()
 
     mainQN.actor.save_weights("./ddpg_actor/actor", overwrite=True)
+############################### train_ddpg ###############################
 
+############################### train_ddqn ###############################
 def train_ddqn(replay_memory, batch_size):
     minibatch = random.sample(replay_memory, batch_size)
     for index, sample in enumerate(minibatch):
@@ -480,12 +492,7 @@ def train_ddqn(replay_memory, batch_size):
     if args.with_per:
         p = np.sum(np.abs(t - target), axis=1)
         memory.update(idx, p)
-
-
-
-
-
-
+############################### train_ddqn ###############################
 
 # list of total rewards
 total_rewards = []
@@ -514,8 +521,8 @@ max_timestep = 5
 def is_target(x):
     return x > max_reward
 
-##########################################################################
-####                      main simulation loop                    ########
+################################################################################
+########                      main simulation loop                      ########
 lock = Lock()
 
 s_queue = Queue()
@@ -684,6 +691,7 @@ for time_step in range(TIME_SLOTS):
         logger.info(f"@@@ Converted @@@\n history_input :\n{history_input}\n --> state_vector :\n{state_vector}\n")
         logger.info(f"/////////////// each_user iter starts ///////////////")
 
+        probs = []
         for each_user in range(NUM_USERS):
             logger.info(f"/////////////// User No:{each_user} ///////////////")
 
@@ -716,14 +724,16 @@ for time_step in range(TIME_SLOTS):
                 #prob = prob1/np.sum(np.exp(beta*probs)) + alpha/(NUM_CHANNELS+1)
 
             elif args.type == "PPO":
+                # 1. Eager 모드 강제 활성화
+                tf.config.run_functions_eagerly(True)
 
                 #tempP = np.array(state_vector[:, each_user])
                 #tempP = np.array(tempP).astype(np.float32)
                 logger.info(f'--> iter each_user : {each_user}')
                 tempP = np.array(state_vector[:, each_user])
                 tempP = np.array(tempP).astype(np.float32)
-                logger.critical(f'ppo tempP :\n{tempP}') # (4, 9)
-                logger.info(f'ppo tempP[{each_user}] : {tempP[each_user]}')
+                logger.critical(f'ppo tempP :\n{tempP}\nshape of tempP: {np.shape(tempP)}') # (None, 4, 9)
+                logger.critical(f'ppo tempP[{each_user}] : {tempP[each_user]}')
                 logger.info(f'ppo state[{each_user}] : {state[each_user]}')
 
                 #extracted = tempP[:, :6]
@@ -732,20 +742,26 @@ for time_step in range(TIME_SLOTS):
 
                 #tempP = tempP.reshape((1, 4, 9))
                 #action[each_user] = ppo.choose_action_(tempP)
-                tempP = np.expand_dims(tempP, axis=0)
-                logger.critical(f'ppo tempP :\n{tempP}') # (None, 4, 9)
-                #prob = ppo.model_actor.predict(tempP)
-                #prob = ppo.model_actor.predict(np.expand_dims(tempP[each_user][:4], axis=0))
-                #logger.critical(f'*** predicted prob[{each_user}] :\n{prob}')
 
+                prob = ppo.model_actor.predict(np.expand_dims(tempP[:9], axis=0))
+                logger.critical(f'*** no sess.run, predict\nprob[{each_user}] :\n{prob}')
+
+                #state_batch = np.expand_dims(tempP, axis=0)  # → (1, 4, 9)
+                #logger.critical(f'ppo actor real input :\n{state_batch}')
+                #prob = ppo.model_actor.predict(state_batch)
+
+                #prob = ppo.model_actor.predict_on_batch(state_batch)
+                #prob = ppo.model_actor.predict(np.expand_dims(tempP[each_user][:9], axis=0))
+                #logger.critical(f'*** no sess.run, predict_on_batch\nprob[{each_user}] :\n{prob}')
+                '''
+                # (0) 초기 1차원 증가
+                tempP = np.expand_dims(tempP, axis=0)
                 # (1) 모델을 레이어처럼 호출해서 Tensor 얻기
                 prob_tensor = ppo.model_actor(tempP)  # tf.Tensor, shape=(1, A)
-
                 # (2) sess.run → ndarray로 반환
-                probs = ppo.sess.run(prob_tensor)  # ndarray, shape=(1, A)
-                #probs = probs.flatten()
-                logger.critical(f'*** predicted prob[{each_user}] :\n{probs}')
-
+                probs = ppo.sess.run(prob_tensor)  # ndarray, shape=(1, A)               
+                logger.critical(f'*** with sess.run, predicted probs[{each_user}] :\n{probs}')
+                '''
             elif args.type == "A2C_ver2":
                 logger.info(f'state[{each_user}] :\n{state[each_user]}')
 
@@ -760,12 +776,28 @@ for time_step in range(TIME_SLOTS):
                 '''
                 logger.info(f'policy[{policy}]\n shape of policy: {np.shape(policy)}')
 
+
             elif args.type == "DDQN":
-                state[each_user] = np.resize(state[each_user], [1, state_size])
-                #state[each_user] = state_vector[:,each_user].reshape(step_size,state_size)
-                Qs = mainQN.model.predict([np.array(state[each_user]), np.ones((1, 1))])
+                # 1. Eager 모드 강제 활성화
+                #tf.config.run_functions_eagerly(True)
+
+                #state[each_user] = np.resize(state[each_user], [1, state_size])
+                state[each_user] = np.resize(state[each_user], [1, 9])
+                #state[each_user] = state_vector[:,each_user].reshape(step_size,NUM_HDMI)
+
+                # Eager 모드 아님, sess.run 필요
+                qs_tensor = mainQN.q_eval_model([state[each_user], np.ones((1, 1))])
+
+                # 세션에서 직접 실행
+                Qs = sess.run(qs_tensor)
+
+                #Qs = mainQN.q_eval_model.predict_on_batch([state[each_user], np.ones((1, 1))])
+                logger.critical(f'DDQN - Qs[{Qs}]\n shape of Qs: {np.shape(Qs)}')
+
                 prob1 = (1-alpha)*np.exp(beta*Qs)
                 prob = prob1/np.sum(np.exp(beta*Qs)) + alpha/(NUM_CHANNELS+1)
+                logger.critical(f'DDQN - prob[{prob}]\n shape of prob: {np.shape(prob)}')
+
                 '''
             elif args.type == "DDPG":                
                 state[each_user] = np.resize(state[each_user], [1, state_size])
@@ -805,7 +837,7 @@ for time_step in range(TIME_SLOTS):
                 # Normalizing probabilities of each action  with temperature (beta)
                 prob = prob1/np.sum(np.exp(beta*Qs)) + alpha/(NUM_CHANNELS+1)
                 #print prob
-                logger.info(f'##### calculated prob[{each_user}] : {prob}\n')
+                logger.critical(f'##### calculated prob[{each_user}] : {prob}\n')
 
             #   This equation is as given in the paper :
             #   Deep Multi-User Reinforcement Learning for  
@@ -825,11 +857,19 @@ for time_step in range(TIME_SLOTS):
                 logger.info(f'##### argmax action[{each_user}]: {action[each_user]}\n')
 
             elif args.type == "PPO":
-                logger.info(f'##### ppo state[{each_user}]: {state[each_user]}\n')
                 #action[each_user] = ppo.choose_action_(state[each_user])
+                #from tensorflow.python.keras import backend as K
+                #prob_np = K.eval(prob)  # K.eval() == get_session().run()
+                #actions[each_user] = np.argmax(prob_np, axis=-1)
+
+                prob = prob[0, each_user, :]
+                action[each_user] = np.argmax(prob)
+
+                '''
                 probs = probs[0, each_user, :]
                 action[each_user] = np.argmax(probs)
-                logger.critical(f'##### ppo chosen action[{each_user}]: {action[each_user]}\n')
+                '''
+                logger.critical(f'##### ppo max prob - action[{each_user}]: {action[each_user]}\n')
 
             elif args.type == "A2C_ver2":
                 categorized_policy = tf.random.categorical(policy, 1)
@@ -840,8 +880,13 @@ for time_step in range(TIME_SLOTS):
                 #action_ = tf.random.categorical(policy, 1)
 
             elif args.type == "DDQN":
-                action[each_user] = mainQN.actor(obs[each_user])
-                #action[each_user] = np.argmax(prob, axis=1)
+                #action[each_user] = mainQN.actor(obs[each_user])
+                action[each_user] = np.argmax(prob, axis=1)
+
+                #prob = prob[0, each_user, :]
+                #action[each_user] = np.argmax(prob)
+                logger.critical(f'##### DDQN max prob - action[{each_user}]: {action[each_user]}\n')
+
 
             elif args.type == "DDPG":
                 #a = mainQN.policy_action(obs[each_user])
@@ -866,13 +911,11 @@ for time_step in range(TIME_SLOTS):
                     logger.info(f'prob:{prob}, sum of beta*Qs:{np.sum(np.exp(beta*Qs))}')
                     logger.info(f'End')
 
-    logger.info(f'@@ all user action : {action}\n shape of action: {np.shape(action)}')
+    logger.critical(f'@@ all user action : {action}\nshape of action: {np.shape(action)}')
 
     # taking action as predicted from the q values and receiving the observation from the environment
     #if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "DDPG":
         #state = state_generator(action, obs)
-
-
 
     state = state_generator(action, obs)
     logger.info(f"@@ after generator - state : {state}\n")
@@ -1309,8 +1352,10 @@ for time_step in range(TIME_SLOTS):
             #total_loss = ppo.learn_(state_batch, action_batch, reward_batch, next_state_batch)
 
             #memory.update_priorities(idx, priorities)
+
         if args.with_per:
-            total_loss = ppo.learn_(state_batch, action_batch, reward_batch, next_state_batch)
+            #total_loss = ppo.learn_(state_batch, action_batch, reward_batch, next_state_batch)
+            total_loss = ppo.train_ppo_with_GT(state_batch, action_batch, reward_batch, next_state_batch)
         else:
             total_loss = ppo.train_ppo_with_GT(state_batch, action_batch, reward_batch, next_state_batch)
             #total_loss = ppo.train_ppo_with_GT(cur_state, action, reward, next_state)
@@ -1321,8 +1366,6 @@ for time_step in range(TIME_SLOTS):
         total_loss = a2c.learn(states, actions, rewards, next_states, False)
         logger.info(f'---------- total_loss : {total_loss}')
         loss_list.append(total_loss)
-
-
     elif args.type == "DDQN":
         #train_ddqn(replay_memory, batch_size)
         mainQN.learn(memory, replay_memory, batch_size)

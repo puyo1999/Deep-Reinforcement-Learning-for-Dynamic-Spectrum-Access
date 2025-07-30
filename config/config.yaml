@@ -18,13 +18,13 @@ num_hdmi: 4
 #attempt_prob : 1
 attempt_prob : 0.6
 #type: "DQN"
-#type: "DDQN"
+type: "DDQN"
 #type: "DRQN"
 #type: "DDPG"
 #type: "A2C"
 #type: "A2C_ver2"
 #type: "A3C"
-type: "PPO"
+#type: "PPO"
 actor_lr: 0.0001
 critic_lr: 0.0005
 #critic_lr: 0.001

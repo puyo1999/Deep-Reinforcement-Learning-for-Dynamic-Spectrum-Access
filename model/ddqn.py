@@ -23,14 +23,13 @@ import sys
 sys.setrecursionlimit(2000)
 
 import numpy as np
-import keras.backend as K
+#import keras.backend as K
 from keras.models import Sequential, Model, clone_model
-from keras.layers import Dense, Activation, Lambda, Layer
-from keras.layers import Input, LSTM, TimeDistributed, RepeatVector, Reshape, Dropout, Bidirectional, Concatenate
-#from keras.layers.normalization import BatchNormalization
-#from keras.optimizers import RMSprop
-from keras.optimizer_v1 import RMSprop
+from keras.layers import Dense, Layer
+from keras.layers import Input
 from keras.optimizer_v1 import Adam
+
+from tensorflow.python.keras import backend as K
 
 import random
 from py_lab.lib import logger
@@ -56,7 +55,7 @@ custom_layer = CustomLayer()
 
 class DDQN:
 
-    def __init__(self, feature_size, learning_rate, state_size, actions, action_size, step_size, prior, memory, gamma, epsilon=.5, epsilon_min=.1, epsilon_decrease=.9, name='DDQNetwork'):
+    def __init__(self, sess, feature_size, learning_rate, state_size, actions, action_size, step_size, prior, memory, gamma, epsilon=.5, epsilon_min=.1, epsilon_decrease=.9, name='DDQNetwork'):
         with tf1.variable_scope(name):
             self.epsilon = epsilon
             self.epsilon_min = epsilon_min
@@ -69,6 +68,9 @@ class DDQN:
             self.action_size = action_size
             self.step_size = step_size
             self.lr = learning_rate
+
+            K.set_session(sess)
+            self.sess = sess
 
             self.feature_size = feature_size
             self.replace_target_iter = 500
@@ -124,7 +126,9 @@ class DDQN:
         #one_hot_actions = tf.one_hot(self.actions, self.action_size)
 
         #inputs = Input(shape=(self.feature_size,))
-        inputs = Input(shape=(6,))
+        #inputs = Input(shape=(6,))
+        inputs = Input(shape=(9,))
+
         if self.prior:
             #weights = Input(shape=(self.feature_size,))
             #weights = Input(shape=(6,))
@@ -296,8 +300,8 @@ class DDQN:
 
         logger.info(f'Learn - shape of sample : {np.shape(sample)}')
         logger.info(f'Learn - sample : {sample}')
-        logger.info(f'Learn - cur_state : {cur_state}')
-        logger.info(f'Learn - next_state : {next_state}')
+        logger.critical(f'Learn - cur_state : {cur_state}')
+        logger.critical(f'Learn - next_state : {next_state}')
         '''
         transition = random.sample(replay_memory, batch_size)
         logger.info("transition:")
@@ -311,10 +315,10 @@ class DDQN:
             idx, w, transition = memory.sample(self.batch_size)
         else:
             transition = memory.sample(self.batch_size)
-        logger.info(f'Learn - shape of transition : {np.shape(transition)}')
+        logger.critical(f'Learn - shape of transition : {np.shape(transition)}')
         transition = np.array(transition[0])
 
-        logger.info(f'Learn - transition : {transition}')
+        logger.critical(f'Learn - transition : {transition}')
         s = transition[:36]
         a = transition[36:40]
         r = transition[40:44]
@@ -350,9 +354,6 @@ class DDQN:
             #s_ = tf.one_hot(s_, self.feature_size)
             #logger.info("after reshape s_: ", np.shape(s_))
 
-            logger.info(f'cur_state : {cur_state}')
-            logger.info(f'next_state : {next_state}')
-
             cur_state = np.array(cur_state)
             next_state = np.array(next_state)
 
@@ -365,27 +366,46 @@ class DDQN:
                 next_state = next_state.reshape((6, 6))
             cur_state = cur_state.reshape((6, 6))
 
-
             #adjusted_input = adjusted_input.reshape((6, 6))
-            cur_state = np.resize(cur_state, [1, 6])
-            next_state = np.resize(next_state, [1, 6])
+            cur_state = np.resize(cur_state, [1, 9])
+            next_state = np.resize(next_state, [1, 9])
             s_ = np.tile(s_, (3, 1))
+
+            logger.critical(f'cur_state : {cur_state}')
+            logger.critical(f'next_state : {next_state}')
+
+            logger.critical(f'cur_state shape : {cur_state.shape}')
+            logger.critical(f'next_state shape : {next_state.shape}')
 
             #index = self.q_eval_model.predict([s_, np.ones((self.batch_size, 1))]).argmax(axis=1)
             #index = self.q_eval_model.predict([s_, np.ones((self.batch_size*3, 1))]).argmax(axis=1)
-            index = self.q_eval_model.predict([cur_state, adjusted_input]).argmax(axis=1)
-            # Predict the index
-            logger.info(f'eval predict - index:{index}')
+            #index = self.q_eval_model.predict([cur_state, adjusted_input]).argmax(axis=1)
 
+            q_vals = self.q_eval_model.predict_on_batch([cur_state, adjusted_input])
+            # q_vals is now a np.ndarray, shape (1, action_dim)
+            index = int(np.argmax(q_vals, axis=1)[0])
+
+
+            # 모델 호출(또는 predict_on_batch) → EagerTensor 반환
+            #qs_tensor = self.q_eval_model([cur_state, adjusted_input], training=False)
+
+            # NumPy 배열로 변환
+            #q_vals = qs_tensor.numpy()  # shape: (1, action_dim)
+
+            # NumPy 메서드 사용
+            #index = q_vals.argmax(axis=1)  # shape: (1,)
+
+            # Predict the index
+            logger.critical(f'eval predict - index:{index}')
 
             #max_q = self.q_target_model.predict([s_, np.ones((self.batch_size*3, 1))])[range(self.batch_size*3), index]
-            max_q = self.q_target_model.predict([next_state, adjusted_input]).argmax(axis=1)
+            max_q = self.q_target_model.predict_on_batch([next_state, adjusted_input]).argmax(axis=1)
             #max_q = np.max(index[0])
             logger.info(f'target predict - max_q:{max_q}')
 
             s = np.tile(s, (3, 1))
             #q_predict = self.q_eval_model.predict([s, np.ones((self.batch_size*3, 1))])
-            q_predict = self.q_eval_model.predict([cur_state, adjusted_input])
+            q_predict = self.q_eval_model.predict_on_batch([cur_state, adjusted_input])
         else:
             index = self.q_eval_model.predict(s_).argmax(axis=1)
             max_q = self.q_target_model.predict(s_)[range(self.batch_size), index]
@@ -422,7 +442,7 @@ class DDQN:
 
         if self.prior:
             #q_pred = self.q_eval_model.predict([s, np.ones((self.batch_size*3, 1))])
-            q_pred = self.q_eval_model.predict([cur_state, adjusted_input])
+            q_pred = self.q_eval_model.predict_on_batch([cur_state, adjusted_input])
             q_pred = np.array(q_pred)
             if q_pred.shape != q_target.shape:
                 q_target = q_target[:6]

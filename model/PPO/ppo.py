@@ -1,24 +1,36 @@
-import tensorflow.compat.v1 as tf
-#tf.disable_v2_behavior()
+"""
+ppo.py
+"""
+__author__ = "py81.kim@gmail.com"
+__credits__ = "https://github.com/puyo1999"
 
 import tensorflow as tf
+tf.compat.v1.enable_eager_execution()
+
 import keras
-import keras as K
-import keras.backend as KB
-from keras.layers import Input, Dense, Flatten
+#import keras as K
+#import keras.backend as KB
+from keras.layers import Input, Dense
+from keras.models import Model
 from keras.optimizers import Adam
+
+from tensorflow.python.keras import backend as K
+
 import torch
-import gym
+from torch.distributions import Normal
+
 import numpy as np
-import random as rand
 from model.base import Algorithm
 import logging
 logger = logging.getLogger(__name__)
 
+from config.setup import with_per
+
+
 LOSS_CLIPPING = 0.1
 huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
 
-import tensorflow.compat.v1 as tf
+#import tensorflow.compat.v1 as tf
 
 class PPO(Algorithm):
 #class PPO(object):
@@ -26,7 +38,8 @@ class PPO(Algorithm):
         #self.env = gym.make('CartPole-v1')
         self.env = env
         # setting the our created session as default session
-        tf.keras.backend.set_session(sess)
+        #tf.keras.backend.set_session(sess)
+        #K.set_session(sess)
         self.sess = sess
         self.action_n = action_n
         self.state_dim = state_dim
@@ -54,7 +67,7 @@ class PPO(Algorithm):
         self.model_actor = self.build_model_actor()
         self.model_critic = self.build_model_critic()
 
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.7)
+        self.optimizer = Adam(learning_rate=0.7)
 
         self.model_actor_old = self.build_model_actor()
         self.model_actor_old.set_weights(self.model_actor.get_weights())
@@ -62,8 +75,8 @@ class PPO(Algorithm):
         self.dummy_advantage = np.zeros((1,1))
         self.dummy_old_prediction = np.zeros((1, self.action_n))
 
-        self.advantage_input = tf.placeholder(dtype=tf.float32, shape=[None, 1], name='advantage_input')
-        self.old_prediction = tf.placeholder(dtype=tf.float32, shape=[None, 6], name='old_prediction_input')
+        #self.advantage_input = tf.placeholder(dtype=tf.float32, shape=[None, 1], name='advantage_input')
+        #self.old_prediction = tf.placeholder(dtype=tf.float32, shape=[None, 6], name='old_prediction_input')
 
         self.memory = memory
         self.ema_rewards = 0
@@ -93,7 +106,7 @@ class PPO(Algorithm):
         #state = Input(shape=[self.action_n, self.state_dim])
         state = Input(shape=[self.state_dim, self.action_n + 2 + 1])
         advantage = Input(shape=[1,], name='advantage_input')
-        old_prediction = K.layers.Input(shape=[self.action_n,], name='old_prediction_input')
+        old_prediction = Input(shape=[self.action_n,], name='old_prediction_input')
 
         #state = Flatten()([state, advantage, old_prediction])
         dense = Dense(self.node_num, activation='relu', name='dense1')(state)
@@ -101,19 +114,17 @@ class PPO(Algorithm):
         policy = Dense(self.action_n, activation='softmax', name='actor_output_layer')(dense)
         logger.info(f'@ build_model_actor - policy :{policy}')
 
-        '''
-        def ppo_loss(y_true, y_pred):
-            return K.mean(K.square(y_true - y_pred))
-        '''
-        #model = K.Model(inputs=[state, advantage, old_prediction], outputs=policy)
-        model = K.Model(inputs=[state], outputs=[policy])
+        #model = Model(inputs=[state, advantage, old_prediction], outputs=policy)
+        model = Model(inputs=[state], outputs=[policy])
 
         model.compile(
             optimizer='Adam',
             loss=self.ppo_loss(advantage=advantage, old_pred=old_prediction)
             #loss=self.ppo_loss,
         )
+        model.build(input_shape=[None, self.action_n + 2 + 1])
         model.summary()
+
         return model
 
     def get_action_prob(self, inputs, training=None, mask=None):
@@ -133,44 +144,15 @@ class PPO(Algorithm):
         dense = Dense(32, activation='relu')(state)
         dense = Dense(32, activation='relu')(dense)
 
-        V = K.layers.Dense(1, name='actor_output_layer')(dense)
+        V = Dense(1, name='actor_output_layer')(dense)
 
-        model = K.Model(inputs=[state], outputs=V)
+        model = Model(inputs=[state], outputs=V)
         model.compile(
             optimizer='Adam',
             loss='mean_squared_error',
         )
         model.summary()
         return model
-
-    def ppo_loss_by_torch(self, predictions, old_predictions, rewards, advantages):
-        # Calculate the log probabilities of the predicted actions
-        log_probs = torch.log(predictions)
-        old_log_probs = torch.log(old_predictions)
-
-        ratio = log_probs / (old_log_probs + 1e-10)
-        clip_ratio = K.backend.clip(ratio, min_value=1 - self.CLIPPING_LOSS_RATIO,
-                                    max_value=1 + self.CLIPPING_LOSS_RATIO)
-        logger.info(f'@ ppo_loss - ratio:\n{ratio}')
-        surrogate1 = ratio[0] * advantages
-        surrogate2 = clip_ratio[0] * advantages
-        surrogate1 = tf.cast(surrogate1, dtype='float32')
-
-        entropy_loss = (log_probs[0] * K.backend.log(log_probs[0] + 1e-10))
-        ppo_loss = -K.backend.mean(K.backend.minimum(surrogate1, surrogate2) + self.ENTROPY_LOSS_RATIO * entropy_loss)
-        logger.info(f'@ ppo_loss - ppo_loss:\n{ppo_loss}')
-        '''
-        # Calculate the surrogate loss using the advantages
-        surrogate_loss = -advantages * log_probs
-
-        # Calculate the clipping loss
-        clip_loss = torch.clamp(log_probs - old_log_probs, min=-0.2, max=0.2)
-        clip_loss = clip_loss * advantages
-
-        # Return the sum of the surrogate and clipping losses
-        return surrogate_loss + clip_loss
-        '''
-        return ppo_loss
 
     def choose_action_(self, state):
         assert isinstance(state, np.ndarray), "state must be numpy.ndarry"
@@ -202,17 +184,21 @@ class PPO(Algorithm):
 
     def get_action_(self, state):
         #policy = self.model_actor.predict(state, batch_size=1).flatten()
-        #policy = self.model_actor.predict_on_batch(state)
+        policy = self.model_actor.predict_on_batch(state)
 
+        '''
         # (1) 모델을 레이어처럼 호출해서 Tensor 얻기
         policy_tensor = self.model_actor(state)  # tf.Tensor, shape=(1, A)
 
         # (2) sess.run → ndarray로 반환
         policy = self.sess.run(policy_tensor)  # ndarray, shape=(1, A)
-        policy = policy.flatten()
-        policy = policy[:6]
+
+        '''
         # 배치 차원 제거 → (4, 6)
         #policy = policy.squeeze(0)
+
+        policy = policy.flatten()
+        policy = policy[:6]
 
         logger.critical(f'policy:\n{policy}')
         logger.critical(f'policy shape : {policy.shape}')
@@ -273,78 +259,80 @@ class PPO(Algorithm):
         return tf.reduce_mean(surrogate)
 
     def ppo_loss_with_GT(self, old_probs, states, actions, advantages, values, returns, rewards):
-     action_masks = tf.one_hot(actions, self.action_n)
-     probs = tf.nn.softmax(self.model_actor(states))
+        action_masks = tf.one_hot(actions, self.action_n)
+        probs = tf.nn.softmax(self.model_actor(states))
 
-     # Ensure the number of elements match
-     if tf.size(action_masks) == tf.size(probs):
-         action_masks = tf.reshape(action_masks, probs.shape)
-     else:
-         logger.info("The number of elements in action_masks and probs do not match.")
+        # Ensure the number of elements match
+        if tf.size(action_masks) == tf.size(probs):
+            action_masks = tf.reshape(action_masks, probs.shape)
+        else:
+            logger.info("The number of elements in action_masks and probs do not match.")
 
 
-     # One-hot encode actions
-     one_hot_actions = tf.one_hot(actions, self.action_n)
+        # One-hot encode actions
+        one_hot_actions = tf.one_hot(actions, self.action_n)
 
-     # Expand dimensions to make it rank 3
-     one_hot_actions = tf.expand_dims(one_hot_actions, axis=0)
+        # Expand dimensions to make it rank 3
+        one_hot_actions = tf.expand_dims(one_hot_actions, axis=0)
 
-     # 패딩을 추가하여 크기를 [1, 9, 6]으로 변경
-     #paddings = tf.constant([[0, 0], [0, 5], [0, 0]])
-     #padded_one_hot_actions = tf.pad(one_hot_actions, paddings, "CONSTANT")
+        # 패딩을 추가하여 크기를 [1, 9, 6]으로 변경
+        #paddings = tf.constant([[0, 0], [0, 5], [0, 0]])
+        #padded_one_hot_actions = tf.pad(one_hot_actions, paddings, "CONSTANT")
 
-     # Perform element-wise multiplication
-     chosen_probs = tf.reduce_sum(probs * one_hot_actions, axis=1)
-     # Now perform the element-wise multiplication
-     #chosen_probs = tf.reduce_sum(action_masks * probs)
+        # Perform element-wise multiplication
+        one_hot_actions = one_hot_actions[:, :4]
+        chosen_probs = tf.reduce_sum(probs * one_hot_actions, axis=1)
+        # Now perform the element-wise multiplication
+        #chosen_probs = tf.reduce_sum(action_masks * probs)
 
-     old_chosen_probs = tf.reduce_sum(old_probs * one_hot_actions, axis=1)
-     #old_chosen_probs = action_masks * old_probs
+        old_chosen_probs = tf.reduce_sum(old_probs * one_hot_actions, axis=1)
+        #old_chosen_probs = action_masks * old_probs
 
-     logger.info("# chosen_probs shape:", chosen_probs.shape)
-     logger.info("# old_chosen_probs shape:", old_chosen_probs.shape)
+        logger.info("# chosen_probs shape:", chosen_probs.shape)
+        logger.info("# old_chosen_probs shape:", old_chosen_probs.shape)
 
-     max_len = max(chosen_probs.shape[0], old_chosen_probs.shape[0])
-     # Tile the smaller tensor to match the larger tensor's shape
-     if chosen_probs.shape[0] < max_len:
-         chosen_probs = tf.tile(chosen_probs, [max_len // chosen_probs.shape[0] + 1])[:max_len]
-     if old_chosen_probs.shape[0] < max_len:
-         old_chosen_probs = tf.tile(old_chosen_probs, [max_len // old_chosen_probs.shape[0] + 1])[:max_len]
+        max_len = max(chosen_probs.shape[0], old_chosen_probs.shape[0])
+        # Tile the smaller tensor to match the larger tensor's shape
+        if chosen_probs.shape[0] < max_len:
+            chosen_probs = tf.tile(chosen_probs, [max_len // chosen_probs.shape[0] + 1])[:max_len]
+        if old_chosen_probs.shape[0] < max_len:
+            old_chosen_probs = tf.tile(old_chosen_probs, [max_len // old_chosen_probs.shape[0] + 1])[:max_len]
 
-     # logger.info new shapes
-     logger.info(f"New chosen_probs shape: {chosen_probs.shape}")
-     logger.info(f"New old_chosen_probs shape: {old_chosen_probs.shape}")
+        # logger.info new shapes
+        logger.info(f"New chosen_probs shape: {chosen_probs.shape}")
+        logger.info(f"New old_chosen_probs shape: {old_chosen_probs.shape}")
 
-     ratio = chosen_probs / (old_chosen_probs + 1e-10)
-     clipped_ratio = tf.clip_by_value(ratio, 1.0 - self.CLIPPING_LOSS_RATIO, 1.0 + self.CLIPPING_LOSS_RATIO)
-     logger.info(f"clipped_ratio: {clipped_ratio}")
+        ratio = chosen_probs / (old_chosen_probs + 1e-10)
+        clipped_ratio = tf.clip_by_value(ratio, 1.0 - self.CLIPPING_LOSS_RATIO, 1.0 + self.CLIPPING_LOSS_RATIO)
+        logger.info(f"clipped_ratio: {clipped_ratio}")
 
-     surrogate1 = ratio * advantages
-     surrogate2 = clipped_ratio * advantages
-     logger.info(f"surrogate1: {surrogate1}")
-     logger.info(f"surrogate2: {surrogate2}")
-     policy_loss = -tf.reduce_mean(tf.minimum(surrogate1, surrogate2))
+        surrogate1 = ratio * advantages
+        surrogate2 = clipped_ratio * advantages
+        logger.info(f"surrogate1: {surrogate1}")
+        logger.info(f"surrogate2: {surrogate2}")
+        policy_loss = tf.reduce_mean(-tf.minimum(surrogate1, surrogate2))
 
-     #value_loss = tf.reduce_mean(tf.square(values - returns))
+        value_loss = tf.reduce_mean(tf.square(returns - values))
+        #value_loss = tf.reduce_mean(tf.square(rewards - values))
 
-     value_loss = tf.reduce_mean(tf.square(rewards - values))
+        entropy_loss = tf.reduce_mean(-tf.reduce_sum(probs * tf.math.log(probs + 1e-10), axis=1))
+        #entropy_loss = -tf.reduce_mean(tf.reduce_sum(probs * tf.math.log(probs + 1e-10), axis=1))
 
-     entropy_loss = -tf.reduce_mean(tf.reduce_sum(probs * tf.math.log(probs + 1e-10), axis=1))
+        # Assuming you are using TensorFlow 1.x
 
-     # Assuming you are using TensorFlow 1.x
+        #total_loss = tf.reduce_mean(tf.reduce_sum(policy_loss + 0.5 * value_loss - 0.01 * entropy_loss))
+        #total_loss_array = self.sess.run(total_loss)
 
-     total_loss = tf.reduce_mean(tf.reduce_sum(policy_loss + 0.5 * value_loss - 0.01 * entropy_loss))
-     total_loss_array = self.sess.run(total_loss)
+        # Log the array
+        #logger.info(f'*********** total_loss : {total_loss_array} **********')
 
-     # Log the array
-     #logger.info(f'*********** total_loss : {total_loss_array} **********')
+        #total_loss = policy_loss + 0.5 * value_loss - 0.01 * entropy_loss
+        total_loss = tf.reduce_mean(tf.reduce_sum( policy_loss + 0.5 * value_loss - 0.01 * entropy_loss))
 
-     #total_loss = policy_loss + 0.5 * value_loss - 0.01 * entropy_loss
-     #total_loss = tf.reduce_mean(tf.reduce_sum( policy_loss + 0.5 * value_loss - 0.01 * entropy_loss))
-
-     logger.info(f'*********** total_loss : {total_loss} **********')
-     #logger.info(f'*********** total_loss_array : {total_loss_array} **********')
-     return total_loss, total_loss_array
+        logger.critical(f'*********** total_loss : {total_loss} **********')
+        #logger.info(f'*********** total_loss_array : {total_loss_array} **********')
+        #return total_loss, total_loss_array
+        return total_loss
 
     #@tf.function
     def ppo_loss(self, advantage, old_pred):
@@ -357,11 +345,11 @@ class PPO(Algorithm):
             prob = y_true * y_pred
             old_prob = y_true * old_pred
             ratio = prob / (old_prob + 1e-10)
-            clip_ratio = K.backend.clip(ratio, min_value=1-self.CLIPPING_LOSS_RATIO, max_value=1+self.CLIPPING_LOSS_RATIO)
+            clip_ratio = K.clip(ratio, min_value=1-self.CLIPPING_LOSS_RATIO, max_value=1+self.CLIPPING_LOSS_RATIO)
             surrogate1 = ratio * advantage
             surrogate2 = clip_ratio * advantage
-            entropy_loss = (prob * K.backend.log(prob+1e-10))
-            ppo_loss = -K.backend.mean(K.backend.minimum(surrogate1, surrogate2)+self.ENTROPY_LOSS_RATIO * entropy_loss)
+            entropy_loss = (prob * K.log(prob+1e-10))
+            ppo_loss = -K.mean(K.minimum(surrogate1, surrogate2)+self.ENTROPY_LOSS_RATIO * entropy_loss)
             logger.info(f'@ ppo_loss - ppo_loss:\n{ppo_loss}')
             return ppo_loss
         return loss
@@ -374,11 +362,11 @@ class PPO(Algorithm):
         # Calculate the ratio of the new and old predictions
         ratio = predictions[0] / old_predictions[0]
         logger.info(f'@@ ppo_loss_new - ratio :\n{ratio}\n')
-        clipped = KB.clip(ratio, 1 - LOSS_CLIPPING, 1 + LOSS_CLIPPING)
+        clipped = K.clip(ratio, 1 - LOSS_CLIPPING, 1 + LOSS_CLIPPING)
         logger.info(f'@@ ppo_loss_new - clipped :\n{clipped}\n')
 
         # Calculate the PPO loss using the ratio and advantages
-        loss = KB.minimum(ratio * advantages, clipped * advantages)
+        loss = K.minimum(ratio * advantages, clipped * advantages)
         loss = -tf.reduce_mean(loss)
 
         logger.info(f'@@ ppo_loss_new - loss :\n{loss}\n')
@@ -630,7 +618,8 @@ class PPO(Algorithm):
             # Assuming you are using TensorFlow 1.x
 
             total_loss = tf.reduce_mean(tf.reduce_sum(a_loss + 0.5 * c_loss - 0.01 * entropy_loss))
-            total_loss_array = self.sess.run(total_loss)
+            #total_loss_array = self.sess.run(total_loss)
+            logger.critical(f'total_loss : {total_loss}')
 
             #Compute the Q value estimate of the target network
 
@@ -653,9 +642,12 @@ class PPO(Algorithm):
             # TD error 값을 스칼라 값으로 변환
             td_error_scalar_mean = tf.reduce_mean(TD_errors)
             td_error_scalar_sum = tf.reduce_sum(TD_errors)
+            logger.critical(f'learn_ - td_error_scalar_mean: {td_error_scalar_mean}')
 
+            '''
             TD_errors_array = self.sess.run(td_error_scalar_mean)
-            logger.info(f'@ learn_ - TD_errors_array: {TD_errors_array}')
+            logger.info(f'learn_ - TD_errors_array: {TD_errors_array}')
+            '''
 
             # Backpropagation
             grads1 = tape1.gradient(a_loss, self.model_actor.trainable_variables)
@@ -664,7 +656,7 @@ class PPO(Algorithm):
             trainable_vars = self.model_critic.trainable_variables
             grads2 = tape2.gradient(c_loss, trainable_vars)
 
-            init = tf.global_variables_initializer()
+            #init = tf.global_variables_initializer()
 
             #self.a_opt.apply_gradients(zip(grads1, self.model_actor.trainable_variables))
             #self.c_opt.apply_gradients(zip(grads2, self.model_critic.trainable_variables))
@@ -672,16 +664,16 @@ class PPO(Algorithm):
             # logger.info gradients
             for grad, var in zip(grads1, self.model_actor.trainable_variables):
                 if grad is not None:
-                    logger.info(f"Variable: {var.name}, Gradient: {grad}")
+                    logger.critical(f"Variable: {var.name}, Gradient: {grad}")
                     self.optimizer.apply_gradients(zip(grads1, self.model_actor.trainable_variables))
                 else:
-                    logger.info(f"Variable: {var.name} has no gradient.")
+                    logger.critical(f"Variable: {var.name} has no gradient.")
 
             # Calculate gradients
 
         #return a_loss, c_loss, TD_errors
-        #return total_loss_array
-        return TD_errors_array
+        return total_loss
+        #return TD_errors_array
 
     def learn(self, error):
         print('ppo learn - saving error:{}\n'.format(self.error))
@@ -700,7 +692,7 @@ class PPO(Algorithm):
         #logger.info(f'### actors shape : {actors.shape}')
 
         # Reshape to add an additional dimension
-        #states = np.expand_dims(states, axis=0)  # Now shape is (1, 4, 9)
+        states = np.expand_dims(states, axis=0)  # Now shape is (1, 4, 9)
         tempP = states.reshape((1, 4, 9))
         #action_probs = self.model_actor.predict(states)
         action_probs = self.model_actor.predict_on_batch(tempP)
@@ -737,12 +729,27 @@ class PPO(Algorithm):
             next_values = self.model_critic(next_states)
             logger.info(f'### next_values shape : {next_values.shape}')
 
-            advantages = self.make_gae()
-            advantages = advantages[:6]
-            #advantages = tf.reshape(advantages, [6, 1])
-            advantages = tf.reshape(advantages, (-1, 1))
+            # rewards 를 discounted factor 로 다시 계산.
+            returns = []
+            discounted_sum = 0
 
-            advantages = tf.cast(advantages, tf.float32)
+            for r in rewards[::-1]:
+                discounted_sum = r + self.discount_rate * discounted_sum
+                returns.insert(0, discounted_sum)
+            # Normalize
+            returns = np.array(returns)
+            returns = (returns - np.mean(returns)) / (np.std(returns) + self.eps)
+            returns = returns.tolist()
+
+            if with_per:
+                advantages = returns[0] - values[0, 0]
+            else:
+                advantages = self.make_gae()
+                advantages = advantages[:6]
+                #advantages = tf.reshape(advantages, [6, 1])
+                advantages = tf.reshape(advantages, (-1, 1))
+
+                advantages = tf.cast(advantages, tf.float32)
             logger.info(f'### advantages shape : {np.shape(advantages)}')
             '''
             mean_advantages = [
@@ -783,7 +790,7 @@ class PPO(Algorithm):
             logger.info(f'### returns shape : {np.shape(returns)}')
 
             #loss, total_loss = self.ppo_loss_with_GT(old_action_probs, states, actions, advantages, values, returns, rewards)
-            loss, total_loss = self.ppo_loss_with_GT(old_action_probs, states, actions, advantages, values, returns, discounted_rewards)
+            total_loss = self.ppo_loss_with_GT(old_action_probs, states, actions, advantages, values, returns, discounted_rewards)
 
             #loss = self.ppo_loss(advantages, old_action_probs)
             #loss = self.ppo_loss_with_GT(old_action_probs, action_probs, values, old_values, next_values, actions, rewards)
@@ -806,17 +813,17 @@ class PPO(Algorithm):
                 # other placeholders
             }'''
 
-        advantage_np = advantages.eval(session=self.sess)
-        batch_old_prediction_np = batch_old_prediction.eval(session=self.sess)
+        #advantage_np = advantages.eval(session=self.sess)
+        #batch_old_prediction_np = batch_old_prediction.eval(session=self.sess)
 
-        init = tf.global_variables_initializer()
+        #init = tf.global_variables_initializer()
 
-        if not isinstance(loss, tf.Tensor):
-            raise TypeError(f"Expected loss to be a tensor, but got {type(loss)}")
+        if not isinstance(total_loss, tf.Tensor):
+            raise TypeError(f"Expected loss to be a tensor, but got {type(total_loss)}")
 
 
         # Calculate gradients
-        grads = tape.gradient(loss, self.model_actor.trainable_variables + self.model_critic.trainable_variables)
+        grads = tape.gradient(total_loss, self.model_actor.trainable_variables + self.model_critic.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.model_actor.trainable_variables + self.model_critic.trainable_variables))
 
         batch_v = self.get_v(states)
