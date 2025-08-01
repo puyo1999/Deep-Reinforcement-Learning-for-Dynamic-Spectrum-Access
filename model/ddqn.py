@@ -361,7 +361,7 @@ class DDQN:
             adjusted_input = np.ones((1, 1))
 
             if np.shape(cur_state) != np.shape(next_state):
-                next_state = next_state.reshape((4, 6))
+                next_state = next_state.reshape((4, 9))
             else:
                 next_state = next_state.reshape((6, 6))
             cur_state = cur_state.reshape((6, 6))
@@ -379,33 +379,35 @@ class DDQN:
 
             #index = self.q_eval_model.predict([s_, np.ones((self.batch_size, 1))]).argmax(axis=1)
             #index = self.q_eval_model.predict([s_, np.ones((self.batch_size*3, 1))]).argmax(axis=1)
-            #index = self.q_eval_model.predict([cur_state, adjusted_input]).argmax(axis=1)
+            index = self.q_eval_model.predict([cur_state, adjusted_input]).argmax(axis=1)
 
-            q_vals = self.q_eval_model.predict_on_batch([cur_state, adjusted_input])
-            # q_vals is now a np.ndarray, shape (1, action_dim)
-            index = int(np.argmax(q_vals, axis=1)[0])
-
+            #q_vals = self.q_eval_model.predict_on_batch([cur_state, adjusted_input])
+            #logger.critical(f'ddqn learn - q_vals[{q_vals}]\n shape of q_vals: {np.shape(q_vals)}')
+            #q_vals is now a np.ndarray, shape (1, action_dim)
+            #index = int(np.argmax(q_vals, axis=1)[0])
 
             # 모델 호출(또는 predict_on_batch) → EagerTensor 반환
-            #qs_tensor = self.q_eval_model([cur_state, adjusted_input], training=False)
-
-            # NumPy 배열로 변환
-            #q_vals = qs_tensor.numpy()  # shape: (1, action_dim)
-
-            # NumPy 메서드 사용
-            #index = q_vals.argmax(axis=1)  # shape: (1,)
+            #q_vals = self.q_eval_model([cur_state, adjusted_input], training=False)
+            # 3) 현재 사용 중인 세션 가져오기
+            #sess = tf.compat.v1.keras.backend.get_session()
+            # 세션에서 직접 실행
+            #index = sess.run(q_vals)
 
             # Predict the index
-            logger.critical(f'eval predict - index:{index}')
+            #logger.critical(f'eval predict - index:{index}')
 
             #max_q = self.q_target_model.predict([s_, np.ones((self.batch_size*3, 1))])[range(self.batch_size*3), index]
-            max_q = self.q_target_model.predict_on_batch([next_state, adjusted_input]).argmax(axis=1)
+            #max_q = self.q_target_model.predict_on_batch([next_state, adjusted_input]).argmax(axis=1)
             #max_q = np.max(index[0])
-            logger.info(f'target predict - max_q:{max_q}')
+            max_q = self.q_target_model.predict_on_batch([next_state, adjusted_input]).argmax(axis=1)
+            #max_q = self.q_target_model([next_state, adjusted_input], training=False)
+            #target_index = sess.run(max_q)
+            logger.critical(f'target predict - max_q : {max_q}')
 
             s = np.tile(s, (3, 1))
             #q_predict = self.q_eval_model.predict([s, np.ones((self.batch_size*3, 1))])
-            q_predict = self.q_eval_model.predict_on_batch([cur_state, adjusted_input])
+            #q_predict = self.q_eval_model.predict_on_batch([cur_state, adjusted_input])
+            q_predict = self.q_eval_model([cur_state, adjusted_input])
         else:
             index = self.q_eval_model.predict(s_).argmax(axis=1)
             max_q = self.q_target_model.predict(s_)[range(self.batch_size), index]
@@ -415,17 +417,15 @@ class DDQN:
         logger.info("shape of max_q: ", np.shape(max_q))
         logger.info("shape of q_predict: ", np.shape(q_predict))
 
-        #max_q = np.reshape(max_q,[32,3])
-        #max_q = max_q.reshape(3, -1).mean(axis=0)
-        logger.info(f'## max_q : {max_q}\n')
-        #logger.info("q_predict : ", q_predict)
-        q_target = np.copy(q_predict)
-        logger.info(f"## q_target : {q_target}\n")
+        logger.info("q_predict : ", q_predict)
+        q_target = tf.identity(q_predict)
+        logger.critical(f"## q_target : {q_target}\n")
         #q_target = np.tile(q_target, (3,1))
         #q_target[range(self.batch_size*3), s.astype(np.int32)] = r + self.gamma * max_q
         #q_target[range(self.batch_size), transition[:, self.feature_size].astype(np.int32)] = r + self.gamma * max_q
-        #q_target = r + self.gamma * max_q
+
         #q_target = np.tile(q_target, (6, 1))
+
 
         batch_index = np.arange(6, dtype=np.int32)
         #q_target[0, batch_index] = r[:6] + self.gamma * max_q
@@ -433,12 +433,13 @@ class DDQN:
         # q_target 업데이트
         #q_target = np.tile(q_target, (6, 1))  # q_target의 크기를 입력 데이터에 맞추기 위해 조정
 
-        # q_target 업데이트
-
         #q_target[batch_index, :] = r[:6].reshape(-1, 1) + self.gamma * max_q.reshape(-1, 1)
         #q_target[batch_index] = r[:6].reshape(-1, 1) + self.gamma * max_q.reshape(-1, 1)
         logger.info(f'{np.shape(cur_state)} {np.shape(adjusted_input)}, {np.shape(q_target)}')
-        report = self.q_eval_model.fit([cur_state, adjusted_input], q_target, epochs=1, verbose=0)
+
+        #report = self.q_eval_model.fit([cur_state, adjusted_input], q_target, epochs=1, verbose=0)
+        #report = self.q_eval_model.fit([cur_state, adjusted_input], target_index, epochs=1, verbose=0)
+        #logger.critical(f"## loss : {report}\n")
 
         if self.prior:
             #q_pred = self.q_eval_model.predict([s, np.ones((self.batch_size*3, 1))])
@@ -448,8 +449,8 @@ class DDQN:
                 q_target = q_target[:6]
             q_target = np.array(q_target)
             #q_target = q_target[:6]
-            logger.info("@ q_pred : ", q_pred)
-            logger.info("@ q_target : ", q_target)
+            logger.critical(f"## q_pred : {q_pred}")
+            logger.critical(f"## q_target : {q_target}")
             p = np.sum(np.abs(q_pred - q_target), axis=1)
             #memory.update(idx, p)
             memory.update(index, p)
@@ -483,26 +484,25 @@ class DDQN:
                 #logger.info("배열 크기 이상")
 
             #report = self.q_eval_model.fit([s, w], q_target, verbose=0)
-            report = self.q_eval_model.fit([cur_state, adjusted_input], q_target, epochs=1, verbose=0)
+            #report = self.q_eval_model.fit([cur_state, adjusted_input], q_target, epochs=1, verbose=0)
             #loss = self.q_eval_model.evaluate([cur_state, adjusted_input], q_target)
             loss = self.my_mse_loss(q_pred, q_target)
-            logger.info(f'my_mse_loss : {loss}')
+            logger.critical(f'my_mse_loss : {loss}')
         else:
             report = self.q_eval_model.fit(s, q_target, verbose=0)
 
         self.epsilon = self.epsilon_min + (self.epsilon - self.epsilon_min) * self.epsilon_decrease
 
-        self.history.append(report.history['loss'])
+        #self.history.append(report.history['loss'])
 
-        if self.verbose and not self.learning_cnt % 100:
-            logger.info('training', self.learning_cnt, ': loss', report.history['loss'])
+        #if self.verbose and not self.learning_cnt % 100:
+            #logger.info('training', self.learning_cnt, ': loss', report.history['loss'])
 
         self.learning_cnt += 1
 
-
         logger.info(f'ddqn, learn - learning_cnt : {self.learning_cnt}')
-        logger.info(f'ddqn, learn - report history loss : {report.history["loss"]}')
-        logger.info(f'ddqn, learn - loss : {loss}')
+        #logger.info(f'ddqn, learn - report history loss : {report.history["loss"]}')
+        logger.critical(f'ddqn, learn - loss : {loss}')
         return loss
 
     def append_sample(self, state, action, reward, next_state, done):

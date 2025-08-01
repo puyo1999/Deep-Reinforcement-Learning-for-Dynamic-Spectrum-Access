@@ -8,15 +8,7 @@ tf.data.experimental.enable_debug_mode()
 ### A2C or A2C_ver2
 # Enable eager execution
 tf.compat.v1.enable_eager_execution()
-### DDQN
-#tf.compat.v1.disable_v2_behavior()
-'''
-if args.type == "A2C" or args.type == "A2C_ver2":
-    from tensorflow.python.framework.ops import enable_eager_execution
-    enable_eager_execution()
-else:
-    tf.disable_v2_behavior()
-'''
+
 from config.setup import *
 
 from env.multi_user_network_env import env_network
@@ -135,7 +127,7 @@ args.with_per = config['with_per']
 args.with_ere = config['with_ere']
 args.graph_drawing = config['graph_drawing']
 
-if args.type == "A2C" or args.type == "A2C_ver2" or args.type == "PPO":
+if args.type == "A2C" or args.type == "A2C_ver2" or args.type == "PPO" or args.type == "DDQN":
     from tensorflow.python.framework.ops import enable_eager_execution
     enable_eager_execution()
 else:
@@ -413,7 +405,7 @@ interval = 1       # debug interval
 ################################
 
 # saver object to save the checkpoints of the DQN to disk
-if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "PPO":
+if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "PPO" and args.type != "DDQN":
     saver = tf.train.Saver()
 else:
     saver = tf.train.Checkpoint()
@@ -785,17 +777,25 @@ for time_step in range(TIME_SLOTS):
                 state[each_user] = np.resize(state[each_user], [1, 9])
                 #state[each_user] = state_vector[:,each_user].reshape(step_size,NUM_HDMI)
 
-                # Eager 모드 아님, sess.run 필요
-                qs_tensor = mainQN.q_eval_model([state[each_user], np.ones((1, 1))])
+                prob = mainQN.q_eval_model.predict_on_batch([state[each_user], np.ones((1, 1))])
 
+                # 1) EagerTensor로 예측
+                #qs_tensor = mainQN.q_eval_model([state[each_user], np.ones((1, 1))], training=False)
+
+                #prob = K.get_value(qs_tensor)
+                # Eager 모드 아님, sess.run 필요
+                #Qs = mainQN.q_eval_model([state[each_user], np.ones((1, 1))])
+
+                # 3) 현재 사용 중인 세션 가져오기
+                #sess = tf.compat.v1.keras.backend.get_session()
                 # 세션에서 직접 실행
-                Qs = sess.run(qs_tensor)
+                #prob = sess.run(Qs)
 
                 #Qs = mainQN.q_eval_model.predict_on_batch([state[each_user], np.ones((1, 1))])
-                logger.critical(f'DDQN - Qs[{Qs}]\n shape of Qs: {np.shape(Qs)}')
+                #logger.critical(f'DDQN - Qs[{Qs}]\n shape of Qs: {np.shape(Qs)}')
 
-                prob1 = (1-alpha)*np.exp(beta*Qs)
-                prob = prob1/np.sum(np.exp(beta*Qs)) + alpha/(NUM_CHANNELS+1)
+                #prob1 = (1-alpha)*np.exp(beta*Qs)
+                #prob = prob1/np.sum(np.exp(beta*Qs)) + alpha/(NUM_CHANNELS+1)
                 logger.critical(f'DDQN - prob[{prob}]\n shape of prob: {np.shape(prob)}')
 
                 '''
@@ -906,7 +906,8 @@ for time_step in range(TIME_SLOTS):
 
             if time_step % interval == 0:
                 logger.info(f'EachUser:{each_user} Debugging state_vector:\n{state_vector[:,each_user]}')
-                if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "DDPG" and args.type != "PPO":
+                if args.type != "A2C" and args.type != "A2C_ver2" and args.type != "DDPG" and args.type != "PPO"\
+                        and args.type != "DDQN":
                     logger.info(f'Qs:{Qs}')
                     logger.info(f'prob:{prob}, sum of beta*Qs:{np.sum(np.exp(beta*Qs))}')
                     logger.info(f'End')
@@ -1368,7 +1369,8 @@ for time_step in range(TIME_SLOTS):
         loss_list.append(total_loss)
     elif args.type == "DDQN":
         #train_ddqn(replay_memory, batch_size)
-        mainQN.learn(memory, replay_memory, batch_size)
+        total_loss = mainQN.learn(memory, replay_memory, batch_size)
+        loss_list.append(total_loss)
     elif args.type == "DDPG":
         #train_ddpg(replay_memory, batch_size)
 
@@ -1499,10 +1501,12 @@ if args.type == "DQN":
     saver.save(sess, "checkpoints/dqn-user.ckpt")
 elif args.type == "DDQN":
     ddqn_scores = []
-    ddqn_scores = np.mean(all_means, axis=0)
+    ddqn_scores = all_means
     np.save("ddqn_scores", ddqn_scores)
+    np.save("ddqn_means", means)
+    np.save("ddqn_loss", loss_list)
     draw_res2(time_step, cum_collision, cum_r, loss_list, means, ddqn_scores, TIME_SLOTS)
-    saver.save(sess,'checkpoints/ddqn-user.ckpt')
+    #saver.save(sess,'checkpoints/ddqn-user.ckpt')
 elif args.type == "DRQN":
     drqn_scores = []
     drqn_scores = all_means
