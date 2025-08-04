@@ -500,7 +500,7 @@ cum_r = [0]
 cum_collision = [0]
 
 # loss list
-loss_list = []
+loss_list = [0]
 
 #mse_loss = mse()
 actor_losses = []
@@ -1371,6 +1371,7 @@ for time_step in range(TIME_SLOTS):
         #train_ddqn(replay_memory, batch_size)
         total_loss = mainQN.learn(memory, replay_memory, batch_size)
         loss_list.append(total_loss)
+
     elif args.type == "DDPG":
         #train_ddpg(replay_memory, batch_size)
 
@@ -1502,9 +1503,12 @@ if args.type == "DQN":
 elif args.type == "DDQN":
     ddqn_scores = []
     ddqn_scores = all_means
+
+    ddqn_loss = []
+    ddqn_loss = loss_list
     np.save("ddqn_scores", ddqn_scores)
     np.save("ddqn_means", means)
-    np.save("ddqn_loss", loss_list)
+    np.save("ddqn_loss", ddqn_loss)
     draw_res2(time_step, cum_collision, cum_r, loss_list, means, ddqn_scores, TIME_SLOTS)
     #saver.save(sess,'checkpoints/ddqn-user.ckpt')
 elif args.type == "DRQN":
@@ -1568,7 +1572,7 @@ means = [0]
 all_means = []
 cum_r = [0]
 cum_collision = [0]
-los_list = []
+loss_list = [0]
 
 logger.info(f'********** All variables are initialized **********\n')
 

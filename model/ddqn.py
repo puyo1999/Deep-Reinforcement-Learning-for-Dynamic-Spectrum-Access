@@ -283,7 +283,6 @@ class DDQN:
         #logger.info(f'mse_loss : {loss}')
         #return loss
 
-
     def learn(self, memory, replay_memory, batch_size):
         if self.learning_cnt % self.replace_target_iter == 0:
             self._copy_model()
@@ -426,8 +425,7 @@ class DDQN:
 
         #q_target = np.tile(q_target, (6, 1))
 
-
-        batch_index = np.arange(6, dtype=np.int32)
+        #batch_index = np.arange(6, dtype=np.int32)
         #q_target[0, batch_index] = r[:6] + self.gamma * max_q
 
         # q_target 업데이트
@@ -435,11 +433,11 @@ class DDQN:
 
         #q_target[batch_index, :] = r[:6].reshape(-1, 1) + self.gamma * max_q.reshape(-1, 1)
         #q_target[batch_index] = r[:6].reshape(-1, 1) + self.gamma * max_q.reshape(-1, 1)
-        logger.info(f'{np.shape(cur_state)} {np.shape(adjusted_input)}, {np.shape(q_target)}')
+        #logger.info(f'{np.shape(cur_state)} {np.shape(adjusted_input)}, {np.shape(q_target)}')
 
         #report = self.q_eval_model.fit([cur_state, adjusted_input], q_target, epochs=1, verbose=0)
         #report = self.q_eval_model.fit([cur_state, adjusted_input], target_index, epochs=1, verbose=0)
-        #logger.critical(f"## loss : {report}\n")
+        #logger.critical(f"## report : {report}\n")
 
         if self.prior:
             #q_pred = self.q_eval_model.predict([s, np.ones((self.batch_size*3, 1))])
@@ -456,11 +454,12 @@ class DDQN:
             memory.update(index, p)
 
             w = np.repeat(w, 3)
-            logger.info("@ shape of s: ", np.shape(s))
-            logger.info("@ shape of w: ", np.shape(w))
-            logger.info("@ shape of q_target: ", np.shape(q_target))
+            logger.info(f"shape of s: {np.shape(s)}")
+            logger.info(f"shape of w: {np.shape(w)}")
+            logger.critical(f"before shape of q_target: {np.shape(q_target)}")
 
             q_target = q_target.reshape((1, 6))
+            logger.critical(f"# after reshape shape of q_target: {np.shape(q_target)}")
             # Ensure target is a numpy array
             '''
             if isinstance(q_target, np.ndarray):
@@ -479,7 +478,7 @@ class DDQN:
 
             #if q_target.shape[0] > 0 and action < q_target.shape[1]:
             q_target[0][action] = reward + self.gamma * max_q
-            logger.info(f"target_Q_values : {q_target}")
+            logger.critical(f"### after calculate target_Q_values : {q_target}")
             #else:
                 #logger.info("배열 크기 이상")
 
@@ -487,7 +486,10 @@ class DDQN:
             #report = self.q_eval_model.fit([cur_state, adjusted_input], q_target, epochs=1, verbose=0)
             #loss = self.q_eval_model.evaluate([cur_state, adjusted_input], q_target)
             loss = self.my_mse_loss(q_pred, q_target)
-            logger.critical(f'my_mse_loss : {loss}')
+            logger.critical(f'my_mse_loss - loss : {loss}')
+            logger.critical(f'my_mse_loss - w : {w}')
+            loss2 = (w * self.my_mse_loss(q_pred, q_target)).mean()
+            logger.critical(f'my_mse_loss - loss2 : {loss2}')
         else:
             report = self.q_eval_model.fit(s, q_target, verbose=0)
 
@@ -502,8 +504,17 @@ class DDQN:
 
         logger.info(f'ddqn, learn - learning_cnt : {self.learning_cnt}')
         #logger.info(f'ddqn, learn - report history loss : {report.history["loss"]}')
-        logger.critical(f'ddqn, learn - loss : {loss}')
-        return loss
+        logger.critical(f'ddqn, learn - loss2 : {loss2}')
+
+        #self.optimizer.zero_grad()
+        #loss.backward()
+        #self.optimizer.step()
+        priorities = np.sum(np.abs(q_pred - q_target), axis=1)
+
+        logger.critical(f'ddqn, update - priorities : {priorities}')
+        memory.update_priorities(idx, priorities)
+
+        return loss2
 
     def append_sample(self, state, action, reward, next_state, done):
         target = self.q_eval_model.predict(state)
